@@ -1,0 +1,51 @@
+{
+  "x": 5, "y": 8,
+  "name": "Old Man", "sprite": "npc_old_man_1", "dir": "down",
+  "type": "npc", "showFlag": "", "hideFlag": "",
+  "walkOnFlag": "", "walkTo": null,
+  "dialog": ["Have you seen my daughter? She went to Route 1!"],
+  "dialogs": [
+    {
+      "condition": "",
+      "setFlag": "quest1_find_daughter",
+      "clearFlag": "",
+      "walkTo": null,
+      "lines": [
+        "Oh, {player}!",
+        "Have you seen my daughter?",
+        "She went north to Route 1 and hasn't returned!"
+      ]
+    },
+    {
+      "condition": "quest1_find_daughter",
+      "setFlag": "",
+      "clearFlag": "",
+      "walkTo": null,
+      "lines": [
+        "Please, {player}, find my daughter on Route 1!",
+        "She's wearing a red dress."
+      ]
+    },
+    {
+      "condition": "quest1_daughter_found",
+      "setFlag": "quest1_complete",
+      "clearFlag": "quest1_daughter_found",
+      "walkTo": null,
+      "lines": [
+        "You found her! She's safe!",
+        "Thank you so much, {player}.",
+        "Please accept this as a reward!"
+      ]
+    },
+    {
+      "condition": "quest1_complete",
+      "setFlag": "",
+      "clearFlag": "",
+      "walkTo": null,
+      "lines": [
+        "Thank you again for finding my daughter, {player}.",
+        "You're a true hero!"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "name": "pokemon-mmo",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "client",
+    "server",
+    "shared"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
+    "dev:client": "npm run dev --workspace=client",
+    "dev:server": "npm run dev --workspace=server",
+    "extract:maps": "node assets/tools/extract-assets.js",
+    "extract:sprites": "node assets/tools/extract-sprites.js",
+    "extract": "node assets/tools/extract-assets.js && node assets/tools/extract-sprites.js"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.0",
+    "pngjs": "^7.0.0",
+    "sharp": "^0.34.5"
+  }
+}

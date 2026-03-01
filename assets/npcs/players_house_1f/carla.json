@@ -1,0 +1,35 @@
+{
+  "x": 8,
+  "y": 4,
+  "name": "Carla",
+  "sprite": "npc_woman",
+  "dir": "left",
+  "type": "npc",
+  "showFlag": "", "hideFlag": "",
+  "walkOnFlag": "", "walkTo": null,
+  "dialog": [
+    "No! I am not your MOM!",
+    "Hi, I am Carla and i am",
+    "receptionist of this POKEWORLD."
+  ],
+  "dialogs": [
+    {
+      "condition": "",
+      "setFlag": "talked_carla",
+      "clearFlag": "",
+      "walkTo": null,
+      "lines": [
+        "No! I am not your MOM!",
+        "Hi, I am Carla and i am",
+        "receptionist of this POKEWORLD."
+      ]
+    },
+    {
+      "condition": "talked_carla",
+      "setFlag": "",
+      "clearFlag": "",
+      "walkTo": null,
+      "lines": ["Welcome to this Pokemon World."]
+    }
+  ]
+}

@@ -1,0 +1,29 @@
+{
+  "x": 12,
+  "y": 2,
+  "name": "Prof. Oak",
+  "sprite": "npc_oak",
+  "dir": "down",
+  "type": "npc",
+  "showFlag": "oak_stop_player",
+  "hideFlag": "oak_escort_step1",
+  "walkOnFlag": "", "walkTo": null,
+  "autoTalk": true,
+  "roam": false, "roamRadius": 3,
+  "dialog": ["Come with me, I'll show you where to get your first Pokemon!"],
+  "dialogs": [
+    {
+      "condition": "",
+      "setFlag": "oak_escort_step1",
+      "clearFlag": "",
+      "walkTo": {"x": 12, "y": 14},
+      "teleportPlayer": null,
+      "movePlayer": {"x": 12, "y": 14},
+      "lines": [
+        "Come with me, {player}!",
+        "My lab is just this way.",
+        "I'll give you your first Pokemon!"
+      ]
+    }
+  ]
+}

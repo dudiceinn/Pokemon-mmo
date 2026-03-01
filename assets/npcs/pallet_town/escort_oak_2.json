@@ -1,0 +1,28 @@
+{
+  "x": 12,
+  "y": 14,
+  "name": "Prof. Oak",
+  "sprite": "npc_oak",
+  "dir": "down",
+  "type": "npc",
+  "showFlag": "oak_escort_step1",
+  "hideFlag": "oak_escort_done",
+  "walkOnFlag": "", "walkTo": null,
+  "autoTalk": true,
+  "roam": false, "roamRadius": 3,
+  "dialog": ["Right this way, the lab is right here!"],
+  "dialogs": [
+    {
+      "condition": "",
+      "setFlag": "oak_escort_done",
+      "clearFlag": "oak_escort_step1",
+      "walkTo": {"x": 16, "y": 14},
+      "teleportPlayer": null,
+      "movePlayer": {"x": 17, "y": 14},
+      "lines": [
+        "Right this way, {player}!",
+        "The lab is right here!"
+      ]
+    }
+  ]
+}

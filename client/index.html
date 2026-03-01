@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Pokemon MMO</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #000;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      overflow: hidden;
+      font-family: 'Segoe UI', Arial, sans-serif;
+      touch-action: none;
+    }
+    canvas { image-rendering: pixelated; }
+
+    /* HUD overlay */
+    #hud {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      pointer-events: none;
+      z-index: 10;
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 12px;
+    }
+    .hud-text {
+      font-size: 13px;
+      color: #fff;
+      background: rgba(0,0,0,0.6);
+      padding: 2px 8px;
+      border-radius: 4px;
+      line-height: 1.4;
+    }
+    #hud-left .map-name { color: #ffd700; }
+    #hud-right { text-align: right; }
+    #hud-right .status-online { color: #88ff88; }
+    #hud-right .status-offline { color: #ff6666; }
+    #hud-right .players { color: #88ccff; }
+
+    /* Dialog box */
+    #dialog-box {
+      display: none;
+      position: fixed;
+      bottom: 16px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: min(94vw, 720px);
+      background: rgba(0, 0, 0, 0.92);
+      border: 3px solid #fff;
+      border-radius: 10px;
+      padding: 18px 24px 14px;
+      z-index: 30;
+      pointer-events: auto;
+    }
+    #dialog-name {
+      font-size: 16px;
+      color: #ffd700;
+      margin-bottom: 6px;
+      font-weight: bold;
+    }
+    #dialog-text {
+      font-size: 20px;
+      color: #fff;
+      line-height: 1.6;
+      min-height: 2em;
+    }
+    #dialog-prompt {
+      font-size: 13px;
+      color: #aaa;
+      text-align: right;
+      margin-top: 8px;
+    }
+    @media (max-width: 480px) {
+      #dialog-box {
+        bottom: 80px;
+        padding: 14px 16px 10px;
+      }
+      #dialog-text { font-size: 16px; }
+      #dialog-name { font-size: 14px; }
+    }
+
+    /* Name labels (HTML overlay for crisp text) */
+    #name-labels {
+      position: fixed;
+      top: 0; left: 0;
+      pointer-events: none;
+      z-index: 5;
+      overflow: hidden;
+      width: 100%; height: 100%;
+    }
+    .name-label {
+      position: absolute;
+      font-size: 11px;
+      font-family: 'Segoe UI', Arial, sans-serif;
+      color: #fff;
+      background: rgba(0,0,0,0.6);
+      padding: 1px 5px;
+      border-radius: 3px;
+      white-space: nowrap;
+      transform: translate(-50%, -100%);
+      line-height: 1.3;
+    }
+
+    /* Mobile D-Pad */
+    #dpad {
+      display: none;
+      position: fixed;
+      bottom: 24px;
+      left: 24px;
+      z-index: 20;
+      width: 140px;
+      height: 140px;
+    }
+    .dpad-btn {
+      position: absolute;
+      width: 44px;
+      height: 44px;
+      background: rgba(255,255,255,0.25);
+      border: 2px solid rgba(255,255,255,0.4);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      color: #fff;
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: none;
+    }
+    .dpad-btn:active, .dpad-btn.active {
+      background: rgba(255,255,255,0.5);
+    }
+    #dpad-up    { top: 0;   left: 48px; }
+    #dpad-down  { bottom: 0; left: 48px; }
+    #dpad-left  { top: 48px; left: 0; }
+    #dpad-right { top: 48px; right: 0; }
+
+    /* Action button (interact) */
+    #btn-action {
+      display: none;
+      position: fixed;
+      bottom: 40px;
+      right: 24px;
+      z-index: 20;
+      width: 56px;
+      height: 56px;
+      background: rgba(255,255,255,0.25);
+      border: 2px solid rgba(255,255,255,0.4);
+      border-radius: 50%;
+      font-size: 14px;
+      font-weight: bold;
+      color: #fff;
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: none;
+    }
+    #btn-action:active, #btn-action.active {
+      background: rgba(255,255,255,0.5);
+    }
+
+    /* Show dpad + action on touch devices */
+    @media (pointer: coarse) {
+      #dpad { display: block; }
+      #btn-action { display: flex; align-items: center; justify-content: center; }
+    }
+
+    /* Landscape on mobile — shrink controls */
+    @media (pointer: coarse) and (orientation: landscape) {
+      #dpad {
+        bottom: 8px;
+        left: 12px;
+        width: 110px;
+        height: 110px;
+      }
+      .dpad-btn {
+        width: 34px;
+        height: 34px;
+        font-size: 16px;
+      }
+      #dpad-up    { top: 0;   left: 38px; }
+      #dpad-down  { bottom: 0; left: 38px; }
+      #dpad-left  { top: 38px; left: 0; }
+      #dpad-right { top: 38px; right: 0; }
+      #btn-action {
+        bottom: 24px;
+        right: 12px;
+        width: 46px;
+        height: 46px;
+        font-size: 12px;
+      }
+      #dialog-box {
+        bottom: 8px;
+        padding: 10px 14px 8px;
+      }
+      #dialog-text { font-size: 14px; min-height: 1.2em; }
+      #dialog-name { font-size: 12px; }
+    }
+  </style>
+</head>
+<body>
+  <div id="hud">
+    <div id="hud-left" class="hud-text">
+      <span class="coords"></span><br>
+      <span class="map-name"></span>
+    </div>
+    <div id="hud-right" class="hud-text">
+      <span class="status"></span><br>
+      <span class="players"></span>
+    </div>
+  </div>
+
+  <div id="name-labels"></div>
+
+  <div id="dialog-box">
+    <div id="dialog-name"></div>
+    <div id="dialog-text"></div>
+    <div id="dialog-prompt"></div>
+  </div>
+
+  <button id="btn-action">A</button>
+
+  <div id="dpad">
+    <div id="dpad-up" class="dpad-btn" data-dir="up">▲</div>
+    <div id="dpad-down" class="dpad-btn" data-dir="down">▼</div>
+    <div id="dpad-left" class="dpad-btn" data-dir="left">◀</div>
+    <div id="dpad-right" class="dpad-btn" data-dir="right">▶</div>
+  </div>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>

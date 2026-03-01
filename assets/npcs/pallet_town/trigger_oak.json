@@ -1,0 +1,29 @@
+{
+  "x": 12,
+  "y": 1,
+  "name": "Prof. Oak",
+  "sprite": "npc_oak",
+  "dir": "down",
+  "type": "trigger",
+  "showFlag": "",
+  "hideFlag": "oak_stop_player",
+  "walkOnFlag": "", "walkTo": null,
+  "autoTalk": false,
+  "roam": false, "roamRadius": 3,
+  "dialog": ["Hey! Wait!"],
+  "dialogs": [
+    {
+      "condition": "",
+      "setFlag": "oak_stop_player",
+      "clearFlag": "",
+      "walkTo": null,
+      "teleportPlayer": null,
+      "movePlayer": {"x": 12, "y": 3},
+      "lines": [
+        "Hey! Wait!",
+        "Don't go out without a Pokemon!",
+        "It's dangerous out there, wild Pokemon lurk in the tall grass!"
+      ]
+    }
+  ]
+}
