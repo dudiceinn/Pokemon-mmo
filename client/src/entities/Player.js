@@ -203,23 +203,34 @@ export class Player {
   }
 
   /**
-   * Called by OverworldScene when the player steps down onto a ledge tile.
-   * Adds a small arc bounce on top of the normal movement tween.
+   * Called by OverworldScene when the player hops over a ledge tile.
+   * Expects: isMoving already set to true, dir set to DOWN.
+   * Moves sprite 2 tiles down with a parabolic arc (hop over ledge, land below).
    */
   startLedgeHop() {
-    // The move tween is already running — add a Y arc over it using a second tween
     const startY = this.sprite.y;
-    const hopHeight = TILE_SIZE * 1.2; // pixels to arc upward at peak
+    const landTileY = this.tileY + 2;
+    const endY = landTileY * TILE_SIZE + TILE_SIZE;
+    const hopHeight = TILE_SIZE * 0.8;
+    const duration = MOVE_DURATION * 1.6;
 
-    this.scene.tweens.add({
-      targets: this.sprite,
-      y: startY - hopHeight,
-      duration: MOVE_DURATION * 0.45,
-      ease: 'Sine.easeOut',
-      yoyo: true,        // bounces back down automatically
+    this.scene.tweens.addCounter({
+      from: 0,
+      to: 1,
+      duration,
+      ease: 'Linear',
+      onUpdate: (tween) => {
+        const t = tween.getValue();
+        const linearY = startY + (endY - startY) * t;
+        const arc = Math.sin(t * Math.PI) * hopHeight;
+        this.sprite.y = linearY - arc;
+      },
       onComplete: () => {
-        // Snap to correct pixel position in case of float drift
-        this.sprite.y = this.tileY * TILE_SIZE + TILE_SIZE;
+        this.tileY = landTileY;
+        this.isMoving = false;
+        this.sprite.setFrame(DIR_FRAMES[DIR.DOWN].stand);
+        this.sprite.y = endY;
+        if (this.onMoveComplete) this.onMoveComplete();
       },
     });
   }

@@ -27,6 +27,10 @@
  *   label: label_name             — Define a jump target (no-op during execution)
  *   givepokemon: speciesId level  — Add a Pokémon to the player's party via PartyManager (level optional, default 5). Shows receive animation.
  *   healparty                     — Restore all party Pokémon to full HP via PartyManager.
+ *   escortnpc                     — Enable escort mode: every movenpc auto-walks the player 1 tile behind the NPC simultaneously.
+ *   stopescort                    — Disable escort mode. Use moveplayer manually again after this.
+ *   startfollow                   — NPC begins following the player in real-time (player leads, NPC trails). Player is never blocked.
+ *   stopfollow                    — NPC stops following the player.
  *   # comment                     — Ignored
  *   (blank lines)                 — Ignored
  *
@@ -114,6 +118,7 @@ export class ScriptRunner {
     this.scene = scene;
     this.npc = npc;
     this.playerName = playerName || '';
+    this._escortMode = false; // When true, movenpc auto-walks player 1 tile behind simultaneously
   }
 
   /**
@@ -141,14 +146,12 @@ export class ScriptRunner {
 
   _execute(commands, idx, onComplete) {
   if (idx >= commands.length) {
-    // Script ended, hide image if it's still showing
     this._hideImage();
     this.scene.currentImage = null;
     if (onComplete) onComplete();
     return;
 }
     // Collect consecutive `say:` commands into one dialog box
-// Collect consecutive `say:` commands into one dialog box
 if (commands[idx].cmd === 'say') {
     const sayLines = [];
     let i = idx;
@@ -157,8 +160,6 @@ if (commands[idx].cmd === 'say') {
         i++;
     }
     const npcName = this.npc ? (this.npc.name || '') : '';
-    
-    // Don't hide the image - it should stay visible
     this.scene.dialogBox.open(npcName, sayLines, () => {
         this._execute(commands, i, onComplete);
     });
@@ -168,14 +169,55 @@ if (commands[idx].cmd === 'say') {
     const { cmd, args } = commands[idx];
     const next = () => this._execute(commands, idx + 1, onComplete);
 
+    try {
     switch (cmd) {
 
       case 'movenpc': {
         const x = parseInt(args[0], 10);
         const y = parseInt(args[1], 10);
         if (!isNaN(x) && !isNaN(y) && this.npc) {
-          this.scene.startNpcWalk(this.npc, x, y, next);
+          if (this._escortMode) {
+            // Capture NPC's tile BEFORE the walk so we know the travel direction
+            const fromX = this.npc.tileX ?? x;
+            const fromY = this.npc.tileY ?? y;
+            // Walk NPC and player simultaneously — next() fires when BOTH finish
+            const follow = this._getFollowTile(fromX, fromY, x, y);
+            let done = 0;
+            const bothDone = () => { if (++done === 2) next(); };
+            this.scene.startNpcWalk(this.npc, x, y, bothDone);
+            this.scene.startPlayerWalk(follow.x, follow.y, bothDone);
+          } else {
+            this.scene.startNpcWalk(this.npc, x, y, next);
+          }
         } else { next(); }
+        break;
+      }
+
+      // escortnpc — NPC leads, player auto-follows 1 tile behind on every movenpc (simultaneous walk)
+      case 'escortnpc': {
+        this._escortMode = true;
+        next();
+        break;
+      }
+
+      // stopescort — disable escort mode; NPC walks alone again via movenpc
+      case 'stopescort': {
+        this._escortMode = false;
+        next();
+        break;
+      }
+
+      // startfollow — player leads, NPC trails behind in real-time (companion mode)
+      case 'startfollow': {
+        if (this.npc) this.scene.setFollowingNpc(this.npc);
+        next();
+        break;
+      }
+
+      // stopfollow — NPC stops following the player
+      case 'stopfollow': {
+        this.scene.clearFollowingNpc();
+        next();
         break;
       }
 
@@ -219,7 +261,9 @@ if (commands[idx].cmd === 'say') {
         const flagName = args[0];
         if (flagName) this.scene.flags.setFlag(flagName);
         this.scene.updateNpcVisibility();
-        this.scene.checkFlagTriggeredWalks();
+        // Defer flag-triggered NPC walks to the next tick so they never
+        // fire mid-script (startNpcWalk flips cutsceneActive and breaks the runner).
+        setTimeout(() => this.scene.checkFlagTriggeredWalks(), 0);
         next();
         break;
       }
@@ -268,9 +312,8 @@ if (commands[idx].cmd === 'say') {
           const inv = readInventory();
           inv[itemId] = (inv[itemId] || 0) + count;
           writeInventory(inv);
-          // Notify inventory UI if available
           this._notifyInventoryChange();
-          // Show item received notification, then continue
+
           const defs = this.scene.cache ? this.scene.cache.json.get('itemDefs') : null;
           const def = defs?.[itemId];
           const displayName = def?.name ?? itemId;
@@ -531,13 +574,13 @@ case 'healparty': {
           launchBattle(speciesId, level);
         } else {
           // No args — show the test-battle chooser UI
-          import('../systems/BattleTestChooser.js')
+          import('./BattleTestChooser.js')
             .then(({ showBattleTestChooser }) => {
               showBattleTestChooser(scene, (sid, lvl) => launchBattle(sid, lvl), next);
             })
-            .catch(() => {
-              console.warn('[ScriptRunner] battle: BattleTestChooser not found; using fallback pikachu');
-              launchBattle('pikachu', 5);
+            .catch((err) => {
+              console.error('[ScriptRunner] battle: failed to load BattleTestChooser:', err);
+              next();
             });
         }
         // Note: next() is called inside the async callbacks above — do NOT fall through
@@ -571,6 +614,27 @@ case 'healparty': {
         break;
       }
     }
+    } catch(e) {
+      console.error(`[ScriptRunner] EXCEPTION in cmd="${cmd}" idx=${idx}:`, e);
+    }
+  }
+
+  // --- Escort / follow helpers ---
+
+  /**
+   * Given the NPC's origin tile and destination tile, return the tile
+   * the player should walk to (1 step behind the NPC in travel direction).
+   * fromX/fromY must be captured BEFORE startNpcWalk is called.
+   */
+  _getFollowTile(fromX, fromY, toX, toY) {
+    const dx = toX - fromX;
+    const dy = toY - fromY;
+    if (dx === 0 && dy === 0) return { x: toX, y: toY + 1 };
+    if (Math.abs(dx) >= Math.abs(dy)) {
+      return { x: toX - Math.sign(dx), y: toY };
+    } else {
+      return { x: toX, y: toY - Math.sign(dy) };
+    }
   }
 
   // Replace {player} with actual player name
@@ -580,6 +644,74 @@ case 'healparty': {
 
   _notifyInventoryChange() {
     window.dispatchEvent(new CustomEvent('pokemon-inventory-changed'));
+  }
+
+  _showItemReceived(itemName, count, iconSrc, onDone) {
+    const existing = document.getElementById('item-received-notification');
+    if (existing) existing.remove();
+
+    const box = document.createElement('div');
+    box.id = 'item-received-notification';
+    box.style.cssText = `
+      position: fixed;
+      bottom: 180px;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: #1a1a2e;
+      border: 3px solid #ffd700;
+      border-radius: 10px;
+      padding: 14px 24px;
+      z-index: 100001;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      font-family: monospace;
+      box-shadow: 0 0 18px rgba(255,215,0,0.35);
+      opacity: 0;
+      transition: opacity 0.25s ease, transform 0.25s ease;
+      pointer-events: none;
+      min-width: 220px;
+    `;
+
+    if (iconSrc) {
+      const img = document.createElement('img');
+      img.src = iconSrc;
+      img.style.cssText = `
+        width: 40px; height: 40px;
+        object-fit: contain;
+        image-rendering: pixelated;
+      `;
+      box.appendChild(img);
+    }
+
+    const textCol = document.createElement('div');
+
+    const label = document.createElement('div');
+    label.style.cssText = `font-size: 11px; color: #aaa; letter-spacing: 1px; text-transform: uppercase;`;
+    label.textContent = 'Item received!';
+
+    const nameEl = document.createElement('div');
+    nameEl.style.cssText = `font-size: 17px; color: #ffd700; font-weight: bold; margin-top: 2px;`;
+    nameEl.textContent = count > 1 ? `${itemName} ×${count}` : itemName;
+
+    textCol.appendChild(label);
+    textCol.appendChild(nameEl);
+    box.appendChild(textCol);
+    document.body.appendChild(box);
+
+    requestAnimationFrame(() => {
+      box.style.opacity = '1';
+      box.style.transform = 'translateX(-50%) translateY(0)';
+    });
+
+    setTimeout(() => {
+      box.style.opacity = '0';
+      box.style.transform = 'translateX(-50%) translateY(-10px)';
+      setTimeout(() => {
+        box.remove();
+        if (onDone) onDone();
+      }, 280);
+    }, 1800);
   }
 
   _notifyMoneyChange() {
@@ -989,10 +1121,20 @@ _showImage(src) {
   //
   // Shows a toast notification when an NPC gives the player an item.
   // Pauses script execution for ~1.8s then calls onDone() to continue.
+  //
+  // FIX: When a second giveitem fires while the first toast is still showing,
+  // we cancel the first toast's pending setTimeout before replacing it.
+  // Without this, the first onDone() (next()) fires anyway after its timeout
+  // causing a double next() which skips commands and hangs the script.
   // ---------------------------------------------------------------
   _showItemReceived(itemName, count, iconSrc, onDone) {
     const existing = document.getElementById('item-received-notification');
-    if (existing) existing.remove();
+    if (existing) {
+      // Cancel the pending dismiss timer so its onDone() never fires
+      if (existing._dismissTimer) clearTimeout(existing._dismissTimer);
+      if (existing._removeTimer) clearTimeout(existing._removeTimer);
+      existing.remove();
+    }
 
     const box = document.createElement('div');
     box.id = 'item-received-notification';
@@ -1052,11 +1194,11 @@ _showImage(src) {
       box.style.transform = 'translateX(-50%) translateY(0)';
     });
 
-    // Auto-dismiss after 1.8s, then continue script
-    setTimeout(() => {
+    // Store timer IDs on the element so they can be cancelled if replaced
+    box._dismissTimer = setTimeout(() => {
       box.style.opacity = '0';
       box.style.transform = 'translateX(-50%) translateY(-10px)';
-      setTimeout(() => {
+      box._removeTimer = setTimeout(() => {
         box.remove();
         if (onDone) onDone();
       }, 280);

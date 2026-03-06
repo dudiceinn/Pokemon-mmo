@@ -130,6 +130,10 @@ Each dialog entry has a `script` field — a plain text block where each line is
 | `hideimage` | `hideimage` | Remove the image popup immediately. |
 | `jump: label` | `jump: skip_dialog` | Jump to a `label:` line elsewhere in the script. Skips everything in between. |
 | `label: name` | `label: skip_dialog` | Defines a jump target. No-op during execution. |
+| `escortnpc` | `escortnpc` | Enable escort mode. Every subsequent `movenpc:` automatically walks the player 1 tile behind the NPC **simultaneously**. No `moveplayer:` needed. |
+| `stopescort` | `stopescort` | Disable escort mode. NPC moves alone again; use `moveplayer:` manually if needed. |
+| `startfollow` | `startfollow` | NPC begins following the player in real-time (companion mode). Player leads freely; NPC trails 1 tile behind and catches up automatically. |
+| `stopfollow` | `stopfollow` | NPC stops following the player. |
 | `# comment` | `# This is a note` | Ignored. Use for notes to yourself. |
 
 ---
@@ -374,15 +378,20 @@ Commands in a script run **strictly top to bottom**:
 ```
 1. say: lines shown → player reads → presses Space → next command runs
 2. movenpc: → NPC walks → walk completes → next command runs
-3. moveplayer: → player walks (frozen) → walk completes → next command runs
-4. teleportplayer: → instant warp on same map → next command runs immediately
-5. teleportmap: → fade out → scene reloads → NOTHING after this runs
-6. setflag / clearflag → flag set immediately → NPC visibility updated
-7. hidenpc → NPC disappears → next command runs
-8. giveitem / removeitem / givemoney / reducemoney → applied immediately
-9. choice: → waits for player input → Yes continues, No aborts
-10. showimage: → image appears immediately → next command runs
-11. hideimage → image removed immediately → next command runs
+3. movenpc: (escort mode) → NPC and player walk simultaneously → both finish → next command runs
+4. moveplayer: → player walks (frozen) → walk completes → next command runs
+5. teleportplayer: → instant warp on same map → next command runs immediately
+6. teleportmap: → fade out → scene reloads → NOTHING after this runs
+7. setflag / clearflag → flag set immediately → NPC visibility updated
+8. hidenpc → NPC disappears → next command runs
+9. giveitem / removeitem / givemoney / reducemoney → applied immediately
+10. choice: → waits for player input → Yes continues, No aborts
+11. showimage: → image appears immediately → next command runs
+12. hideimage → image removed immediately → next command runs
+13. escortnpc → escort mode enabled immediately → next command runs
+14. stopescort → escort mode disabled immediately → next command runs
+15. startfollow → NPC begins real-time follow immediately → next command runs (player can move freely)
+16. stopfollow → NPC stops following immediately → next command runs
 ```
 
 This means you have **full control over sequence**. Say some lines, walk the NPC, say more lines, show an image, ask a choice, give an item, set a flag — all in one script.
@@ -639,6 +648,45 @@ When another script sets `oak_comes_to_route1`: Oak appears and immediately walk
 
 ### Pattern 9: NPC Escorts Player (Guided Movement)
 
+There are two ways to escort a player. Use **escort mode** (`escortnpc`) for multi-stop tours — the NPC and player walk simultaneously. Use **manual mode** for a single short walk or precise positioning.
+
+#### Option A — Escort Mode (recommended for tours and multi-hop sequences)
+
+`escortnpc` enables escort mode. Every `movenpc:` after it automatically walks the player 1 tile behind the NPC **at the same time**. Call `stopescort` when the NPC needs to walk away alone.
+
+```json
+{
+  "x": 8, "y": 8,
+  "name": "Tour Guide", "sprite": "NPC 01", "dir": "down",
+  "type": "npc",
+  "hideFlag": "tour_complete",
+  "dialogs": [
+    {
+      "condition": "",
+      "script": "say: Welcome! Let me show you around.\nchoice: Would you like a tour?\nescortnpc\nsay: Follow me!\nmovenpc: 15 8\nsay: This is the Rival's house!\nmovenpc: 20 8\nmovenpc: 20 14\nmovenpc: 16 14\nsay: And this is Oak's Lab!\nstopescort\nmovenpc: 8 8\nsetflag: tour_complete"
+    }
+  ]
+}
+```
+
+**How escort mode works:**
+- `escortnpc` — turns on escort mode instantly (no movement, just a mode switch)
+- Each `movenpc: x y` — NPC and player walk **simultaneously**; player lands 1 tile behind the NPC based on travel direction
+- `stopescort` — turns off escort mode; NPC walks alone again (e.g. returning home)
+- No `moveplayer:` needed while escort mode is active
+
+**Player follow position is calculated automatically from travel direction:**
+```
+NPC walks EAST  (X increases): player trails at NPC_X - 1, NPC_Y  (one tile west)
+NPC walks WEST  (X decreases): player trails at NPC_X + 1, NPC_Y  (one tile east)
+NPC walks SOUTH (Y increases): player trails at NPC_X, NPC_Y - 1  (one tile north)
+NPC walks NORTH (Y decreases): player trails at NPC_X, NPC_Y + 1  (one tile south)
+```
+
+#### Option B — Manual Mode (for a single walk or precise positioning)
+
+Use `movenpc:` followed by `moveplayer:` when you need exact control over where the player stops. The NPC walks first, then the player walks.
+
 ```json
 {
   "x": 6, "y": 3,
@@ -648,6 +696,10 @@ When another script sets `oak_comes_to_route1`: Oak appears and immediately walk
     {
       "condition": "",
       "script": "say: Come with me, {player}!\nsay: I want to show you something.\nmovenpc: 8 3\nmoveplayer: 8 5\nsetflag: walked_to_table"
+    },
+    {
+      "condition": "walked_to_table",
+      "script": "say: This is where I do my research."
     }
   ]
 }
@@ -690,7 +742,7 @@ Flow: Something sets `oak_stop_player` → Oak appears → immediately starts sc
 
 ### Pattern 11: Full Escort Sequence with Cross-Map Teleport
 
-This is the actual Pallet Town starter sequence. Two NPCs work together: a trigger pushes the player back and summons Oak, then Oak escorts the player to the lab via `teleportmap`.
+This is the actual Pallet Town starter sequence. Two NPCs work together: a trigger pushes the player back and summons Oak, then Oak escorts the player to the lab via `teleportmap`. Uses `escortnpc` so Oak and the player walk simultaneously.
 
 **Trigger** (`assets/npcs/pallet_town/trigger_oak.json`):
 ```json
@@ -716,7 +768,7 @@ This is the actual Pallet Town starter sequence. Two NPCs work together: a trigg
   "autoTalk": true,
   "dialogs": [{
     "condition": "",
-    "script": "say: Come with me, {player}!\nsay: My lab is just this way.\nsay: I'll give you your first Pokemon!\nmovenpc: 12 15\nmoveplayer: 12 14\nmovenpc: 16 15\nmovenpc: 16 13\nmoveplayer: 16 13\nsetflag: oak_escort_done\nteleportmap: oaks_lab 6 12"
+    "script": "say: Come with me, {player}!\nsay: My lab is just this way.\nsay: I'll give you your first Pokemon!\nescortnpc\nmovenpc: 12 15\nmovenpc: 16 15\nstopescort\nsetflag: oak_escort_done\nteleportmap: oaks_lab 6 12"
   }]
 }
 ```
@@ -727,8 +779,8 @@ This is the actual Pallet Town starter sequence. Two NPCs work together: a trigg
 ```
 Player steps on (12,1) → trigger fires → player walks to (12,3) → oak_stop_player set → trigger gone
   → escort_oak appears at (12,2) → autoTalks immediately
-  → dialog → Oak walks to lab entrance → player follows
-  → setflag: oak_escort_done  ← BEFORE teleportmap
+  → dialog → escortnpc on → Oak and player walk together to lab entrance
+  → stopescort → setflag: oak_escort_done  ← BEFORE teleportmap
   → teleportmap: oaks_lab 6 12 → scene reloads
   → Oak disappears (hideFlag: oak_escort_done) ← already set
 ```
@@ -895,7 +947,54 @@ Send the player to another map at the end of a sequence. Always put `setflag` be
 
 ---
 
-## Common Pitfalls
+### Pattern 19: NPC Follows Player (Companion Mode)
+
+The player leads freely and the NPC trails 1 tile behind in real-time. The NPC catches up each time the player moves — the player is never blocked or slowed. Use `startfollow` to begin and `stopfollow` to end.
+
+```json
+{
+  "x": 10, "y": 8,
+  "name": "Pikachu",
+  "sprite": "NPC 04",
+  "dir": "down",
+  "type": "npc",
+  "showFlag": "got_pikachu",
+  "dialogs": [
+    {
+      "condition": "pikachu_following",
+      "script": "say: Pika pika!"
+    },
+    {
+      "condition": "got_pikachu",
+      "script": "say: Want me to follow you?\nchoice: Should Pikachu follow you?\nstartfollow\nsetflag: pikachu_following\nsay: Pikachu will follow you everywhere!"
+    }
+  ]
+}
+```
+
+To stop following — e.g. another NPC or trigger calls `stopfollow`:
+```
+stopfollow
+clearflag: pikachu_following
+say: Pikachu stopped following you.
+```
+
+**How companion follow works:**
+- The NPC walks to the tile the player just vacated each time the player moves one step
+- The player moves freely — the NPC is never a blocker
+- If the player moves fast, the NPC catches up step by step
+- Follow mode persists until `stopfollow` is called or the player changes maps (auto-cleared on map transition)
+- The following NPC still has its normal dialog — player can turn and talk to it
+
+**Difference from escort mode:**
+
+| | `escortnpc` | `startfollow` |
+|---|---|---|
+| Who leads | NPC | Player |
+| Movement control | Script (`movenpc:`) | Player input (real-time) |
+| Walks simultaneously | Yes | NPC follows after each player step |
+| Player blocked | During walks | Never |
+| Use case | Guided tours, cutscenes | Companions, quest NPCs, followers |
 
 ### 1. NPC and player walking to the same tile
 `movenpc` and `moveplayer` must not point to the same tile — the NPC arrives first and blocks the player.
@@ -969,6 +1068,34 @@ RIGHT:  use a conditional dialog entry with condition: starter_chosen
 ### 12. jump: is local to the script
 `jump` cannot target a label in a different dialog entry or a different NPC. Labels only exist within the same script string.
 
+### 13. escortnpc stays on until stopescort
+`escortnpc` is a mode, not a one-shot command. Once enabled, **every** `movenpc:` will pull the player along until `stopescort` is called. Always call `stopescort` before any `movenpc:` that should move the NPC alone (like returning home).
+```
+escortnpc
+movenpc: 15 8    ← player follows
+movenpc: 20 8    ← player follows
+stopescort
+movenpc: 8 8     ← NPC walks home alone, player stays put
+```
+
+### 14. Don't use moveplayer: while in escort mode
+`moveplayer:` still works during escort mode but will move the player independently — the two walks won't be in sync. While `escortnpc` is active, let the escort handle all player movement automatically.
+
+### 15. Escort mode direction is based on NPC travel, not player position
+The player follow tile is calculated from where the NPC started vs where it's going. For diagonal-ish hops (large dx AND dy), the dominant axis wins. If you need the player at a very specific tile, use `stopescort` + `moveplayer:` manually for that step.
+
+### 16. startfollow is cleared on map transition
+If the player walks through a warp while an NPC is following, the follow mode is automatically cleared. The NPC stays on the old map. Re-enable follow on the new map if needed.
+
+### 17. Don't use escortnpc and startfollow at the same time
+These are separate modes. `escortnpc` controls scripted NPC-led walks. `startfollow` controls real-time player-led following. Using both simultaneously will cause conflicting movement.
+
+### 18. Multiple giveitem lines are safe — but were previously broken
+Two or more `giveitem:` commands in a row are fine. Each toast notification shows sequentially. (Internally, each toast cancels the previous one's dismiss timer before replacing it — so only one `next()` ever fires per item.)
+
+### 19. Never put setflag before a walkOnFlag NPC is ready to walk mid-script
+`setflag` triggers `checkFlagTriggeredWalks` which can start an NPC walk — this flips `cutsceneActive` and breaks the current script. This is handled internally by deferring `checkFlagTriggeredWalks` to the next tick, so it is safe to use `setflag` at any point in a script. Just be aware that `walkOnFlag` NPCs won't start walking until after the current script fully completes.
+
 ---
 
 ## Rules for Quest Design
@@ -989,6 +1116,13 @@ RIGHT:  use a conditional dialog entry with condition: starter_chosen
 14. **teleportmap is always last** — Never put any command after `teleportmap` in a script.
 15. **checkflag + jump do not mix** — Use conditional dialog entries for flag-based branching.
 16. **jump labels are script-local** — A `label:` can only be targeted by `jump:` in the same script.
+17. **escortnpc is a mode, not a step** — It stays on until `stopescort`. Call `stopescort` before any `movenpc:` that should move the NPC alone.
+18. **No moveplayer: during escort mode** — The escort handles player movement automatically. Manual `moveplayer:` during escort mode will desync NPC and player.
+19. **stopescort before teleportmap** — If using escort mode and then teleporting, always call `stopescort` before `setflag` and `teleportmap`.
+20. **startfollow is cleared on map change** — Follow mode auto-clears when the player transitions maps. Re-enable it on the new map if the NPC should still follow.
+21. **Don't mix escortnpc and startfollow** — They are separate systems. Use one at a time.
+22. **Multiple giveitem lines are fine** — They display sequentially. Each toast fully dismisses before the next one appears.
+23. **setflag is safe anywhere in a script** — `walkOnFlag` NPCs triggered by the flag will wait until after the script finishes before walking.
 
 ---
 
@@ -1006,5 +1140,7 @@ When designing a new quest:
 8. Add trigger zones for automatic events (use `hideFlag` for one-time triggers)
 9. If using `teleportmap`: make sure all `setflag` calls come before it
 10. If using `choice:`: make sure flags/items come after it, and `hideimage` is called right after
-11. Test the full flow: talk to NPC A → travel to map B → talk to NPC C → return to A
-12. If branching on a flag — use a conditional dialog entry, NOT `checkflag` + `jump`.
+11. If using `escortnpc`: make sure `stopescort` is called before any solo `movenpc:` (NPC returning home) and before `teleportmap`
+12. If using `startfollow`: make sure `stopfollow` is called when the companion should stop, and remember it auto-clears on map change
+13. Test the full flow: talk to NPC A → travel to map B → talk to NPC C → return to A
+14. If branching on a flag — use a conditional dialog entry, NOT `checkflag` + `jump`.

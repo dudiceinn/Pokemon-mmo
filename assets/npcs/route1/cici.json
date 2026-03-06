@@ -6,7 +6,7 @@
   "dir": "right",
   "type": "npc",
   "showFlag": "",
-  "hideFlag": "",
+  "hideFlag": "quest1_complete",
   "walkOnFlag": "",
   "autoTalk": false,
   "roam": false,
@@ -18,20 +18,16 @@
       "script": "say: Hi {player}! Want to play?"
     },
     {
-      "condition": "quest1_daughter_found",
-      "script": "say: Daddy! You came!\nsay: This nice person told me you were coming!"
-    },
-    {
       "condition": "quest1_found_cici",
-      "script": "say: Have you already told my dad?\nsay: Please hurry! I'm still waiting here..."
+      "script": "say: Please hurry!\nsay: Lead me back to my dad, I'm right behind you!"
     },
     {
       "condition": "quest1_refused_cici",
-      "script": "say: Oh come on...\nsay: You're a bad person!\nsay: Fine... will you at least tell him now?\nchoice: Will you tell him I'm safe?\nclearflag: quest1_refused_cici\nsetflag: quest1_found_cici"
+      "script": "say: Oh come on...\nsay: You're a bad person!\nsay: Fine... will you at least take me back to my dad?\nchoice: Will you take me to him?\nclearflag: quest1_refused_cici\nsetflag: quest1_found_cici\nstartfollow\nsay: Okay! Lead the way, {player}!"
     },
     {
       "condition": "quest1_find_daughter",
-      "script": "say: ...\nsay: I'm lost...\nsay: I can't find my way back home.\nsay: Can you tell my dad I'm okay?\nsetflag: quest1_refused_cici\nchoice: Will you tell him I'm safe?\nclearflag: quest1_refused_cici\nsetflag: quest1_found_cici"
+      "script": "say: ...\nsay: I'm lost...\nsay: I can't find my way back home.\nsay: Can you take me back to my dad?\nsetflag: quest1_refused_cici\nchoice: Will you take me to him?\nclearflag: quest1_refused_cici\nsetflag: quest1_found_cici\nstartfollow\nsay: Oh thank you! Lead the way, {player}!\nsay: I'll follow right behind you!"
     },
     {
       "condition": "",

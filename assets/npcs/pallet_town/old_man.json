@@ -15,23 +15,57 @@
   "dialogs": [
     {
       "condition": "quest1_complete",
-      "script": "say: Thank you again, {player}.\nsay: You're a true friend."
+      "script": "say: Thank you again, {player}.\nsay: You're a true friend.",
+      "lines": [
+        "Thank you again, {player}.",
+        "You're a true friend."
+      ]
     },
     {
-      "condition": "quest1_found_cici",
-      "script": "say: You found her?!\nsay: She's on Route 1? Thank goodness!\nsay: Thank you so much, {player}!\nsay: I promised you Pokeballs, and here they are!\ngiveitem: potion 3\ngiveitem: pokeball 5\nsetflag: quest1_complete\nclearflag: quest1_found_cici"
+      "condition": "quest1_cici_arrived",
+      "script": "say: You found her?!\nsay: CICI!\nsay: Oh, my dear girl, I was so worried!\nsay: Thank you so much, {player}!\nsay: I promised you something for finding her...\nsay: Here — take these!\nstopfollow\ngiveitem: potion 5\ngiveitem: pokeball 5\nsetflag: quest1_complete\nclearflag: quest1_found_cici\nclearflag: quest1_cici_arrived",
+      "lines": [
+        "You found her?!",
+        "CICI!",
+        "Oh, my dear girl, I was so worried!",
+        "Thank you so much, {player}!",
+        "I promised you something for finding her...",
+        "Here — take these!"
+      ]
     },
     {
       "condition": "quest1_find_daughter",
-      "script": "say: Please hurry, {player}!\nsay: Find my daughter on Route 1!\nsay: She's wearing a red dress."
+      "script": "say: Please hurry, {player}!\nsay: Find my daughter on Route 1!\nsay: She's wearing a red dress.",
+      "lines": [
+        "Please hurry, {player}!",
+        "Find my daughter on Route 1!",
+        "She's wearing a red dress."
+      ]
     },
     {
       "condition": "quest1_refused_oldman",
-      "script": "say: Please...\nsay: I'll even give you Pokeballs if you find her!\nsay: Will you at least try?\nsetflag: quest1_refused_oldman\nchoice: Will you find my daughter?\nclearflag: quest1_refused_oldman\nsetflag: quest1_find_daughter"
+      "script": "say: Please...\nsay: I'll even give you Pokeballs if you find her!\nsetflag: quest1_refused_oldman\nchoice: Will you find my daughter?\nclearflag: quest1_refused_oldman\nsetflag: quest1_find_daughter\nsay: Oh thank you! Please hurry north to Route 1!",
+      "lines": [
+        "Please...",
+        "I'll even give you Pokeballs if you find her!",
+        "Oh thank you! Please hurry north to Route 1!"
+      ]
     },
     {
       "condition": "",
-      "script": "say: Oh, {player}!\nsay: Have you seen my daughter?\nsay: She went north to Route 1 and hasn't returned!\nsetflag: quest1_refused_oldman\nchoice: Will you find my daughter?\nclearflag: quest1_refused_oldman\nsetflag: quest1_find_daughter"
+      "script": "say: Oh, {player}!\nsay: Have you seen my daughter?\nsay: She went north to Route 1 and hasn't returned!\nsetflag: quest1_refused_oldman\nchoice: Will you find her?\nclearflag: quest1_refused_oldman\nsetflag: quest1_find_daughter\nsay: Oh thank you! Please hurry north to Route 1!",
+      "lines": [
+        "Oh, {player}!",
+        "Have you seen my daughter?",
+        "She went north to Route 1 and hasn't returned!",
+        "Oh thank you! Please hurry north to Route 1!"
+      ]
     }
+  ],
+  "dialog": [
+    "Oh, {player}!",
+    "Have you seen my daughter?",
+    "She went north to Route 1 and hasn't returned!",
+    "Oh thank you! Please hurry north to Route 1!"
   ]
 }

@@ -23,6 +23,7 @@
     .mode button.active-spawn { background: #22c55e; border-color: #22c55e; color: #000; }
     .mode button.active-topblock { background: #f97316; border-color: #f97316; color: #000; }
     .mode button.active-ledge { background: #a855f7; border-color: #a855f7; color: #fff; }
+    .mode button.active-above { background: #06b6d4; border-color: #06b6d4; color: #000; }
     #toolbar label { font-size: 13px; }
     #info { font-size: 12px; color: #aaa; flex-basis: 100%; }
     #viewport { flex: 1; overflow: auto; position: relative; cursor: crosshair; }
@@ -198,6 +199,7 @@
       <button id="btnWarp" onclick="setMode('warp')">Warp</button>
       <button id="btnNpc" onclick="setMode('npc')">NPC</button>
       <button id="btnSpawn" onclick="setMode('spawn')">Spawn</button>
+      <button id="btnAbove" onclick="setMode('above')">Above ▲</button>
       <button id="btnErase" onclick="setMode('erase')">Erase</button>
     </div>
     <button onclick="saveAll()">Save All</button>
@@ -216,6 +218,7 @@
       <span class="leg-spawn">🌿 Grass = Spawn</span>
       <span style="background:rgba(249,115,22,0.6);padding:1px 6px;margin-right:4px;">Orange = Top Block</span>
       <span style="background:rgba(168,85,247,0.6);padding:1px 6px;margin-right:4px;">Purple = Ledge ↓</span>
+      <span style="background:rgba(6,182,212,0.6);padding:1px 6px;margin-right:4px;">Cyan = Above ▲</span>
     </div>
     <span id="info">Collision mode: click/drag to paint blocked tiles.</span>
   </div>
@@ -375,6 +378,7 @@
     let mapKey = '';
     let tilesetImg = null;
     let collisionData = [];
+    let aboveData = [];  // tile IDs for the 'above' layer (renders over player)
     let warps = [];
     let spawns = [];
     let npcs = [];
@@ -482,6 +486,7 @@ npSpriteSelect.appendChild(noneOpt);
       document.getElementById('btnCollision').className = m === 'collision' ? 'active-collision' : '';
       document.getElementById('btnTopBlock').className = m === 'topblock' ? 'active-topblock' : '';
       document.getElementById('btnLedge').className = m === 'ledge' ? 'active-ledge' : '';
+      document.getElementById('btnAbove').className = m === 'above' ? 'active-above' : '';
       document.getElementById('btnWarp').className = m === 'warp' ? 'active-warp' : '';
       document.getElementById('btnNpc').className = m === 'npc' ? 'active-npc' : '';
       document.getElementById('btnSpawn').className = m === 'spawn' ? 'active-spawn' : '';
@@ -490,10 +495,11 @@ npSpriteSelect.appendChild(noneOpt);
         collision: 'Collision mode: click/drag to paint fully blocked tiles.',
         topblock: 'Top Block mode: click/drag to paint tiles that block from above only (fixes walking-on-roof).',
         ledge: 'Ledge mode: click/drag to paint ledge tiles — player can hop down but not walk up.',
+        above: 'Above mode: click/drag to mark tiles that render ABOVE the player (rooftops, shelves, treetops).',
         warp: 'Warp mode: click a tile to place or edit a warp. Blue tiles = existing warps.',
         npc: 'NPC mode: click to place/edit NPC. Drag existing NPC to move. Yellow tiles = NPCs.',
         spawn: 'Spawn mode: click a tile to place or edit a grass/encounter spawn. Green tiles = spawns.',
-        erase: 'Erase mode: click/drag to remove collision, warps, NPCs, and spawns.',
+        erase: 'Erase mode: click/drag to remove collision, warps, NPCs, spawns, and above tiles.',
       };
       document.getElementById('info').textContent = msgs[m];
     }
@@ -520,6 +526,10 @@ npSpriteSelect.appendChild(noneOpt);
       // Collision
       const collLayer = currentMap.layers.find(l => l.name === 'collision');
       collisionData = [...collLayer.data];
+
+      // Above layer — duplicate tile IDs that render over the player
+      const aboveLayer = currentMap.layers.find(l => l.name === 'above');
+      aboveData = aboveLayer ? [...aboveLayer.data] : new Array(mapW * mapH).fill(0);
 
       // Warps — prefer _warps from JSON (editor-saved), fallback to hardcoded
       if (currentMap._warps && currentMap._warps.length > 0) {
@@ -642,6 +652,25 @@ npSpriteSelect.appendChild(noneOpt);
             ctx.fillStyle = '#a855f7';
             ctx.font = `bold ${8 * SCALE}px monospace`;
             ctx.fillText('↓', px + sz / 2 - 4 * SCALE, py + 9 * SCALE);
+          }
+        }
+      }
+
+      // Above layer overlay — cyan border + icon
+      for (let y = 0; y < mapH; y++) {
+        for (let x = 0; x < mapW; x++) {
+          if (aboveData[y * mapW + x] > 0) {
+            const px = x * TILE * SCALE;
+            const py = y * TILE * SCALE;
+            const sz = TILE * SCALE;
+            ctx.fillStyle = `rgba(6, 182, 212, ${opacity * 0.5})`;
+            ctx.fillRect(px, py, sz, sz);
+            ctx.strokeStyle = 'rgba(6, 182, 212, 0.9)';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(px + 1, py + 1, sz - 2, sz - 2);
+            ctx.fillStyle = '#06b6d4';
+            ctx.font = `bold ${7 * SCALE}px monospace`;
+            ctx.fillText('▲', px + sz / 2 - 4 * SCALE, py + 10 * SCALE);
           }
         }
       }
@@ -781,6 +810,7 @@ npSpriteSelect.appendChild(noneOpt);
         if (cv === COLL_FULL)     label += ' [blocked]';
         if (cv === COLL_TOPBLOCK) label += ' [top-block]';
         if (cv === COLL_LEDGE)    label += ' [ledge↓]';
+        if (aboveData[t.y * mapW + t.x] > 0) label += ' [above▲]';
         if (wi >= 0) label += ` [warp→${warps[wi].destMap}]`;
         if (ni >= 0) label += ` [NPC: ${npcs[ni].name || npcs[ni].sprite}]`;
         if (si >= 0) label += ` [spawn ${Math.round(spawns[si].encounterRate * 100)}%]`;
@@ -797,7 +827,7 @@ npSpriteSelect.appendChild(noneOpt);
         return;
       }
 
-      if (painting && (mode === 'collision' || mode === 'topblock' || mode === 'ledge' || mode === 'erase' || mode === 'spawn')) {
+      if (painting && (mode === 'collision' || mode === 'topblock' || mode === 'ledge' || mode === 'above' || mode === 'erase' || mode === 'spawn')) {
         if (mode === 'spawn') didDragSpawn = true;
         handlePaint(e);
       }
@@ -817,6 +847,11 @@ npSpriteSelect.appendChild(noneOpt);
       } else if (mode === 'ledge') {
         collisionData[idx] = COLL_LEDGE;
         render();
+      } else if (mode === 'above') {
+        // Copy the ground tile into the above layer
+        const groundLayer = currentMap.layers.find(l => l.name === 'ground');
+        aboveData[idx] = groundLayer.data[idx];
+        render();
       } else if (mode === 'spawn') {
         const existing = findSpawnAt(t.x, t.y);
         if (existing < 0) {
@@ -829,6 +864,7 @@ npSpriteSelect.appendChild(noneOpt);
         }
       } else if (mode === 'erase') {
         collisionData[idx] = COLL_NONE;
+        aboveData[idx] = 0;
         const wi = findWarpAt(t.x, t.y);
         if (wi >= 0) warps.splice(wi, 1);
         const si = findSpawnAt(t.x, t.y);
@@ -858,8 +894,13 @@ npSpriteSelect.appendChild(noneOpt);
       } else if (mode === 'ledge') {
         collisionData[idx] = COLL_LEDGE;
         render();
+      } else if (mode === 'above') {
+        const groundLayer = currentMap.layers.find(l => l.name === 'ground');
+        aboveData[idx] = groundLayer.data[idx];
+        render();
       } else if (mode === 'erase') {
         collisionData[idx] = COLL_NONE;
+        aboveData[idx] = 0;
         const wi = findWarpAt(t.x, t.y);
         if (wi >= 0) warps.splice(wi, 1);
         const ni = npcs.findIndex(n => n.x === t.x && n.y === t.y);
@@ -1414,6 +1455,27 @@ npSpriteSelect.appendChild(noneOpt);
     async function saveAll() {
       const collLayer = currentMap.layers.find(l => l.name === 'collision');
       collLayer.data = [...collisionData];
+
+      // Above layer — create or update
+      let aboveLayer = currentMap.layers.find(l => l.name === 'above');
+      const hasAboveTiles = aboveData.some(v => v > 0);
+      if (hasAboveTiles) {
+        if (!aboveLayer) {
+          // Clone ground layer structure for the new above layer
+          const groundRef = currentMap.layers.find(l => l.name === 'ground');
+          aboveLayer = JSON.parse(JSON.stringify(groundRef));
+          aboveLayer.name = 'above';
+          aboveLayer.id = Math.max(...currentMap.layers.map(l => l.id)) + 1;
+          currentMap.layers.push(aboveLayer);
+        }
+        aboveLayer.visible = true;
+        aboveLayer.opacity = 1;
+        aboveLayer.data = [...aboveData];
+      } else if (aboveLayer) {
+        // No above tiles — remove the layer
+        currentMap.layers = currentMap.layers.filter(l => l.name !== 'above');
+      }
+
       currentMap._warps = warps.map(w => ({ ...w }));
       // Remove _npcs and _spawns from map data (now stored separately)
       delete currentMap._npcs;
@@ -1478,6 +1540,23 @@ npSpriteSelect.appendChild(noneOpt);
       const mapSnapshot = JSON.parse(JSON.stringify(currentMap));
       const collLayer = mapSnapshot.layers.find(l => l.name === 'collision');
       collLayer.data = [...collisionData];
+
+      // Above layer for download
+      let dlAbove = mapSnapshot.layers.find(l => l.name === 'above');
+      const hasAbove = aboveData.some(v => v > 0);
+      if (hasAbove) {
+        if (!dlAbove) {
+          dlAbove = JSON.parse(JSON.stringify(collLayer));
+          dlAbove.name = 'above';
+          dlAbove.visible = true;
+          mapSnapshot.layers.push(dlAbove);
+        }
+        dlAbove.visible = true;
+        dlAbove.data = [...aboveData];
+      } else {
+        mapSnapshot.layers = mapSnapshot.layers.filter(l => l.name !== 'above');
+      }
+
       mapSnapshot._warps = warps.map(w => ({ ...w }));
       // Spawns and NPCs stored in separate folders — remove from map JSON
       delete mapSnapshot._npcs;

@@ -23,6 +23,9 @@ export class OverworldScene extends Phaser.Scene {
     this.remotePlayers = new Map(); // id → RemotePlayer
     this.client = null;
     this.dialogBox = null;
+    this._followingNpc = null;      // NPC currently following the player (companion mode)
+    this._playerLastTile = null;    // Last tile the player was on, used to detect movement for follow
+    this._interactCooldown = 0;     // frames to block interact after dialog closes
   }
 
   create() {
@@ -226,15 +229,11 @@ export class OverworldScene extends Phaser.Scene {
     this.groundLayer = this.map.createLayer('ground', tileset, 0, 0);
     this.groundLayer.setDepth(0);
 
-    // Above layer — renders above player (depth 20), optional
-    // Contains rooftops, treetops, overhangs — anything that should overlap the player
-    const aboveLayerData = this.map.getLayer('above');
-    if (aboveLayerData) {
-      this.aboveLayer = this.map.createLayer('above', tileset, 0, 0);
-      this.aboveLayer.setDepth(20);
-    } else {
-      this.aboveLayer = null;
-    }
+    // Above layer — renders top-half of marked tiles at depth 20 (over the player).
+    // Only the top half is drawn so roof overhangs cover the player but the
+    // grass portion of mixed edge-tiles stays transparent.
+    this.aboveLayer = null;
+    this._buildAboveOverlay(key);
 
     this.collisionLayer = this.map.getLayer('collision');
 
@@ -254,6 +253,46 @@ export class OverworldScene extends Phaser.Scene {
       this.npcs.push(npc);
     }
     this.updateNpcVisibility();
+  }
+
+  _buildAboveOverlay(key) {
+    const rawJSON = this.cache.json.get(`${key}_raw`);
+    const aboveLayer = rawJSON?.layers?.find(l => l.name === 'above');
+    if (!aboveLayer?.data) return;
+
+    const srcImg = this.textures.get(`${key}_tileset`).getSourceImage();
+    const tsCols = this.map.tilesets[0].columns;
+    const w = this.map.width;
+    const h = this.map.height;
+    const cropH = Math.floor(TILE_SIZE * 0.5); // top 8px of 16px tile
+
+    // Use Phaser's createCanvas so GPU texture is properly managed
+    const texKey = `${key}_above_overlay`;
+    if (this.textures.exists(texKey)) this.textures.remove(texKey);
+    const tex = this.textures.createCanvas(texKey, w * TILE_SIZE, h * TILE_SIZE);
+    const ctx = tex.getContext();
+
+    let count = 0;
+    for (let i = 0; i < aboveLayer.data.length; i++) {
+      const gid = aboveLayer.data[i];
+      if (gid <= 0) continue;
+      const tx = i % w;
+      const ty = Math.floor(i / w);
+      const tileId = gid - 1;
+      const srcX = (tileId % tsCols) * TILE_SIZE;
+      const srcY = Math.floor(tileId / tsCols) * TILE_SIZE;
+      ctx.drawImage(srcImg,
+        srcX, srcY, TILE_SIZE, cropH,
+        tx * TILE_SIZE, ty * TILE_SIZE, TILE_SIZE, cropH);
+      count++;
+    }
+
+    if (count === 0) return;
+    tex.refresh(); // sync canvas pixels to GPU texture
+
+    this.aboveLayer = this.add.image(0, 0, texKey);
+    this.aboveLayer.setOrigin(0, 0);
+    this.aboveLayer.setDepth(20);
   }
 
   clearNpcs() {
@@ -279,38 +318,62 @@ findNpcAt(x, y) {
     if (setFlag) this.flags.setFlag(setFlag);
     if (clearFlag) this.flags.clearFlag(clearFlag);
     this.updateNpcVisibility();
-    this.checkFlagTriggeredWalks();
+    // Defer walkOnFlag checks to next tick — same as setflag command does in ScriptRunner.
+    // Calling synchronously here fires startNpcWalk while onComplete is still on the call
+    // stack, flipping cutsceneActive and permanently locking the scene if the walk never fires.
+    setTimeout(() => this.checkFlagTriggeredWalks(), 0);
   }
 
   updateNpcVisibility() {
     for (const npc of this.npcs) {
       npc.updateVisibility(this.flags);
     }
-    // Check for autoTalk NPCs that just became visible
-    for (const npc of this.npcs) {
-      if (npc._justAppeared) {
-        npc._justAppeared = false;
-        this.triggerAutoTalk(npc);
-        break; // one at a time
+    // Defer autoTalk to next tick — setflag/clearflag call updateNpcVisibility
+    // mid-script; firing triggerAutoTalk here would spawn a second ScriptRunner
+    // while the first is still running, hijacking dialogBox and causing a hang.
+    setTimeout(() => {
+      for (const npc of this.npcs) {
+        if (npc._justAppeared) {
+          npc._justAppeared = false;
+          this.triggerAutoTalk(npc);
+          break;
+        }
       }
-    }
+    }, 0);
   }
 
   triggerAutoTalk(npc) {
+    // Don't fire if a script is already running — would create a second runner
+    if (this.cutsceneActive) return;
+    // If map is still fading in, wait until transition finishes
+    if (this.transitioning) {
+      const poll = setInterval(() => {
+        if (!this.transitioning && !this.cutsceneActive) {
+          clearInterval(poll);
+          this.triggerAutoTalk(npc);
+        }
+      }, 50);
+      return;
+    }
     const dialogResult = npc.getDialog(this.flags);
     if (!dialogResult.script) return;
     this.cutsceneActive = true;
     const runner = new ScriptRunner(this, npc, this.playerName);
     runner.run(dialogResult.script, () => {
       this.cutsceneActive = false;
+      this.interactKey?.reset();
       this._runLegacyPostDialog(npc, dialogResult);
     });
   }
 
   startNpcWalk(npc, targetX, targetY, onComplete) {
-    this.cutsceneActive = true;
+    // Only take ownership of cutsceneActive if not already inside a running script.
+    // When called from ScriptRunner (movenpc:), cutsceneActive is already true —
+    // unconditionally clearing it here would unlock input before the script finishes.
+    const ownsCutscene = !this.cutsceneActive;
+    if (ownsCutscene) this.cutsceneActive = true;
     npc.walkToTile(targetX, targetY, () => {
-      this.cutsceneActive = false;
+      if (ownsCutscene) this.cutsceneActive = false;
       this.updateNpcVisibility();
       if (onComplete) onComplete();
     });
@@ -328,6 +391,72 @@ findNpcAt(x, y) {
       this.sendMove();
       if (onComplete) onComplete();
     });
+  }
+
+  // --- Companion follow mode ---
+
+  /**
+   * Set an NPC to follow the player in real-time.
+   * Called by the `startfollow` script command.
+   * The NPC walks to the tile the player just left each time the player moves.
+   */
+  setFollowingNpc(npc) {
+    this._followingNpc = npc;
+    this._playerLastTile = { x: this.player.tileX, y: this.player.tileY };
+  }
+
+  /**
+   * Stop the NPC from following the player.
+   * Called by the `stopfollow` script command.
+   */
+  clearFollowingNpc() {
+    this._followingNpc = null;
+    this._playerLastTile = null;
+  }
+
+  /**
+   * Show a small hint message above the dialog box (e.g. "Cici can't jump!").
+   * Auto-dismisses after 2s. Only one hint shows at a time.
+   */
+  _showFollowHint(message) {
+    const existing = document.getElementById('follow-hint-box');
+    if (existing) return; // already showing, don't spam
+
+    const box = document.createElement('div');
+    box.id = 'follow-hint-box';
+    box.style.cssText = `
+      position: fixed;
+      bottom: 180px;
+      left: 50%;
+      transform: translateX(-50%) translateY(10px);
+      background: rgba(0,0,0,0.82);
+      border: 2px solid #fff;
+      border-radius: 8px;
+      padding: 8px 20px;
+      z-index: 100002;
+      font-family: monospace;
+      font-size: 14px;
+      color: #fff;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.2s ease, transform 0.2s ease;
+      white-space: nowrap;
+    `;
+    box.textContent = message;
+    document.body.appendChild(box);
+
+    // Animate in
+    requestAnimationFrame(() => {
+      box.style.opacity = '1';
+      box.style.transform = 'translateX(-50%) translateY(0)';
+    });
+
+    // Fade out and remove after 2s
+    setTimeout(() => {
+      box.style.opacity = '0';
+      box.style.transform = 'translateX(-50%) translateY(-8px)';
+      setTimeout(() => box.remove(), 220);
+    }, 2000);
   }
 
   // Legacy post-dialog: handles walkTo/teleportPlayer/movePlayer/flags
@@ -386,18 +515,48 @@ findNpcAt(x, y) {
     // Tick wild pokemon roam + contact detection
     this.encounterManager?.update(delta);
 
+    // --- Companion follow mode ---
+    // If an NPC is set to follow the player, walk it toward the player's previous tile
+    // whenever the player moves. The NPC catches up naturally; the player is never blocked.
+    if (this._followingNpc && this._playerLastTile && !this._followingNpc.isWalking) {
+      const px = this.player.tileX;
+      const py = this.player.tileY;
+      const last = this._playerLastTile;
+      // Player has moved to a new tile since we last checked
+      if (px !== last.x || py !== last.y) {
+        // Walk NPC toward the tile the player just vacated
+        const targetX = last.x;
+        const targetY = last.y;
+        this._playerLastTile = { x: px, y: py };
+        // Only walk if target is different from NPC's current position
+        if (this._followingNpc.tileX !== targetX || this._followingNpc.tileY !== targetY) {
+          this._followingNpc.walkToTile(targetX, targetY, null);
+        }
+      }
+    }
+
     if (this.dialogBox.isOpen()) {
       // Mobile action button advances dialog
       if (this.touchAction) {
         this.touchAction = false;
         this.dialogBox.advance();
       }
+      // While dialog is open, keep refreshing cooldown so Space can't
+      // re-trigger an NPC on the same frame the dialog closes.
+      if (this.interactKey.isDown) this._interactCooldown = 3;
       return;
     }
     if (this.player.isMoving || this.transitioning || this.cutsceneActive) return;
 
     // Block movement when bag overlay is open
     if (window.inventory?.isBagOpen()) return;
+
+    // Block interact for N frames after dialog closes — prevents the Space
+    // that closed the final dialog line from immediately re-triggering the NPC.
+    if (this._interactCooldown > 0) {
+      this._interactCooldown--;
+      return;
+    }
 
     // Interact with NPC (Space key or mobile action button)
     const interact = Phaser.Input.Keyboard.JustDown(this.interactKey) || this.touchAction;
@@ -468,8 +627,35 @@ findNpcAt(x, y) {
       return;
     }
 
+    // Ledge hop: player hops over ledge tile and lands 2 tiles down
+    if (dir === DIR.DOWN && this.getCollisionValue(targetX, targetY) === 3) {
+      // Block the hop if an NPC is following — they can't cross ledges
+      if (this._followingNpc) {
+        this.player.faceDirection(dir);
+        const name = this._followingNpc.name || 'Your companion';
+        this._showFollowHint(`${name} can't jump!`);
+        return;
+      }
+      const landY = targetY + 1;
+      // Only hop if landing tile is in bounds and passable
+      if (landY < this.map.height && !this.isBlocked(targetX, landY, dir)) {
+        this.player.isMoving = true;
+        this.player.dir = dir;
+        this.player.sprite.play(`${this.player.spriteKey}_walk_${dir}`);
+        this.player.startLedgeHop();
+        this.player.onMoveComplete = () => {
+          this.sendMove();
+          this.player.onMoveComplete = null;
+          this.encounterManager?.checkStep(this.player.tileX, this.player.tileY);
+        };
+      } else {
+        this.player.faceDirection(dir);
+      }
+      return;
+    }
+
     // Normal movement
-    const moved = this.player.tryMove(dir, (x, y) => this.isBlocked(x, y));
+    const moved = this.player.tryMove(dir, (x, y) => this.isBlocked(x, y, dir));
     if (moved) {
       this.player.onMoveComplete = () => {
         this.sendMove();
@@ -505,12 +691,21 @@ findNpcAt(x, y) {
     return resolveWarp(this.currentMapKey, x, y);
   }
 
-  isBlocked(x, y) {
+  // Collision tile values (must match collision-editor.html)
+  // 0 = passable, 1 = fully blocked, 2 = top-block (blocks moving DOWN into), 3 = ledge (only passable going DOWN)
+
+  getCollisionValue(x, y) {
+    if (!this.collisionLayer) return 0;
+    const tile = this.collisionLayer.data[y]?.[x];
+    return (tile && tile.index > 0) ? tile.index : 0;
+  }
+
+  isBlocked(x, y, dir) {
     if (x < 0 || y < 0 || x >= this.map.width || y >= this.map.height) return true;
-    if (this.collisionLayer) {
-      const tile = this.collisionLayer.data[y]?.[x];
-      if (tile && tile.index > 0) return true;
-    }
+    const cv = this.getCollisionValue(x, y);
+    if (cv === 1) return true;                          // fully blocked
+    if (cv === 2 && dir === DIR.DOWN) return true;      // top-block: can't walk down into
+    if (cv === 3 && dir !== DIR.DOWN) return true;      // ledge: only passable going down
     const npc = this.findNpcAt(x, y);
     if (npc && npc.type !== 'trigger') return true;
     return false;
@@ -543,6 +738,8 @@ findNpcAt(x, y) {
       // Clear entities from old map
       this.clearRemotePlayers();
       this.clearNpcs();
+      this._followingNpc = null;
+      this._playerLastTile = null;
 
       this.loadMap(destMapKey);
       this.player.setPosition(destX, destY);

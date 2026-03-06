@@ -32,6 +32,15 @@ export class DialogBox {
     this._open = true;
     this.el.style.display = 'block';
 
+    // Always remove any existing key listener before adding a new one.
+    // Without this, rapid open() calls stack up multiple listeners and
+    // every keypress fires advance() multiple times, causing onClose to
+    // be called with a null callback (already consumed by the extra call).
+    if (this._keyHandler) {
+      window.removeEventListener('keydown', this._keyHandler);
+      this._keyHandler = null;
+    }
+
     // Key listener
     this._keyHandler = (e) => {
       if (e.code === 'Space' || e.code === 'Enter') {
@@ -66,8 +75,9 @@ export class DialogBox {
       this._keyHandler = null;
     }
     if (this.onClose) {
-      this.onClose();
+      const cb = this.onClose;
       this.onClose = null;
+      cb();
     }
   }
 }

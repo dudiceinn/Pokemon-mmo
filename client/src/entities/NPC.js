@@ -11,19 +11,19 @@ const MOVE_DURATION_MS = MOVE_DURATION || 200; // Use 200ms if MOVE_DURATION is 
 // Row 2 (frames 8-11): Right (East)
 // Row 3 (frames 12-15): Up (North)
 const DIR_FRAMES = {
-  [DIR.DOWN]:  { 
+  [DIR.DOWN]:  {
     stand: 0,
     walk: [1, 0, 2, 0, 3, 0]
   },
-  [DIR.LEFT]:  { 
+  [DIR.LEFT]:  {
     stand: 4,
     walk: [5, 4, 6, 4, 7, 4]
   },
-  [DIR.RIGHT]: { 
+  [DIR.RIGHT]: {
     stand: 8,
     walk: [9, 8, 10, 8, 11, 8]
   },
-  [DIR.UP]:    { 
+  [DIR.UP]:    {
     stand: 12,
     walk: [13, 12, 14, 12, 15, 12]
   },

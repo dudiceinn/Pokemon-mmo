@@ -177,7 +177,7 @@ export function showBattleTestChooser(scene, onStart, onCancel) {
   speciesInput.type = 'text';
   speciesInput.placeholder = 'e.g. pikachu, mewtwo…';
   speciesInput.value = 'pikachu';
-  speciesInput.list = 'bt-species-list';
+  speciesInput.setAttribute('list', 'bt-species-list');
 
   // Datalist of suggestions
   const dataList = document.createElement('datalist');

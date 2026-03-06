@@ -12,42 +12,17 @@
   "roam": false,
   "dialogs": [
     {
-      "condition": "",
-      "script": "say: Hello, {player}! Welcome to Pallet Town!\nsay: I'll show you around. Follow me!\nmovenpc: 15 8\nmoveplayer: 14 8\nsay: Over here is your Rival's house.\nsay: Your rival lives here — he's always one step ahead!\nmovenpc: 16 14\nmoveplayer: 15 14\nsay: And this is Professor Oak's Lab.\nsay: The Professor studies Pokemon from all over the world.\nsay: If you ever need advice, come here!\nmovenpc: 11 2\nmoveplayer: 11 3\nsay: Finally, up here is the exit to Route 1.\nsay: Head north when you're ready to start your adventure!\nsay: That's the full tour, {player}. Good luck out there!\nmovenpc: 8 8\nsetflag: tour_complete",
-      "lines": [
-        "Hello, {player}! Welcome to Pallet Town!",
-        "I'll show you around. Follow me!",
-        "Over here is your Rival's house.",
-        "Your rival lives here — he's always one step ahead!",
-        "And this is Professor Oak's Lab.",
-        "The Professor studies Pokemon from all over the world.",
-        "If you ever need advice, come here!",
-        "Finally, up here is the exit to Route 1.",
-        "Head north when you're ready to start your adventure!",
-        "That's the full tour, {player}. Good luck out there!"
-      ]
-    },
-    {
       "condition": "tour_complete",
       "script": "say: Hope the tour was helpful, {player}!\nsay: Remember — Route 1 is to the north, Oak's Lab is to the south-east!",
-      "lines": [
-        "Hope the tour was helpful, {player}!",
-        "Remember — Route 1 is to the north, Oak's Lab is to the south-east!"
-      ]
+      "lines": []
+    },
+    {
+      "condition": "",
+      "script": "say: Hi there, {player}! Welcome to Pallet Town!\nsay: It's a small town, but there's plenty to see.\nchoice: Would you like me to show you around?\nescortnpc\nsay: Great! Follow me closely, {player}!\nmovenpc: 15 8\nsay: Here we are — this is your Rival's house!\nsay: He's always one step ahead, so watch out for him!\nmovenpc: 20 8\nmovenpc: 20 14\nmovenpc: 16 14\nsay: And this is Professor Oak's Lab!\nsay: The Professor studies Pokémon from all over the world.\nsay: If you ever need guidance, he's the one to see!\nmovenpc: 12 14\nmovenpc: 12 2\nsay: Finally, just up here is the exit to Route 1.\nsay: Head north when you feel ready to begin your adventure!\nsay: That's the full tour, {player}. Good luck out there!\nstopescort\nmovenpc: 8 2\nmovenpc: 8 8\nsetflag: tour_complete",
+      "lines": []
     }
   ],
-  "dialog": [
-    "Hello, {player}! Welcome to Pallet Town!",
-    "I'll show you around. Follow me!",
-    "Over here is your Rival's house.",
-    "Your rival lives here — he's always one step ahead!",
-    "And this is Professor Oak's Lab.",
-    "The Professor studies Pokemon from all over the world.",
-    "If you ever need advice, come here!",
-    "Finally, up here is the exit to Route 1.",
-    "Head north when you're ready to start your adventure!",
-    "That's the full tour, {player}. Good luck out there!"
-  ],
   "extraTiles": [],
-  "roamRadius": 3
+  "roamRadius": 3,
+  "dialog": []
 }

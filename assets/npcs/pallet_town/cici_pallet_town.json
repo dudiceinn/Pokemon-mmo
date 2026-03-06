@@ -1,0 +1,23 @@
+{
+  "x": 13,
+  "y": 2,
+  "name": "Cici",
+  "sprite": "NPC 02",
+  "dir": "down",
+  "type": "npc",
+  "showFlag": "quest1_found_cici",
+  "hideFlag": "quest1_complete",
+  "walkOnFlag": "",
+  "autoTalk": true,
+  "roam": false,
+  "roamRadius": 3,
+  "extraTiles": [],
+  "dialogs": [
+    {
+      "condition": "quest1_found_cici",
+      "script": "say: We made it back to Pallet Town!\nsay: My dad lives just south of here.\nsay: Lead me to him, {player}!\nsetflag: quest1_cici_arrived\nstartfollow",
+      "lines": []
+    }
+  ],
+  "dialog": []
+}
