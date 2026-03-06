@@ -220,6 +220,10 @@ export class OverworldScene extends Phaser.Scene {
   loadMap(key) {
     if (this.groundLayer) this.groundLayer.destroy();
     if (this.aboveLayer) this.aboveLayer.destroy();
+    if (this._aboveSprites) {
+      this._aboveSprites.forEach(s => s.destroy());
+      this._aboveSprites = [];
+    }
 
     this.currentMapKey = key;
     this.map = this.make.tilemap({ key });
@@ -229,11 +233,12 @@ export class OverworldScene extends Phaser.Scene {
     this.groundLayer = this.map.createLayer('ground', tileset, 0, 0);
     this.groundLayer.setDepth(0);
 
-    // Above layer — renders top-half of marked tiles at depth 20 (over the player).
-    // Only the top half is drawn so roof overhangs cover the player but the
-    // grass portion of mixed edge-tiles stays transparent.
+    // Above layer — roof overhangs rendered above the player (depth 20).
+    // Draws only the top half of each above-tile as individual sprites,
+    // so roof edges cover the player but ground portions stay invisible.
     this.aboveLayer = null;
-    this._buildAboveOverlay(key);
+    this._aboveSprites = [];
+    this._buildAboveSprites(key);
 
     this.collisionLayer = this.map.getLayer('collision');
 
@@ -255,44 +260,55 @@ export class OverworldScene extends Phaser.Scene {
     this.updateNpcVisibility();
   }
 
-  _buildAboveOverlay(key) {
-    const rawJSON = this.cache.json.get(`${key}_raw`);
-    const aboveLayer = rawJSON?.layers?.find(l => l.name === 'above');
-    if (!aboveLayer?.data) return;
+  _buildAboveSprites(key) {
+    try {
+      const rawJSON = this.cache.json.get(`${key}_raw`);
+      const aboveLayer = rawJSON?.layers?.find(l => l.name === 'above');
+      if (!aboveLayer?.data) return;
 
-    const srcImg = this.textures.get(`${key}_tileset`).getSourceImage();
-    const tsCols = this.map.tilesets[0].columns;
-    const w = this.map.width;
-    const h = this.map.height;
-    const cropH = Math.floor(TILE_SIZE * 0.5); // top 8px of 16px tile
+      const srcImg = this.textures.get(`${key}_tileset`).getSourceImage();
+      const tsCols = this.map.tilesets[0].columns;
+      const w = this.map.width;
+      // Skip top 8px of each tile, draw bottom 8px.
+      // This covers the player's body/legs but leaves their head/face visible.
+      const skipTop = 9;
+      const drawH = TILE_SIZE - skipTop; // 12px
 
-    // Use Phaser's createCanvas so GPU texture is properly managed
-    const texKey = `${key}_above_overlay`;
-    if (this.textures.exists(texKey)) this.textures.remove(texKey);
-    const tex = this.textures.createCanvas(texKey, w * TILE_SIZE, h * TILE_SIZE);
-    const ctx = tex.getContext();
+      for (let i = 0; i < aboveLayer.data.length; i++) {
+        const gid = aboveLayer.data[i];
+        if (gid <= 0) continue;
 
-    let count = 0;
-    for (let i = 0; i < aboveLayer.data.length; i++) {
-      const gid = aboveLayer.data[i];
-      if (gid <= 0) continue;
-      const tx = i % w;
-      const ty = Math.floor(i / w);
-      const tileId = gid - 1;
-      const srcX = (tileId % tsCols) * TILE_SIZE;
-      const srcY = Math.floor(tileId / tsCols) * TILE_SIZE;
-      ctx.drawImage(srcImg,
-        srcX, srcY, TILE_SIZE, cropH,
-        tx * TILE_SIZE, ty * TILE_SIZE, TILE_SIZE, cropH);
-      count++;
+        const tx = i % w;
+        const ty = Math.floor(i / w);
+        const tileId = gid - 1;
+        const srcX = (tileId % tsCols) * TILE_SIZE;
+        const srcY = Math.floor(tileId / tsCols) * TILE_SIZE;
+
+        // Canvas with bottom portion of tile only
+        const c = document.createElement('canvas');
+        c.width = TILE_SIZE;
+        c.height = drawH;
+        const ctx = c.getContext('2d');
+        ctx.drawImage(srcImg,
+          srcX, srcY + skipTop, TILE_SIZE, drawH,
+          0, 0, TILE_SIZE, drawH);
+
+        const texKey = `${key}_above_${tx}_${ty}`;
+        if (this.textures.exists(texKey)) this.textures.remove(texKey);
+        this.textures.addCanvas(texKey, c);
+
+        // Position: shifted down by skipTop, centered on the 12px strip
+        const sprite = this.add.image(
+          tx * TILE_SIZE + TILE_SIZE / 2,
+          ty * TILE_SIZE + skipTop + drawH / 2,
+          texKey
+        );
+        sprite.setDepth(20);
+        this._aboveSprites.push(sprite);
+      }
+    } catch (e) {
+      console.error('[OverworldScene] _buildAboveSprites failed:', e);
     }
-
-    if (count === 0) return;
-    tex.refresh(); // sync canvas pixels to GPU texture
-
-    this.aboveLayer = this.add.image(0, 0, texKey);
-    this.aboveLayer.setOrigin(0, 0);
-    this.aboveLayer.setDepth(20);
   }
 
   clearNpcs() {
