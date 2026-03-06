@@ -1,51 +1,37 @@
 {
-  "x": 5, "y": 8,
-  "name": "Old Man", "sprite": "npc_old_man_1", "dir": "down",
-  "type": "npc", "showFlag": "", "hideFlag": "",
-  "walkOnFlag": "", "walkTo": null,
-  "dialog": ["Have you seen my daughter? She went to Route 1!"],
+  "x": 5,
+  "y": 8,
+  "name": "Old Man",
+  "sprite": "NPC 10",
+  "dir": "down",
+  "type": "npc",
+  "showFlag": "",
+  "hideFlag": "",
+  "walkOnFlag": "",
+  "autoTalk": false,
+  "roam": false,
+  "roamRadius": 3,
+  "extraTiles": [],
   "dialogs": [
     {
-      "condition": "",
-      "setFlag": "quest1_find_daughter",
-      "clearFlag": "",
-      "walkTo": null,
-      "lines": [
-        "Oh, {player}!",
-        "Have you seen my daughter?",
-        "She went north to Route 1 and hasn't returned!"
-      ]
+      "condition": "quest1_complete",
+      "script": "say: Thank you again, {player}.\nsay: You're a true friend."
+    },
+    {
+      "condition": "quest1_found_cici",
+      "script": "say: You found her?!\nsay: She's on Route 1? Thank goodness!\nsay: Thank you so much, {player}!\nsay: I promised you Pokeballs, and here they are!\ngiveitem: potion 3\ngiveitem: pokeball 5\nsetflag: quest1_complete\nclearflag: quest1_found_cici"
     },
     {
       "condition": "quest1_find_daughter",
-      "setFlag": "",
-      "clearFlag": "",
-      "walkTo": null,
-      "lines": [
-        "Please, {player}, find my daughter on Route 1!",
-        "She's wearing a red dress."
-      ]
+      "script": "say: Please hurry, {player}!\nsay: Find my daughter on Route 1!\nsay: She's wearing a red dress."
     },
     {
-      "condition": "quest1_daughter_found",
-      "setFlag": "quest1_complete",
-      "clearFlag": "quest1_daughter_found",
-      "walkTo": null,
-      "lines": [
-        "You found her! She's safe!",
-        "Thank you so much, {player}.",
-        "Please accept this as a reward!"
-      ]
+      "condition": "quest1_refused_oldman",
+      "script": "say: Please...\nsay: I'll even give you Pokeballs if you find her!\nsay: Will you at least try?\nsetflag: quest1_refused_oldman\nchoice: Will you find my daughter?\nclearflag: quest1_refused_oldman\nsetflag: quest1_find_daughter"
     },
     {
-      "condition": "quest1_complete",
-      "setFlag": "",
-      "clearFlag": "",
-      "walkTo": null,
-      "lines": [
-        "Thank you again for finding my daughter, {player}.",
-        "You're a true hero!"
-      ]
+      "condition": "",
+      "script": "say: Oh, {player}!\nsay: Have you seen my daughter?\nsay: She went north to Route 1 and hasn't returned!\nsetflag: quest1_refused_oldman\nchoice: Will you find my daughter?\nclearflag: quest1_refused_oldman\nsetflag: quest1_find_daughter"
     }
   ]
 }

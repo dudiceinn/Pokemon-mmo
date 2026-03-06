@@ -1,0 +1,17 @@
+{
+  "x": 2,
+  "y": 10,
+  "name": "Lab Asst.",
+  "sprite": "NPC 27",
+  "dir": "down",
+  "type": "npc",
+  "showFlag": "",
+  "hideFlag": "",
+  "walkOnFlag": "",
+  "autoTalk": false,
+  "roam": true,
+  "roamRadius": 3,
+  "extraTiles": [],
+  "dialog": [],
+  "dialogs": []
+}

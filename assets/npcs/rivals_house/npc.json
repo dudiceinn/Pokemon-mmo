@@ -1,0 +1,23 @@
+{
+  "x": 10,
+  "y": 5,
+  "name": "Battle Tester",
+  "sprite": "npc_trainer",
+  "dir": "down",
+  "type": "npc",
+  "showFlag": "",
+  "hideFlag": "",
+  "walkOnFlag": "",
+  "autoTalk": false,
+  "roam": false,
+  "roamRadius": 3,
+  "extraTiles": [],
+  "dialog": [],
+  "dialogs": [
+    {
+      "condition": "",
+      "script": "say: Hey trainer! Want to run a battle test?\nchoice: Start battle test?\nbattle:\nsay: Good fight!",
+      "lines": []
+    }
+  ]
+}

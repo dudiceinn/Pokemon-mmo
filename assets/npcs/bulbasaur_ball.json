@@ -1,0 +1,35 @@
+{
+  "x": 8,
+  "y": 4,
+  "name": "",
+  "sprite": "POKEBALL",
+  "dir": "down",
+  "type": "npc",
+  "showFlag": "oak_escort_done",
+  "hideFlag": "pokemon_chosen",
+  "walkOnFlag": "",
+  "autoTalk": false,
+  "roam": false,
+  "roamRadius": 3,
+  "dialogs": [
+    {
+      "condition": "",
+      "script": "showimage: pokemon/Front/bulbasaur\nsay: Bulbasaur!\nsay: The Seed Pokemon. A Grass and Poison type.\nsay: A great choice for a beginner!\nchoice: Do you want to choose Bulbasaur?\nsetflag: starter_pending_bulbasaur\nclearflag: starter_pending_charmander\nclearflag: starter_pending_squirtle\nsay: Great choice! You have chosen Bulbasaur!\nsay: Talk to Prof. Oak to confirm!\nsetflag: starter_is_bulbasaur\nclearflag: starter_is_charmander\nclearflag: starter_is_squirtle\nhidenpc",
+      "lines": [
+        "Bulbasaur!",
+        "The Seed Pokemon. A Grass and Poison type.",
+        "A great choice for a beginner!",
+        "Great choice! You have chosen Bulbasaur!",
+        "Talk to Prof. Oak to confirm!"
+      ]
+    }
+  ],
+  "dialog": [
+    "Bulbasaur!",
+    "The Seed Pokemon. A Grass and Poison type.",
+    "A great choice for a beginner!",
+    "Great choice! You have chosen Bulbasaur!",
+    "Talk to Prof. Oak to confirm!"
+  ],
+  "extraTiles": []
+}

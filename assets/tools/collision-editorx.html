@@ -1,0 +1,1584 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Map Editor — Collision, Warps & NPCs</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #1a1a2e; color: #eee; font-family: monospace; display: flex; flex-direction: column; height: 100vh; }
+    #toolbar {
+      padding: 8px 16px; background: #16213e; display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+    }
+    #toolbar select, #toolbar button, #toolbar input[type=number] {
+      font-family: monospace; font-size: 14px; padding: 4px 8px; background: #0f3460; color: #eee;
+      border: 1px solid #555; cursor: pointer;
+    }
+    #toolbar input[type=number] { width: 50px; }
+    #toolbar button:hover { background: #1a5276; }
+    .mode { display: flex; gap: 4px; }
+    .mode button.active-collision { background: #e94560; border-color: #e94560; }
+    .mode button.active-warp { background: #4560e9; border-color: #4560e9; }
+    .mode button.active-erase { background: #45e960; border-color: #45e960; color: #000; }
+    .mode button.active-npc { background: #e9c845; border-color: #e9c845; color: #000; }
+    .mode button.active-spawn { background: #22c55e; border-color: #22c55e; color: #000; }
+    #toolbar label { font-size: 13px; }
+    #info { font-size: 12px; color: #aaa; flex-basis: 100%; }
+    #viewport { flex: 1; overflow: auto; position: relative; cursor: crosshair; }
+    #coordsBar {
+      background: #16213e; border-top: 1px solid #333;
+      padding: 4px 16px; flex-shrink: 0;
+    }
+    #coords { font-size: 13px; color: #ffd700; font-family: monospace; }
+    canvas { image-rendering: pixelated; display: block; }
+
+    /* Warp panel */
+    #warpPanel {
+      display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+      background: #16213e; border: 2px solid #4560e9; padding: 16px; z-index: 100;
+      min-width: 320px;
+    }
+    #warpPanel h3 { margin-bottom: 8px; color: #4560e9; }
+    #warpPanel label { display: block; margin: 6px 0 2px; font-size: 13px; }
+    #warpPanel select, #warpPanel input {
+      font-family: monospace; font-size: 14px; padding: 4px 8px; background: #0f3460;
+      color: #eee; border: 1px solid #555; width: 100%;
+    }
+    #warpPanel .btns { margin-top: 12px; display: flex; gap: 8px; }
+    #warpPanel .btns button { flex: 1; padding: 6px; font-size: 14px; }
+    #warpPanel .btn-save { background: #4560e9; border-color: #4560e9; }
+    #warpPanel .btn-delete { background: #e94560; border-color: #e94560; }
+    #warpPanel .btn-cancel { background: #555; border-color: #555; }
+
+    /* NPC panel — full screen two-column layout */
+    #npcPanel {
+      display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      background: #16213e; border: none; padding: 0; z-index: 100;
+      flex-direction: column;
+    }
+    #npcPanel.visible { display: flex; }
+    #npcPanel .panel-header {
+      padding: 10px 20px; border-bottom: 2px solid #e9c845; display: flex;
+      justify-content: space-between; align-items: center; flex-shrink: 0;
+    }
+    #npcPanel .panel-header h3 { margin: 0; color: #e9c845; }
+    #npcPanel .panel-body {
+      display: flex; flex: 1; overflow: hidden;
+    }
+    #npcPanel .panel-left {
+      width: 340px; min-width: 300px; padding: 12px 20px; overflow-y: auto;
+      border-right: 1px solid #444; flex-shrink: 0;
+    }
+    #npcPanel .panel-right {
+      flex: 1; padding: 12px 20px; overflow-y: auto; display: flex; flex-direction: column;
+    }
+    #npcPanel .panel-footer {
+      padding: 10px 20px; border-top: 1px solid #444; flex-shrink: 0;
+    }
+    #npcPanel label { display: block; margin: 5px 0 2px; font-size: 13px; }
+    #npcPanel select, #npcPanel input, #npcPanel textarea {
+      font-family: monospace; font-size: 14px; padding: 4px 8px; background: #0f3460;
+      color: #eee; border: 1px solid #555; width: 100%;
+    }
+    #npcPanel textarea { height: 80px; resize: vertical; }
+    .dialog-entry {
+      border: 1px solid #555; padding: 8px; margin-bottom: 8px; background: #0a1a30; position: relative;
+    }
+    .dialog-entry label { margin: 4px 0 2px; }
+    .dialog-entry .entry-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+    .dialog-entry .entry-header span { font-size: 12px; color: #e9c845; }
+    .dialog-entry .entry-actions button {
+      font-family: monospace; font-size: 12px; padding: 2px 6px; background: #333; color: #eee;
+      border: 1px solid #555; cursor: pointer; margin-left: 4px;
+    }
+    .dialog-entry .entry-actions button:hover { background: #555; }
+    .dialog-entry input, .dialog-entry textarea { margin-bottom: 4px; }
+    #dialogList { flex: 1; overflow-y: auto; margin-bottom: 8px; }
+    #btnAddDialog {
+      font-family: monospace; font-size: 13px; padding: 4px 12px; background: #1a5276;
+      color: #eee; border: 1px solid #555; cursor: pointer; width: 100%; margin-bottom: 0;
+      flex-shrink: 0;
+    }
+    #btnAddDialog:hover { background: #2a6286; }
+    #npcPanel .btns { display: flex; gap: 8px; }
+    #npcPanel .btns button { flex: 1; padding: 6px; font-size: 14px; }
+    #npcPanel .btn-save { background: #e9c845; border-color: #e9c845; color: #000; }
+    #npcPanel .btn-delete { background: #e94560; border-color: #e94560; }
+    #npcPanel .btn-cancel { background: #555; border-color: #555; }
+
+    /* Flag debug panel */
+    #flagPanel {
+      display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+      background: #16213e; border: 2px solid #45e960; padding: 20px; z-index: 100;
+      width: 700px; max-width: 90vw; max-height: 85vh; overflow-y: auto;
+    }
+    #flagPanel h3 { margin-bottom: 12px; color: #45e960; }
+    #flagPanel .flag-group {
+      border: 1px solid #444; margin-bottom: 10px; background: #0a1a30;
+    }
+    #flagPanel .flag-group-header {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 6px 10px; background: #0f2440; cursor: pointer;
+    }
+    #flagPanel .flag-group-header span { color: #45e960; font-size: 13px; font-weight: bold; }
+    #flagPanel .flag-group-header button {
+      font-family: monospace; font-size: 11px; padding: 2px 8px; background: #e94560;
+      color: #fff; border: 1px solid #e94560; cursor: pointer;
+    }
+    #flagPanel .flag-group-header button:hover { background: #c73a52; }
+    #flagPanel .flag-item {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 4px 10px 4px 20px; border-top: 1px solid #333;
+    }
+    #flagPanel .flag-item span { font-size: 13px; color: #ccc; }
+    #flagPanel .flag-item button {
+      font-family: monospace; font-size: 11px; padding: 1px 6px; background: #555;
+      color: #eee; border: 1px solid #666; cursor: pointer;
+    }
+    #flagPanel .flag-item button:hover { background: #777; }
+    #flagPanel .flag-actions {
+      display: flex; gap: 8px; margin-bottom: 12px;
+    }
+    #flagPanel .flag-actions button {
+      font-family: monospace; font-size: 13px; padding: 4px 12px; cursor: pointer;
+      border: 1px solid #555;
+    }
+    #flagPanel .flag-empty { color: #888; font-style: italic; padding: 20px; text-align: center; }
+    #flagPanel .flag-add { display: flex; gap: 8px; margin-bottom: 12px; }
+    #flagPanel .flag-add input {
+      font-family: monospace; font-size: 13px; padding: 4px 8px; background: #0f3460;
+      color: #eee; border: 1px solid #555; flex: 1;
+    }
+    #flagPanel .flag-add button {
+      font-family: monospace; font-size: 13px; padding: 4px 12px; background: #45e960;
+      color: #000; border: 1px solid #45e960; cursor: pointer;
+    }
+
+    #overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 99; }
+    #legend { font-size: 11px; color: #888; }
+    #legend span { padding: 1px 6px; margin-right: 4px; }
+    .leg-coll { background: rgba(255,0,0,0.5); }
+    .leg-warp { background: rgba(69,96,233,0.7); }
+    .leg-npc { background: rgba(233,200,69,0.7); }
+    .leg-sign { background: rgba(69,233,96,0.7); }
+    .leg-trigger { background: rgba(180,69,233,0.7); }
+    .leg-linked { background: repeating-linear-gradient(45deg, rgba(233,200,69,0.7) 0px, rgba(233,200,69,0.7) 4px, rgba(0,0,0,0.4) 4px, rgba(0,0,0,0.4) 8px); }
+    .leg-spawn { color: #22c55e; font-weight: bold; }
+
+    /* Extra tiles section in NPC panel */
+    #extraTilesList { margin-top: 4px; }
+    .extra-tile-row {
+      display: flex; align-items: center; gap: 6px; margin-bottom: 4px;
+    }
+    .extra-tile-row input[type=number] {
+      width: 60px; font-family: monospace; font-size: 13px; padding: 3px 6px;
+      background: #0f3460; color: #eee; border: 1px solid #555;
+    }
+    .extra-tile-row button {
+      font-family: monospace; font-size: 12px; padding: 2px 7px;
+      background: #e94560; color: #fff; border: 1px solid #e94560; cursor: pointer;
+    }
+    .extra-tile-row button:hover { background: #c73a52; }
+    .extra-tile-row span { font-size: 12px; color: #aaa; }
+    #btnAddExtraTile {
+      font-family: monospace; font-size: 12px; padding: 3px 10px;
+      background: #1a5276; color: #eee; border: 1px solid #555; cursor: pointer; margin-top: 2px;
+    }
+    #btnAddExtraTile:hover { background: #2a6286; }
+  </style>
+</head>
+<body>
+  <div id="toolbar">
+    <label>Map: <select id="mapSelect"></select></label>
+    <div class="mode">
+      <button id="btnCollision" class="active-collision" onclick="setMode('collision')">Collision</button>
+      <button id="btnWarp" onclick="setMode('warp')">Warp</button>
+      <button id="btnNpc" onclick="setMode('npc')">NPC</button>
+      <button id="btnSpawn" onclick="setMode('spawn')">Spawn</button>
+      <button id="btnErase" onclick="setMode('erase')">Erase</button>
+    </div>
+    <button onclick="saveAll()">Save All</button>
+    <button onclick="downloadAll()" title="Download map + all NPC files" style="background:#2e7d32;border-color:#2e7d32;">⬇ Download All</button>
+    <button onclick="loadMap()">Reload</button>
+    <button onclick="openFlagPanel()" style="background:#45e960;color:#000;border-color:#45e960;">Flags Debug</button>
+    <label><input type="checkbox" id="showGrid" checked onchange="render()"> Grid</label>
+    <label>Opacity: <input type="range" id="opacity" min="10" max="90" value="50" oninput="render()"></label>
+    <div id="legend">
+      <span class="leg-coll">Red = Collision</span>
+      <span class="leg-warp">Blue = Warp</span>
+      <span class="leg-npc">Yellow = NPC</span>
+      <span class="leg-sign">Green = Sign</span>
+      <span class="leg-trigger">Purple = Trigger</span>
+      <span class="leg-linked">Striped = Linked Tile</span>
+      <span class="leg-spawn">🌿 Grass = Spawn</span>
+    </div>
+    <span id="info">Collision mode: click/drag to paint blocked tiles.</span>
+  </div>
+  <div id="viewport">
+    <canvas id="canvas"></canvas>
+  </div>
+  <div id="coordsBar">
+    <span id="coords">(-, -)</span>
+  </div>
+
+  <div id="overlay" onclick="closeAllPanels()"></div>
+
+  <!-- Warp panel -->
+  <div id="warpPanel">
+    <h3>Edit Warp at (<span id="wpX"></span>, <span id="wpY"></span>)</h3>
+    <label>Destination Map</label>
+    <select id="wpDestMap"></select>
+    <label>Dest X</label>
+    <input type="number" id="wpDestX" min="0" value="0">
+    <label>Dest Y</label>
+    <input type="number" id="wpDestY" min="0" value="0">
+    <div class="btns">
+      <button class="btn-save" onclick="saveWarp()">Save</button>
+      <button class="btn-delete" onclick="deleteWarp()">Delete</button>
+      <button class="btn-cancel" onclick="closeAllPanels()">Cancel</button>
+    </div>
+  </div>
+
+  <!-- Spawn panel -->
+  <div id="spawnPanel" style="
+    display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%);
+    background:#16213e; border:2px solid #22c55e; padding:16px; z-index:100;
+    min-width:380px; max-width:95vw; max-height:90vh; overflow-y:auto;
+  ">
+    <h3 style="color:#22c55e; margin-bottom:10px;">
+      🌿 Spawn Tile at (<span id="spX"></span>, <span id="spY"></span>)
+    </h3>
+    <label style="display:block; margin:6px 0 2px; font-size:13px;">
+      Encounter Rate
+      <span style="color:#888; font-size:11px;">(0.0 – 1.0, e.g. 0.15 = 15% per step)</span>
+    </label>
+    <input type="number" id="spRate" min="0" max="1" step="0.01" value="0.15"
+      style="font-family:monospace;font-size:14px;padding:4px 8px;background:#0f3460;color:#eee;border:1px solid #555;width:100%;">
+
+    <label style="display:block; margin:10px 0 4px; font-size:13px; color:#22c55e;">
+      Pokémon Table
+      <span style="color:#888; font-size:11px;">(weights don't need to add to 100)</span>
+    </label>
+    <div id="spawnPokemonList" style="margin-bottom:8px;"></div>
+    <button onclick="addSpawnPokemon()" style="
+      font-family:monospace;font-size:13px;padding:4px 12px;
+      background:#14532d;color:#eee;border:1px solid #22c55e;cursor:pointer;width:100%;margin-bottom:10px;
+    ">+ Add Pokémon</button>
+
+    <div style="display:flex;gap:8px;">
+      <button onclick="saveSpawn()" style="flex:1;padding:6px;font-family:monospace;font-size:14px;background:#22c55e;border-color:#22c55e;color:#000;cursor:pointer;">Save</button>
+      <button onclick="deleteSpawn()" style="flex:1;padding:6px;font-family:monospace;font-size:14px;background:#e94560;border-color:#e94560;color:#fff;cursor:pointer;">Delete</button>
+      <button onclick="closeAllPanels()" style="flex:1;padding:6px;font-family:monospace;font-size:14px;background:#555;border-color:#555;color:#eee;cursor:pointer;">Cancel</button>
+    </div>
+  </div>
+
+  <!-- NPC panel — fullscreen two-column -->
+  <div id="npcPanel">
+    <div class="panel-header">
+      <h3>Edit NPC at (<span id="npX"></span>, <span id="npY"></span>)</h3>
+      <div class="btns" style="gap:6px;">
+        <button class="btn-save" onclick="saveNpc()">Save</button>
+        <button class="btn-duplicate" onclick="duplicateNpc()" style="background:#1a5276;border-color:#1a5276;">Duplicate</button>
+        <button class="btn-delete" onclick="deleteNpc()">Delete</button>
+        <button class="btn-cancel" onclick="closeAllPanels()">Cancel</button>
+      </div>
+    </div>
+    <div class="panel-body">
+      <!-- Left column: NPC properties -->
+      <div class="panel-left">
+        <label>Name</label>
+        <input type="text" id="npName" placeholder="Prof. Oak">
+        <label>Type</label>
+        <select id="npType">
+          <option value="npc">NPC (visible, blocks)</option>
+          <option value="sign">Sign (invisible, interact)</option>
+          <option value="trigger">Trigger (invisible, step-on)</option>
+        </select>
+        <label>Sprite</label>
+        <select id="npSprite"></select>
+        <label>Direction</label>
+        <select id="npDir">
+          <option value="down">Down</option>
+          <option value="up">Up</option>
+          <option value="left">Left</option>
+          <option value="right">Right</option>
+        </select>
+        <hr style="border-color:#444; margin:10px 0;">
+        <label>Show Flag <span style="color:#888; font-size:11px;">(appears when set)</span></label>
+        <input type="text" id="npShowFlag" placeholder="e.g. oak_at_lab">
+        <label>Hide Flag <span style="color:#888; font-size:11px;">(disappears when set)</span></label>
+        <input type="text" id="npHideFlag" placeholder="e.g. oak_left">
+        <hr style="border-color:#444; margin:10px 0;">
+        <label>Walk On Flag <span style="color:#888; font-size:11px;">(NPC walks when set)</span></label>
+        <input type="text" id="npWalkOnFlag" placeholder="e.g. oak_should_walk">
+        <label>Walk To (X, Y)</label>
+        <div style="display:flex;gap:8px;">
+          <input type="number" id="npWalkToX" min="0" style="width:50%;" placeholder="X">
+          <input type="number" id="npWalkToY" min="0" style="width:50%;" placeholder="Y">
+        </div>
+        <hr style="border-color:#444; margin:10px 0;">
+        <label>
+          <input type="checkbox" id="npAutoTalk"> Auto Talk (starts dialog when NPC appears)
+        </label>
+        <label>
+          <input type="checkbox" id="npRoam"> Roam (random movement)
+        </label>
+        <label>Roam Radius</label>
+        <input type="number" id="npRoamRadius" min="1" max="20" value="3" style="width:80px;">
+        <hr style="border-color:#444; margin:10px 0;">
+        <label style="color:#e9c845; font-size:13px;">Extra Tiles <span style="color:#888; font-size:11px;">(same script fires from these positions too)</span></label>
+        <div id="extraTilesList"></div>
+        <button id="btnAddExtraTile" onclick="addExtraTile()">+ Add Tile</button>
+      </div>
+      <!-- Right column: Dialogs -->
+      <div class="panel-right">
+        <label style="font-size:14px; color:#e9c845; margin-bottom:6px;">Dialogs (conditional)</label>
+        <div id="dialogList"></div>
+        <button id="btnAddDialog" onclick="addDialogEntry()">+ Add Dialog Entry</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Flag debug panel -->
+  <div id="flagPanel">
+    <h3>Game Flags Debug</h3>
+    <div class="flag-add">
+      <input type="text" id="flagAddInput" placeholder="Flag name to set (e.g. quest1_complete)">
+      <button onclick="addFlag()">Set Flag</button>
+    </div>
+    <div class="flag-actions">
+      <button onclick="clearAllFlags()" style="background:#e94560;color:#fff;border-color:#e94560;">Clear ALL Flags</button>
+      <button onclick="closeFlagPanel()" style="background:#555;color:#eee;border-color:#555;">Close</button>
+    </div>
+    <div id="flagContent"></div>
+  </div>
+
+  <script>
+    const TILE = 16;
+    const SCALE = 2;
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const mapSelect = document.getElementById('mapSelect');
+
+    let currentMap = null;
+    let mapKey = '';
+    let tilesetImg = null;
+    let collisionData = [];
+    let warps = [];
+    let spawns = [];
+    let npcs = [];
+    let mapW = 0, mapH = 0;
+    let mode = 'collision';
+    let painting = false;
+    let editingWarpIdx = -1;
+    let editingNpcIdx = -1;
+    let editingSpawnIdx = -1;
+    let draggingNpcIdx = -1;
+    // Last spawn config used — applied when drag-painting new spawn tiles
+    let lastSpawnConfig = { encounterRate: 0.15, pokemon: [] };
+
+    // NPC sprite keys — loaded dynamically from npc-sprites.json (same source as BootScene.js)
+    let NPC_SPRITES = [];
+    const npSpriteSelect = document.getElementById('npSprite');
+
+    async function loadNpcSprites() {
+      try {
+        const resp = await fetch('/data/npc-sprites.json');
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        const data = await resp.json();
+        NPC_SPRITES = data.sprites || [];
+      } catch (err) {
+        console.warn('Could not load npc-sprites.json, using fallback list.', err);
+        NPC_SPRITES = [
+          'NPC 00', 'NPC 01', 'NPC 02', 'NPC 03', 'NPC 04', 'NPC 05',
+          'NPC 06', 'NPC 07', 'NPC 08', 'NPC 09', 'NPC 10',
+          'NPC 11', 'NPC 12', 'NPC 13', 'NPC 14', 'NPC 15',
+          'NPC 16', 'NPC 17', 'NPC 18', 'NPC 19', 'NPC 20',
+          'NPC 21', 'NPC 22', 'NPC 23', 'NPC 24', 'NPC 25',
+          'NPC 26', 'NPC 27', 'NPC 28', 'NPC 29',
+        ];
+      }
+      npSpriteSelect.innerHTML = '';
+	  
+	  // Add "none" option first
+const noneOpt = document.createElement('option');
+noneOpt.value = '';
+noneOpt.textContent = '(none / invisible)';
+npSpriteSelect.appendChild(noneOpt);
+
+      NPC_SPRITES.forEach(k => {
+        const opt = document.createElement('option');
+        opt.value = k; opt.textContent = k;
+        npSpriteSelect.appendChild(opt);
+      });
+    }
+
+    const MAPS = [
+      'pallet_town', 'route1',
+      'players_house_1f', 'players_house_2f',
+      'rivals_house', 'oaks_lab',
+    ];
+
+    // Hardcoded warps from shared/maps.js — loaded as defaults if no _warps in JSON
+    const HARDCODED_WARPS = {
+      pallet_town: [
+        { x: 6, y: 7, destMap: 'players_house_1f', destX: 4, destY: 7 },
+        { x: 15, y: 7, destMap: 'rivals_house', destX: 4, destY: 7 },
+        { x: 16, y: 13, destMap: 'oaks_lab', destX: 6, destY: 12 },
+      ],
+      route1: [],
+      players_house_1f: [
+        { x: 5, y: 8, destMap: 'pallet_town', destX: 6, destY: 8 },
+        { x: 4, y: 8, destMap: 'pallet_town', destX: 6, destY: 8 },
+        { x: 10, y: 2, destMap: 'players_house_2f', destX: 1, destY: 2 },
+        { x: 3, y: 9, destMap: 'pallet_town', destX: 6, destY: 8 },
+      ],
+      players_house_2f: [
+        { x: 10, y: 2, destMap: 'players_house_1f', destX: 10, destY: 3 },
+      ],
+      rivals_house: [
+        { x: 4, y: 8, destMap: 'pallet_town', destX: 15, destY: 8 },
+        { x: 5, y: 8, destMap: 'pallet_town', destX: 15, destY: 8 },
+        { x: 3, y: 9, destMap: 'pallet_town', destX: 15, destY: 8 },
+      ],
+      oaks_lab: [
+        { x: 7, y: 13, destMap: 'pallet_town', destX: 16, destY: 14 },
+        { x: 6, y: 13, destMap: 'pallet_town', destX: 16, destY: 14 },
+      ],
+    };
+
+    // Populate map dropdown
+    MAPS.forEach(k => {
+      const opt = document.createElement('option');
+      opt.value = k; opt.textContent = k;
+      mapSelect.appendChild(opt);
+    });
+    mapSelect.addEventListener('change', () => loadMap());
+
+    function populateWarpDestSelect(defaultMap) {
+      const sel = document.getElementById('wpDestMap');
+      sel.innerHTML = '';
+      MAPS.forEach(k => {
+        const opt = document.createElement('option');
+        opt.value = k; opt.textContent = k;
+        sel.appendChild(opt);
+      });
+      sel.value = defaultMap || mapKey;
+    }
+
+    function setMode(m) {
+      mode = m;
+      document.getElementById('btnCollision').className = m === 'collision' ? 'active-collision' : '';
+      document.getElementById('btnWarp').className = m === 'warp' ? 'active-warp' : '';
+      document.getElementById('btnNpc').className = m === 'npc' ? 'active-npc' : '';
+      document.getElementById('btnSpawn').className = m === 'spawn' ? 'active-spawn' : '';
+      document.getElementById('btnErase').className = m === 'erase' ? 'active-erase' : '';
+      const msgs = {
+        collision: 'Collision mode: click/drag to paint blocked tiles.',
+        warp: 'Warp mode: click a tile to place or edit a warp. Blue tiles = existing warps.',
+        npc: 'NPC mode: click to place/edit NPC. Drag existing NPC to move. Yellow tiles = NPCs.',
+        spawn: 'Spawn mode: click a tile to place or edit a grass/encounter spawn. Green tiles = spawns.',
+        erase: 'Erase mode: click/drag to remove collision, warps, NPCs, and spawns.',
+      };
+      document.getElementById('info').textContent = msgs[m];
+    }
+
+    async function loadMap() {
+      mapKey = mapSelect.value;
+      if (!mapKey) {
+        document.getElementById('info').textContent = 'No map selected.';
+        return;
+      }
+      document.getElementById('info').textContent = `Loading ${mapKey}...`;
+      let resp;
+      try {
+        resp = await fetch(`/maps/${mapKey}.json`);
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+      } catch (err) {
+        document.getElementById('info').textContent = `Failed to load map "${mapKey}": ${err.message}`;
+        return;
+      }
+      currentMap = await resp.json();
+      mapW = currentMap.width;
+      mapH = currentMap.height;
+
+      // Collision
+      const collLayer = currentMap.layers.find(l => l.name === 'collision');
+      collisionData = [...collLayer.data];
+
+      // Warps — prefer _warps from JSON (editor-saved), fallback to hardcoded
+      if (currentMap._warps && currentMap._warps.length > 0) {
+        warps = currentMap._warps.map(w => ({ ...w }));
+      } else if (HARDCODED_WARPS[mapKey]) {
+        warps = HARDCODED_WARPS[mapKey].map(w => ({ ...w }));
+      } else {
+        warps = [];
+      }
+
+      // Spawns — from separate spawns/<map>.json file, fallback to _spawns in map JSON
+      let spawnSource = [];
+      try {
+        const spawnResp = await fetch(`/spawns/${mapKey}.json`);
+        if (spawnResp.ok) {
+          spawnSource = await spawnResp.json();
+        }
+      } catch (e) {}
+      if (!spawnSource.length && currentMap._spawns && currentMap._spawns.length > 0) {
+        spawnSource = currentMap._spawns;
+      }
+      spawns = spawnSource.map(s => ({
+        x: s.x, y: s.y,
+        encounterRate: s.encounterRate ?? 0.15,
+        pokemon: (s.pokemon || []).map(p => ({ ...p })),
+      }));
+
+      // NPCs — from separate npcs/<map>.json file, fallback to _npcs in map JSON
+      let npcSource = [];
+      try {
+        const npcResp = await fetch(`/npcs/${mapKey}.json`);
+        if (npcResp.ok) {
+          npcSource = await npcResp.json();
+        }
+      } catch (e) {}
+      if (!npcSource.length && currentMap._npcs && currentMap._npcs.length > 0) {
+        npcSource = currentMap._npcs;
+      }
+      npcs = npcSource.map(n => ({
+        ...n,
+        dialog: [...(n.dialog || [])],
+        dialogs: (n.dialogs || []).map(d => ({
+          condition: d.condition || '',
+          script: d.script || '',
+          lines: [...(d.lines || [])],
+        })),
+        extraTiles: (n.extraTiles || []).map(t => ({ x: t.x, y: t.y })),
+      }));
+
+      tilesetImg = new Image();
+      tilesetImg.onload = () => {
+        canvas.width = mapW * TILE * SCALE;
+        canvas.height = mapH * TILE * SCALE;
+        render();
+      };
+      tilesetImg.src = `/tilesets/${mapKey}_tileset.png`;
+
+      document.getElementById('info').textContent =
+        `Loaded ${mapKey} (${mapW}x${mapH}) — ${warps.length} warps, ${npcs.length} NPCs, ${spawns.length} spawn tiles`;
+    }
+
+    function render() {
+      if (!tilesetImg || !currentMap) return;
+      ctx.imageSmoothingEnabled = false;
+
+      const groundLayer = currentMap.layers.find(l => l.name === 'ground');
+      const tsCols = currentMap.tilesets[0].columns;
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      for (let y = 0; y < mapH; y++) {
+        for (let x = 0; x < mapW; x++) {
+          const tileId = groundLayer.data[y * mapW + x] - 1;
+          if (tileId < 0) continue;
+          const srcX = (tileId % tsCols) * TILE;
+          const srcY = Math.floor(tileId / tsCols) * TILE;
+          ctx.drawImage(tilesetImg, srcX, srcY, TILE, TILE,
+            x * TILE * SCALE, y * TILE * SCALE, TILE * SCALE, TILE * SCALE);
+        }
+      }
+
+      const opacity = document.getElementById('opacity').value / 100;
+
+      // Collision overlay
+      for (let y = 0; y < mapH; y++) {
+        for (let x = 0; x < mapW; x++) {
+          if (collisionData[y * mapW + x] > 0) {
+            ctx.fillStyle = `rgba(255, 0, 0, ${opacity})`;
+            ctx.fillRect(x * TILE * SCALE, y * TILE * SCALE, TILE * SCALE, TILE * SCALE);
+          }
+        }
+      }
+
+      // Warp overlay
+      for (const w of warps) {
+        ctx.fillStyle = `rgba(69, 96, 233, 0.7)`;
+        ctx.fillRect(w.x * TILE * SCALE, w.y * TILE * SCALE, TILE * SCALE, TILE * SCALE);
+        ctx.fillStyle = '#fff';
+        ctx.font = `${10 * SCALE}px monospace`;
+        ctx.fillText(w.destMap.substring(0, 8), w.x * TILE * SCALE + 2, w.y * TILE * SCALE + 11 * SCALE);
+        ctx.font = `${7 * SCALE}px monospace`;
+        ctx.fillText(`(${w.destX},${w.destY})`, w.x * TILE * SCALE + 2, w.y * TILE * SCALE + 15 * SCALE);
+      }
+
+      // NPC overlay (color-coded by type)
+      for (const n of npcs) {
+        const npcType = n.type || 'npc';
+        let baseColor;
+        if (npcType === 'sign') {
+          baseColor = `rgba(69, 233, 96, 0.7)`;
+        } else if (npcType === 'trigger') {
+          baseColor = `rgba(180, 69, 233, 0.7)`;
+        } else {
+          baseColor = `rgba(233, 200, 69, 0.7)`;
+        }
+
+        // Draw extra (linked) tiles first — striped pattern
+        for (const et of (n.extraTiles || [])) {
+          const px = et.x * TILE * SCALE;
+          const py = et.y * TILE * SCALE;
+          const sz = TILE * SCALE;
+          // Striped fill
+          ctx.save();
+          ctx.beginPath();
+          ctx.rect(px, py, sz, sz);
+          ctx.clip();
+          ctx.fillStyle = baseColor;
+          ctx.fillRect(px, py, sz, sz);
+          ctx.strokeStyle = 'rgba(0,0,0,0.5)';
+          ctx.lineWidth = 2;
+          for (let s = -sz; s < sz * 2; s += 7) {
+            ctx.beginPath();
+            ctx.moveTo(px + s, py);
+            ctx.lineTo(px + s + sz, py + sz);
+            ctx.stroke();
+          }
+          ctx.restore();
+          // Link indicator
+          ctx.fillStyle = '#fff';
+          ctx.font = `bold ${8 * SCALE}px monospace`;
+          ctx.fillText('🔗', px + 2, py + 10 * SCALE);
+        }
+
+        // Draw primary tile
+        ctx.fillStyle = baseColor;
+        ctx.fillRect(n.x * TILE * SCALE, n.y * TILE * SCALE, TILE * SCALE, TILE * SCALE);
+        ctx.fillStyle = '#000';
+        ctx.font = `${9 * SCALE}px monospace`;
+        const typeLabel = npcType !== 'npc' ? `[${npcType}]` : '';
+        const label = (n.name || n.sprite || 'NPC').substring(0, 10);
+        ctx.fillText(typeLabel || label, n.x * TILE * SCALE + 2, n.y * TILE * SCALE + 10 * SCALE);
+        ctx.font = `${7 * SCALE}px monospace`;
+        const dCount = n.dialogs && n.dialogs.length > 0 ? n.dialogs.length + 'D' : (n.dialog ? n.dialog.length + 'L' : '0L');
+        const extraCount = (n.extraTiles || []).length > 0 ? ` +${n.extraTiles.length}` : '';
+        ctx.fillText(`${n.dir || 'down'} ${dCount}${extraCount}`, n.x * TILE * SCALE + 2, n.y * TILE * SCALE + 14 * SCALE);
+      }
+
+      // Spawn overlay — green grass tiles
+      for (const s of spawns) {
+        const px = s.x * TILE * SCALE;
+        const py = s.y * TILE * SCALE;
+        const sz = TILE * SCALE;
+        ctx.fillStyle = 'rgba(34, 197, 94, 0.45)';
+        ctx.fillRect(px, py, sz, sz);
+        ctx.fillStyle = '#fff';
+        ctx.font = `bold ${8 * SCALE}px monospace`;
+        ctx.fillText('🌿', px + 1, py + 10 * SCALE);
+        ctx.font = `${6 * SCALE}px monospace`;
+        ctx.fillStyle = '#d1fae5';
+        ctx.fillText(`${Math.round(s.encounterRate * 100)}%`, px + 2, py + 15 * SCALE);
+      }
+
+      // Grid
+      if (document.getElementById('showGrid').checked) {
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+        ctx.lineWidth = 1;
+        for (let x = 0; x <= mapW; x++) {
+          ctx.beginPath();
+          ctx.moveTo(x * TILE * SCALE, 0);
+          ctx.lineTo(x * TILE * SCALE, mapH * TILE * SCALE);
+          ctx.stroke();
+        }
+        for (let y = 0; y <= mapH; y++) {
+          ctx.beginPath();
+          ctx.moveTo(0, y * TILE * SCALE);
+          ctx.lineTo(mapW * TILE * SCALE, y * TILE * SCALE);
+          ctx.stroke();
+        }
+      }
+    }
+
+    function getTile(e) {
+      const rect = canvas.getBoundingClientRect();
+      const x = Math.floor((e.clientX - rect.left) / (TILE * SCALE));
+      const y = Math.floor((e.clientY - rect.top) / (TILE * SCALE));
+      if (x < 0 || y < 0 || x >= mapW || y >= mapH) return null;
+      return { x, y };
+    }
+
+    function findWarpAt(x, y) {
+      return warps.findIndex(w => w.x === x && w.y === y);
+    }
+
+    function findSpawnAt(x, y) {
+      return spawns.findIndex(s => s.x === x && s.y === y);
+    }
+
+    function findNpcAt(x, y) {
+      // First check primary positions
+      let idx = npcs.findIndex(n => n.x === x && n.y === y);
+      if (idx >= 0) return idx;
+      // Then check extraTiles
+      idx = npcs.findIndex(n => (n.extraTiles || []).some(t => t.x === x && t.y === y));
+      return idx;
+    }
+
+    // Always show coordinates on mouse move
+    canvas.addEventListener('mousemove', (e) => {
+      const t = getTile(e);
+      if (t) {
+        const wi = findWarpAt(t.x, t.y);
+        const ni = findNpcAt(t.x, t.y);
+        const si = findSpawnAt(t.x, t.y);
+        const coll = collisionData[t.y * mapW + t.x] > 0;
+        let label = `(${t.x}, ${t.y})`;
+        if (coll) label += ' [blocked]';
+        if (wi >= 0) label += ` [warp→${warps[wi].destMap}]`;
+        if (ni >= 0) label += ` [NPC: ${npcs[ni].name || npcs[ni].sprite}]`;
+        if (si >= 0) label += ` [spawn ${Math.round(spawns[si].encounterRate * 100)}%]`;
+        document.getElementById('coords').textContent = label;
+      } else {
+        document.getElementById('coords').textContent = '(-, -)';
+      }
+
+      // Drag NPC
+      if (draggingNpcIdx >= 0 && t) {
+        npcs[draggingNpcIdx].x = t.x;
+        npcs[draggingNpcIdx].y = t.y;
+        render();
+        return;
+      }
+
+      if (painting && (mode === 'collision' || mode === 'erase' || mode === 'spawn')) {
+        if (mode === 'spawn') didDragSpawn = true;
+        handlePaint(e);
+      }
+    });
+
+    function handlePaint(e) {
+      const t = getTile(e);
+      if (!t) return;
+
+      if (mode === 'collision') {
+        collisionData[t.y * mapW + t.x] = 1;
+        render();
+      } else if (mode === 'spawn') {
+        // Drag-paint: add spawn tile silently using lastSpawnConfig
+        // If tile already has a spawn, leave it alone (don't overwrite its Pokemon table)
+        const existing = findSpawnAt(t.x, t.y);
+        if (existing < 0) {
+          spawns.push({
+            x: t.x,
+            y: t.y,
+            encounterRate: lastSpawnConfig.encounterRate,
+            pokemon: lastSpawnConfig.pokemon.map(p => ({ ...p })),
+          });
+          render();
+        }
+      } else if (mode === 'erase') {
+        collisionData[t.y * mapW + t.x] = 0;
+        const wi = findWarpAt(t.x, t.y);
+        if (wi >= 0) warps.splice(wi, 1);
+        const si = findSpawnAt(t.x, t.y);
+        if (si >= 0) spawns.splice(si, 1);
+        const ni = npcs.findIndex(n => n.x === t.x && n.y === t.y);
+        if (ni >= 0) {
+          npcs.splice(ni, 1);
+        } else {
+          const eni = npcs.findIndex(n => (n.extraTiles || []).some(et => et.x === t.x && et.y === t.y));
+          if (eni >= 0) npcs[eni].extraTiles = npcs[eni].extraTiles.filter(et => !(et.x === t.x && et.y === t.y));
+        }
+        render();
+      }
+    }
+
+    function handleClick(e) {
+      const t = getTile(e);
+      if (!t) return;
+
+      if (mode === 'collision') {
+        collisionData[t.y * mapW + t.x] = 1;
+        render();
+      } else if (mode === 'erase') {
+        collisionData[t.y * mapW + t.x] = 0;
+        const wi = findWarpAt(t.x, t.y);
+        if (wi >= 0) warps.splice(wi, 1);
+        const ni = npcs.findIndex(n => n.x === t.x && n.y === t.y);
+        if (ni >= 0) {
+          npcs.splice(ni, 1);
+        } else {
+          const eni = npcs.findIndex(n => (n.extraTiles || []).some(et => et.x === t.x && et.y === t.y));
+          if (eni >= 0) {
+            npcs[eni].extraTiles = npcs[eni].extraTiles.filter(et => !(et.x === t.x && et.y === t.y));
+            document.getElementById('info').textContent = `Removed linked tile (${t.x}, ${t.y}) from "${npcs[eni].name || npcs[eni].sprite}"`;
+          }
+        }
+        render();
+      } else if (mode === 'warp') {
+        const wi = findWarpAt(t.x, t.y);
+        if (wi >= 0) {
+          openWarpPanel(wi);
+        } else {
+          warps.push({ x: t.x, y: t.y, destMap: mapKey, destX: 0, destY: 0 });
+          openWarpPanel(warps.length - 1);
+        }
+        render();
+      } else if (mode === 'spawn') {
+        const si = findSpawnAt(t.x, t.y);
+        if (si >= 0) {
+          // Clicking existing spawn — open panel to edit it
+          // (drag is handled by handlePaint, this only fires on clean click via mousedown)
+          openSpawnPanel(si);
+        } else {
+          // New spawn tile — create with lastSpawnConfig and open panel
+          spawns.push({
+            x: t.x,
+            y: t.y,
+            encounterRate: lastSpawnConfig.encounterRate,
+            pokemon: lastSpawnConfig.pokemon.map(p => ({ ...p })),
+          });
+          openSpawnPanel(spawns.length - 1);
+        }
+        render();
+      } else if (mode === 'npc') {
+        const ni = findNpcAt(t.x, t.y);
+        if (ni >= 0) {
+          // Start drag — panel opens on mouseup if not dragged far
+          draggingNpcIdx = ni;
+          draggingNpcStartX = npcs[ni].x;
+          draggingNpcStartY = npcs[ni].y;
+        } else {
+          // New NPC
+          npcs.push({ x: t.x, y: t.y, name: '', sprite: 'npc_oak', dir: 'down', type: 'npc', showFlag: '', hideFlag: '', walkOnFlag: '', walkTo: null, autoTalk: false, roam: false, roamRadius: 3, extraTiles: [], dialog: [], dialogs: [] });
+          openNpcPanel(npcs.length - 1);
+        }
+        render();
+      }
+    }
+
+    let draggingNpcStartX = -1;
+    let draggingNpcStartY = -1;
+
+    let mouseDownTile = null;
+    let didDragSpawn = false;
+
+    canvas.addEventListener('mousedown', (e) => {
+      painting = true;
+      mouseDownTile = getTile(e);
+      didDragSpawn = false;
+      // For spawn mode, don't open panel on mousedown — wait for mouseup
+      // to distinguish click vs drag
+      if (mode !== 'spawn') {
+        handleClick(e);
+      }
+    });
+    canvas.addEventListener('mouseup', (e) => {
+      painting = false;
+
+      // Spawn mode: open panel only if it was a clean click (no drag)
+      if (mode === 'spawn' && !didDragSpawn) {
+        handleClick(e);
+      }
+      didDragSpawn = false;
+      mouseDownTile = null;
+
+      if (draggingNpcIdx >= 0) {
+        const n = npcs[draggingNpcIdx];
+        const didDrag = (n.x !== draggingNpcStartX || n.y !== draggingNpcStartY);
+        if (!didDrag) {
+          openNpcPanel(draggingNpcIdx);
+        } else {
+          document.getElementById('info').textContent =
+            `Moved NPC "${n.name || n.sprite}" to (${n.x}, ${n.y})`;
+        }
+        draggingNpcIdx = -1;
+        render();
+      }
+    });
+    canvas.addEventListener('mouseleave', () => {
+      painting = false;
+      draggingNpcIdx = -1;
+      didDragSpawn = false;
+      mouseDownTile = null;
+    });
+
+    // --- Warp panel ---
+
+    function openWarpPanel(idx) {
+      editingWarpIdx = idx;
+      const w = warps[idx];
+      document.getElementById('wpX').textContent = w.x;
+      document.getElementById('wpY').textContent = w.y;
+      populateWarpDestSelect(w.destMap);
+      document.getElementById('wpDestX').value = w.destX;
+      document.getElementById('wpDestY').value = w.destY;
+      document.getElementById('warpPanel').style.display = 'block';
+      document.getElementById('overlay').style.display = 'block';
+    }
+
+    function closeAllPanels() {
+      document.getElementById('warpPanel').style.display = 'none';
+      document.getElementById('npcPanel').classList.remove('visible');
+      document.getElementById('flagPanel').style.display = 'none';
+      document.getElementById('spawnPanel').style.display = 'none';
+      document.getElementById('overlay').style.display = 'none';
+      editingWarpIdx = -1;
+      editingNpcIdx = -1;
+      editingSpawnIdx = -1;
+      render();
+    }
+
+    // --- Spawn panel ---
+
+    function openSpawnPanel(idx) {
+      editingSpawnIdx = idx;
+      const s = spawns[idx];
+      document.getElementById('spX').textContent = s.x;
+      document.getElementById('spY').textContent = s.y;
+      document.getElementById('spRate').value = s.encounterRate ?? 0.15;
+      renderSpawnPokemonList(s.pokemon || []);
+      document.getElementById('spawnPanel').style.display = 'block';
+      document.getElementById('overlay').style.display = 'block';
+    }
+
+    function renderSpawnPokemonList(table) {
+      const container = document.getElementById('spawnPokemonList');
+      container.innerHTML = '';
+      table.forEach((p, i) => {
+        const row = document.createElement('div');
+        row.style.cssText = 'display:grid;grid-template-columns:1fr 60px 60px 60px 32px;gap:4px;margin-bottom:6px;align-items:center;';
+        row.innerHTML = `
+          <input type="text" placeholder="speciesId e.g. pidgey" value="${p.speciesId || ''}"
+            style="font-family:monospace;font-size:13px;padding:3px 6px;background:#0f3460;color:#eee;border:1px solid #555;"
+            onchange="updateSpawnPokemon(${i},'speciesId',this.value)">
+          <input type="number" placeholder="minLv" value="${p.minLevel ?? 2}" min="1" max="100"
+            style="font-family:monospace;font-size:13px;padding:3px 6px;background:#0f3460;color:#eee;border:1px solid #555;"
+            onchange="updateSpawnPokemon(${i},'minLevel',+this.value)">
+          <input type="number" placeholder="maxLv" value="${p.maxLevel ?? 4}" min="1" max="100"
+            style="font-family:monospace;font-size:13px;padding:3px 6px;background:#0f3460;color:#eee;border:1px solid #555;"
+            onchange="updateSpawnPokemon(${i},'maxLevel',+this.value)">
+          <input type="number" placeholder="wt" value="${p.weight ?? 50}" min="1"
+            style="font-family:monospace;font-size:13px;padding:3px 6px;background:#0f3460;color:#eee;border:1px solid #555;"
+            onchange="updateSpawnPokemon(${i},'weight',+this.value)">
+          <button onclick="removeSpawnPokemon(${i})"
+            style="font-family:monospace;font-size:12px;padding:2px 4px;background:#e94560;color:#fff;border:1px solid #e94560;cursor:pointer;">✕</button>
+        `;
+        container.appendChild(row);
+      });
+
+      // Column headers if there are entries
+      if (table.length > 0) {
+        const header = document.createElement('div');
+        header.style.cssText = 'display:grid;grid-template-columns:1fr 60px 60px 60px 32px;gap:4px;margin-bottom:2px;';
+        header.innerHTML = `
+          <span style="font-size:11px;color:#888;">Species ID</span>
+          <span style="font-size:11px;color:#888;">Min Lv</span>
+          <span style="font-size:11px;color:#888;">Max Lv</span>
+          <span style="font-size:11px;color:#888;">Weight</span>
+          <span></span>
+        `;
+        container.insertBefore(header, container.firstChild);
+      }
+    }
+
+    function updateSpawnPokemon(i, field, value) {
+      if (editingSpawnIdx < 0) return;
+      spawns[editingSpawnIdx].pokemon[i][field] = value;
+    }
+
+    function addSpawnPokemon() {
+      if (editingSpawnIdx < 0) return;
+      spawns[editingSpawnIdx].pokemon.push({ speciesId: '', minLevel: 2, maxLevel: 4, weight: 50 });
+      renderSpawnPokemonList(spawns[editingSpawnIdx].pokemon);
+    }
+
+    function removeSpawnPokemon(i) {
+      if (editingSpawnIdx < 0) return;
+      spawns[editingSpawnIdx].pokemon.splice(i, 1);
+      renderSpawnPokemonList(spawns[editingSpawnIdx].pokemon);
+    }
+
+    function saveSpawn() {
+      if (editingSpawnIdx < 0) return;
+      const s = spawns[editingSpawnIdx];
+      s.encounterRate = parseFloat(document.getElementById('spRate').value) || 0.15;
+      // Clean out empty species entries
+      s.pokemon = s.pokemon.filter(p => p.speciesId && p.speciesId.trim() !== '');
+      // Remember this config for drag-painting new tiles
+      lastSpawnConfig = {
+        encounterRate: s.encounterRate,
+        pokemon: s.pokemon.map(p => ({ ...p })),
+      };
+      document.getElementById('info').textContent =
+        `Spawn at (${s.x}, ${s.y}) — ${Math.round(s.encounterRate * 100)}% rate, ${s.pokemon.length} Pokémon. Drag to paint more tiles with same config.`;
+      closeAllPanels();
+    }
+
+    function deleteSpawn() {
+      if (editingSpawnIdx < 0) return;
+      const s = spawns[editingSpawnIdx];
+      spawns.splice(editingSpawnIdx, 1);
+      document.getElementById('info').textContent = `Spawn deleted at (${s.x}, ${s.y})`;
+      closeAllPanels();
+    }
+
+    function saveWarp() {
+      if (editingWarpIdx < 0) return;
+      warps[editingWarpIdx].destMap = document.getElementById('wpDestMap').value;
+      warps[editingWarpIdx].destX = parseInt(document.getElementById('wpDestX').value) || 0;
+      warps[editingWarpIdx].destY = parseInt(document.getElementById('wpDestY').value) || 0;
+      document.getElementById('info').textContent =
+        `Warp at (${warps[editingWarpIdx].x}, ${warps[editingWarpIdx].y}) → ${warps[editingWarpIdx].destMap} (${warps[editingWarpIdx].destX}, ${warps[editingWarpIdx].destY})`;
+      closeAllPanels();
+    }
+
+    function deleteWarp() {
+      if (editingWarpIdx < 0) return;
+      const w = warps[editingWarpIdx];
+      warps.splice(editingWarpIdx, 1);
+      document.getElementById('info').textContent = `Warp deleted at (${w.x}, ${w.y})`;
+      closeAllPanels();
+    }
+
+    // --- NPC panel ---
+
+    let editDialogEntries = [];
+    let editExtraTiles = [];
+
+    function openNpcPanel(idx) {
+      editingNpcIdx = idx;
+      const n = npcs[idx];
+      document.getElementById('npX').textContent = n.x;
+      document.getElementById('npY').textContent = n.y;
+      document.getElementById('npName').value = n.name || '';
+      document.getElementById('npType').value = n.type || 'npc';
+      document.getElementById('npSprite').value = n.sprite || 'npc_oak';
+      document.getElementById('npDir').value = n.dir || 'down';
+      document.getElementById('npShowFlag').value = n.showFlag || '';
+      document.getElementById('npHideFlag').value = n.hideFlag || '';
+      document.getElementById('npWalkOnFlag').value = n.walkOnFlag || '';
+      document.getElementById('npWalkToX').value = n.walkTo ? n.walkTo.x : '';
+      document.getElementById('npWalkToY').value = n.walkTo ? n.walkTo.y : '';
+      document.getElementById('npAutoTalk').checked = !!n.autoTalk;
+      document.getElementById('npRoam').checked = !!n.roam;
+      document.getElementById('npRoamRadius').value = n.roamRadius || 3;
+
+      // Extra tiles
+      editExtraTiles = (n.extraTiles || []).map(t => ({ x: t.x, y: t.y }));
+      renderExtraTilesList();
+
+      // Build dialog entries from dialogs array
+      if (n.dialogs && n.dialogs.length > 0) {
+        editDialogEntries = n.dialogs.map(d => ({
+          condition: d.condition || '',
+          script: d.script || linesToScript(d.lines || []),
+        }));
+      } else if (n.dialog && n.dialog.length > 0) {
+        editDialogEntries = [{ condition: '', script: linesToScript(n.dialog) }];
+      } else {
+        editDialogEntries = [];
+      }
+      renderDialogList();
+
+      document.getElementById('npcPanel').classList.add('visible');
+      document.getElementById('overlay').style.display = 'block';
+    }
+
+    // Build full NPC JSON for a single dialog entry
+    function buildNpcJsonForEntry(entryIdx) {
+      const n = npcs[editingNpcIdx];
+      const entry = editDialogEntries[entryIdx];
+      const wtX = document.getElementById('npWalkToX').value;
+      const wtY = document.getElementById('npWalkToY').value;
+      return {
+        x: n.x, y: n.y,
+        name: document.getElementById('npName').value.trim(),
+        sprite: document.getElementById('npSprite').value,
+        dir: document.getElementById('npDir').value,
+        type: document.getElementById('npType').value,
+        showFlag: document.getElementById('npShowFlag').value.trim(),
+        hideFlag: document.getElementById('npHideFlag').value.trim(),
+        walkOnFlag: document.getElementById('npWalkOnFlag').value.trim(),
+        walkTo: (wtX !== '' && wtY !== '') ? { x: parseInt(wtX), y: parseInt(wtY) } : null,
+        autoTalk: document.getElementById('npAutoTalk').checked,
+        roam: document.getElementById('npRoam').checked,
+        roamRadius: parseInt(document.getElementById('npRoamRadius').value) || 3,
+        dialogs: [{ condition: entry.condition || '', script: entry.script || '' }],
+      };
+    }
+
+    function updateEntryPreview(i) {
+      const preview = document.getElementById(`entryPreview_${i}`);
+      if (!preview) return;
+      try { preview.value = JSON.stringify(buildNpcJsonForEntry(i), null, 2); } catch(e) {}
+    }
+
+    function copyEntryPreview(i) {
+      updateEntryPreview(i);
+      const preview = document.getElementById(`entryPreview_${i}`);
+      if (!preview) return;
+      navigator.clipboard.writeText(preview.value).then(() => {
+        const btn = document.getElementById(`copyBtn_${i}`);
+        if (btn) { btn.textContent = '✓ Copied!'; setTimeout(() => btn.textContent = '⎘ Copy', 1500); }
+      });
+    }
+
+    function downloadDialogEntry(i) {
+      updateEntryPreview(i);
+      const npcData = buildNpcJsonForEntry(i);
+      const npcName = npcData.name || npcData.sprite || `npc_${npcData.x}_${npcData.y}`;
+      const condition = npcData.dialogs[0].condition || 'default';
+      const filename = (npcName + '_' + condition).toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '') + '.json';
+      const blob = new Blob([JSON.stringify(npcData, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = filename; a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function renderDialogList() {
+      const container = document.getElementById('dialogList');
+      container.innerHTML = '';
+      editDialogEntries.forEach((entry, i) => {
+        const div = document.createElement('div');
+        div.className = 'dialog-entry';
+        div.innerHTML = `
+          <div class="entry-header">
+            <span>#${i + 1}</span>
+            <div class="entry-actions">
+              ${i > 0 ? `<button onclick="moveDialogEntry(${i}, -1)" title="Move up">&#9650;</button>` : ''}
+              ${i < editDialogEntries.length - 1 ? `<button onclick="moveDialogEntry(${i}, 1)" title="Move down">&#9660;</button>` : ''}
+              <button onclick="removeDialogEntry(${i})" title="Delete" style="color:#e94560;">&#10005;</button>
+            </div>
+          </div>
+          <label>Condition (flag name, empty = default)</label>
+          <input type="text" data-field="condition" data-idx="${i}" value="${entry.condition}" placeholder="e.g. talked_to_oak">
+          <label style="color:#e9c845;">Script <span style="color:#888;font-size:11px;">— one command per line</span></label>
+          <div style="font-size:10px;color:#888;margin-bottom:4px;line-height:1.5;">
+            <b style="color:#aaa;">say:</b> text &nbsp;|&nbsp;
+            <b style="color:#aaa;">movenpc:</b> x y &nbsp;|&nbsp;
+            <b style="color:#aaa;">moveplayer:</b> x y &nbsp;|&nbsp;
+            <b style="color:#aaa;">teleportplayer:</b> x y &nbsp;|&nbsp;
+            <b style="color:#aaa;">teleportmap:</b> map_name x y<br>
+            <b style="color:#aaa;">setflag:</b> name &nbsp;|&nbsp;
+            <b style="color:#aaa;">clearflag:</b> name &nbsp;|&nbsp;
+            <b style="color:#aaa;">checkflag:</b> name &nbsp;|&nbsp;
+            <b style="color:#aaa;">hidenpc</b><br>
+            <b style="color:#aaa;">giveitem:</b> id count &nbsp;|&nbsp;
+            <b style="color:#aaa;">checkitem:</b> id count &nbsp;|&nbsp;
+            <b style="color:#aaa;">removeitem:</b> id count<br>
+            <b style="color:#aaa;">givemoney:</b> amount &nbsp;|&nbsp;
+            <b style="color:#aaa;">reducemoney:</b> amount &nbsp;|&nbsp;
+            <b style="color:#aaa;">checkmoney:</b> amount &nbsp;|&nbsp;
+            <b style="color:#aaa;">wait:</b> ms<br>
+            <b style="color:#e9c845;">showimage:</b> pokemon/bulbasaur &nbsp;|&nbsp;
+            <b style="color:#e9c845;">hideimage</b> &nbsp;|&nbsp;
+            <b style="color:#e9c845;">choice:</b> question text
+          </div>
+          <textarea data-field="script" data-idx="${i}" style="height:140px;font-size:13px;line-height:1.6;" placeholder="say: Hello, {player}!&#10;say: Welcome to Pallet Town!&#10;setflag: talked_to_oak&#10;giveitem: potion 2&#10;say: Here, take these potions!&#10;# --- Pokemon choice example ---&#10;showimage: pokemon/bulbasaur&#10;say: Bulbasaur, the Seed Pokemon!&#10;choice: Do you want Bulbasaur?&#10;setflag: chose_bulbasaur&#10;say: Great choice!">${entry.script || ''}</textarea>
+          <div style="margin-top:6px;">
+            <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+              <span style="font-size:11px;color:#888;">JSON Preview</span>
+              <button id="copyBtn_${i}" onclick="copyEntryPreview(${i})" style="font-size:11px;padding:2px 8px;background:#1a5276;border:1px solid #555;color:#eee;cursor:pointer;">⎘ Copy</button>
+              <button onclick="downloadDialogEntry(${i})" style="font-size:11px;padding:2px 8px;background:#2e7d32;border:1px solid #2e7d32;color:#eee;cursor:pointer;">⬇ Download</button>
+            </div>
+            <textarea id="entryPreview_${i}" readonly style="height:120px;font-size:11px;line-height:1.4;color:#aaa;background:#060e1a;border:1px solid #333;resize:vertical;"></textarea>
+          </div>
+        `;
+        container.appendChild(div);
+        setTimeout(() => updateEntryPreview(i), 0);
+      });
+
+      // Sync inputs on change and refresh preview live
+      container.querySelectorAll('input[data-field], textarea[data-field]').forEach(el => {
+        el.addEventListener('input', () => {
+          const idx = parseInt(el.dataset.idx);
+          const field = el.dataset.field;
+          editDialogEntries[idx][field] = el.value;
+          updateEntryPreview(idx);
+        });
+      });
+    }
+
+    function addDialogEntry() {
+      editDialogEntries.push({ condition: '', script: '' });
+      renderDialogList();
+    }
+
+    function removeDialogEntry(idx) {
+      editDialogEntries.splice(idx, 1);
+      renderDialogList();
+    }
+
+    function moveDialogEntry(idx, dir) {
+      const target = idx + dir;
+      if (target < 0 || target >= editDialogEntries.length) return;
+      [editDialogEntries[idx], editDialogEntries[target]] = [editDialogEntries[target], editDialogEntries[idx]];
+      renderDialogList();
+    }
+
+    function renderExtraTilesList() {
+      const container = document.getElementById('extraTilesList');
+      container.innerHTML = '';
+      editExtraTiles.forEach((tile, i) => {
+        const row = document.createElement('div');
+        row.className = 'extra-tile-row';
+        row.innerHTML = `
+          <span>X</span>
+          <input type="number" min="0" value="${tile.x}" data-et-idx="${i}" data-et-field="x">
+          <span>Y</span>
+          <input type="number" min="0" value="${tile.y}" data-et-idx="${i}" data-et-field="y">
+          <button onclick="removeExtraTile(${i})">✕</button>
+        `;
+        container.appendChild(row);
+      });
+      container.querySelectorAll('input').forEach(el => {
+        el.addEventListener('input', () => {
+          const idx = parseInt(el.dataset.etIdx);
+          const field = el.dataset.etField;
+          editExtraTiles[idx][field] = parseInt(el.value) || 0;
+        });
+      });
+    }
+
+    function addExtraTile() {
+      const n = npcs[editingNpcIdx];
+      // Default to one tile right of primary
+      editExtraTiles.push({ x: (n ? n.x + 1 : 0), y: (n ? n.y : 0) });
+      renderExtraTilesList();
+    }
+
+    function removeExtraTile(idx) {
+      editExtraTiles.splice(idx, 1);
+      renderExtraTilesList();
+    }
+
+    // Convert legacy lines array to script string
+    function linesToScript(lines) {
+      if (!lines || !lines.length) return '';
+      return lines.map(l => `say: ${l}`).join('\n');
+    }
+
+    // Extract say: lines from script for legacy dialog field
+    function scriptToLines(script) {
+      if (!script) return [];
+      return script.split('\n')
+        .map(l => l.trim())
+        .filter(l => l.toLowerCase().startsWith('say:'))
+        .map(l => l.slice(4).trim());
+    }
+
+    function saveNpc() {
+      if (editingNpcIdx < 0) return;
+      const n = npcs[editingNpcIdx];
+      n.name = document.getElementById('npName').value.trim();
+      n.type = document.getElementById('npType').value;
+      n.sprite = document.getElementById('npSprite').value;
+      n.dir = document.getElementById('npDir').value;
+      n.showFlag = document.getElementById('npShowFlag').value.trim();
+      n.hideFlag = document.getElementById('npHideFlag').value.trim();
+      n.walkOnFlag = document.getElementById('npWalkOnFlag').value.trim();
+      n.autoTalk = document.getElementById('npAutoTalk').checked;
+      n.roam = document.getElementById('npRoam').checked;
+      n.roamRadius = parseInt(document.getElementById('npRoamRadius').value) || 3;
+      const wtX = document.getElementById('npWalkToX').value;
+      const wtY = document.getElementById('npWalkToY').value;
+      n.walkTo = (wtX !== '' && wtY !== '') ? { x: parseInt(wtX), y: parseInt(wtY) } : null;
+
+      // Extra tiles
+      n.extraTiles = editExtraTiles.filter(t => t.x !== n.x || t.y !== n.y); // exclude primary tile if added by mistake
+
+      // Build dialogs array from entries
+      n.dialogs = editDialogEntries
+        .filter(e => (e.script || '').trim() !== '')
+        .map(e => ({
+          condition: e.condition.trim(),
+          script: e.script.trim(),
+          // Keep legacy lines for backward compat (extracted say: commands)
+          lines: scriptToLines(e.script),
+        }));
+
+      // Keep legacy dialog for backward compat
+      const defaultEntry = n.dialogs.find(d => !d.condition);
+      n.dialog = defaultEntry ? defaultEntry.lines : (n.dialogs[0]?.lines || []);
+
+      const totalLines = n.dialogs.reduce((sum, d) => sum + d.lines.length, 0);
+      document.getElementById('info').textContent =
+        `NPC "${n.name}" at (${n.x}, ${n.y}) — ${n.dialogs.length} script entries, ${totalLines} say lines`;
+      closeAllPanels();
+    }
+
+    function duplicateNpc() {
+      if (editingNpcIdx < 0) return;
+      // Save current panel state first
+      saveNpc();
+      const src = npcs[editingNpcIdx];
+      const clone = {
+        x: src.x + 1,
+        y: src.y,
+        name: src.name,
+        sprite: src.sprite,
+        dir: src.dir,
+        type: src.type || 'npc',
+        showFlag: src.showFlag || '',
+        hideFlag: src.hideFlag || '',
+        walkOnFlag: src.walkOnFlag || '',
+        walkTo: src.walkTo ? { ...src.walkTo } : null,
+        autoTalk: !!src.autoTalk,
+        roam: !!src.roam,
+        roamRadius: src.roamRadius || 3,
+        extraTiles: [],  // don't copy extra tiles — duplicate gets its own position
+        dialog: [...(src.dialog || [])],
+        dialogs: (src.dialogs || []).map(d => ({
+          condition: d.condition || '',
+          script: d.script || '',
+          lines: [...(d.lines || [])],
+        })),
+      };
+      npcs.push(clone);
+      document.getElementById('info').textContent =
+        `Duplicated NPC "${src.name}" to (${clone.x}, ${clone.y})`;
+      closeAllPanels();
+      openNpcPanel(npcs.length - 1);
+    }
+
+    function deleteNpc() {
+      if (editingNpcIdx < 0) return;
+      const n = npcs[editingNpcIdx];
+      npcs.splice(editingNpcIdx, 1);
+      document.getElementById('info').textContent = `NPC deleted at (${n.x}, ${n.y})`;
+      closeAllPanels();
+    }
+
+    // --- Save ---
+
+    async function saveAll() {
+      const collLayer = currentMap.layers.find(l => l.name === 'collision');
+      collLayer.data = [...collisionData];
+      currentMap._warps = warps.map(w => ({ ...w }));
+      // Remove _npcs and _spawns from map data (now stored separately)
+      delete currentMap._npcs;
+      delete currentMap._spawns;
+
+      const npcData = npcs.map(n => ({
+        ...n,
+        dialog: [...(n.dialog || [])],
+        dialogs: (n.dialogs || []).map(d => ({
+          condition: d.condition || '',
+          script: d.script || '',
+          lines: [...(d.lines || [])],
+        })),
+        walkTo: n.walkTo ? { ...n.walkTo } : undefined,
+        extraTiles: (n.extraTiles || []).map(t => ({ ...t })),
+      }));
+
+      const spawnData = spawns.map(s => ({
+        x: s.x, y: s.y,
+        encounterRate: s.encounterRate,
+        pokemon: s.pokemon.map(p => ({ ...p })),
+      }));
+
+      try {
+        const resp = await fetch('/api/save-map', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ mapKey, data: currentMap, npcs: npcData, spawns: spawnData }),
+        });
+        const result = await resp.json();
+        if (result.ok) {
+          document.getElementById('info').textContent =
+            `Saved ${mapKey}.json (${warps.length} warps, ${npcs.length} NPCs, ${spawns.length} spawn tiles) — live in game now!`;
+        } else {
+          document.getElementById('info').textContent = `Error: ${result.error}`;
+        }
+      } catch (err) {
+        document.getElementById('info').textContent = `Save failed: ${err.message}`;
+      }
+    }
+
+    // --- Download (offline fallback) ---
+
+    function downloadJSON(filename, data) {
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = filename; a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function npcToFilename(npc) {
+      const raw = npc.name || npc.sprite || `npc_${npc.x}_${npc.y}`;
+      return raw.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '') + '.json';
+    }
+
+    function downloadAll() {
+      if (!currentMap) {
+        document.getElementById('info').textContent = 'No map loaded.';
+        return;
+      }
+      const mapSnapshot = JSON.parse(JSON.stringify(currentMap));
+      const collLayer = mapSnapshot.layers.find(l => l.name === 'collision');
+      collLayer.data = [...collisionData];
+      mapSnapshot._warps = warps.map(w => ({ ...w }));
+      // Spawns and NPCs stored in separate folders — remove from map JSON
+      delete mapSnapshot._npcs;
+      delete mapSnapshot._spawns;
+      downloadJSON(`${mapKey}.json`, mapSnapshot);
+
+      // Download NPC files → assets/npcs/<mapKey>/
+      npcs.forEach(n => {
+        const npcData = {
+          x: n.x, y: n.y,
+          name: n.name || '',
+          sprite: n.sprite || '',
+          dir: n.dir || 'down',
+          type: n.type || 'npc',
+          showFlag: n.showFlag || '',
+          hideFlag: n.hideFlag || '',
+          walkOnFlag: n.walkOnFlag || '',
+          walkTo: n.walkTo ? { ...n.walkTo } : null,
+          autoTalk: !!n.autoTalk,
+          roam: !!n.roam,
+          roamRadius: n.roamRadius || 3,
+          extraTiles: (n.extraTiles || []).map(t => ({ ...t })),
+          dialogs: (n.dialogs || []).map(d => ({
+            condition: d.condition || '',
+            script: d.script || '',
+          })),
+        };
+        downloadJSON(npcToFilename(n), npcData);
+      });
+
+      // Download spawn files → assets/spawns/<mapKey>/
+      // One file per tile: spawn_X_Y.json
+      spawns.forEach(s => {
+        const spawnData = {
+          x: s.x, y: s.y,
+          encounterRate: s.encounterRate,
+          pokemon: s.pokemon.map(p => ({ ...p })),
+        };
+        downloadJSON(`spawn_${s.x}_${s.y}.json`, spawnData);
+      });
+
+      document.getElementById('info').textContent =
+        `Downloaded ${mapKey}.json + ${npcs.length} NPC file(s) + ${spawns.length} spawn file(s). ` +
+        `Place NPCs in assets/npcs/${mapKey}/ and spawns in assets/spawns/${mapKey}/.`;
+    }
+
+    // --- Flag Debug ---
+
+    const FLAG_STORAGE_KEY = 'pokemon-mmo-flags';
+
+    function readFlags() {
+      try {
+        const raw = localStorage.getItem(FLAG_STORAGE_KEY);
+        return raw ? JSON.parse(raw) : {};
+      } catch { return {}; }
+    }
+
+    function writeFlags(flags) {
+      localStorage.setItem(FLAG_STORAGE_KEY, JSON.stringify(flags));
+    }
+
+    function openFlagPanel() {
+      renderFlagPanel();
+      document.getElementById('flagPanel').style.display = 'block';
+      document.getElementById('overlay').style.display = 'block';
+    }
+
+    function closeFlagPanel() {
+      document.getElementById('flagPanel').style.display = 'none';
+      document.getElementById('overlay').style.display = 'none';
+    }
+
+    function renderFlagPanel() {
+      const flags = readFlags();
+      const keys = Object.keys(flags).sort();
+      const container = document.getElementById('flagContent');
+
+      if (keys.length === 0) {
+        container.innerHTML = '<div class="flag-empty">No flags set. Play the game and interact with NPCs to set flags.</div>';
+        return;
+      }
+
+      // Group by prefix (everything before the last underscore-separated segment, or full name)
+      const groups = {};
+      for (const key of keys) {
+        const parts = key.split('_');
+        const prefix = parts.length > 1 ? parts.slice(0, -1).join('_') : key;
+        if (!groups[prefix]) groups[prefix] = [];
+        groups[prefix].push(key);
+      }
+
+      let html = '';
+      for (const [prefix, flagKeys] of Object.entries(groups).sort((a, b) => a[0].localeCompare(b[0]))) {
+        html += `<div class="flag-group">`;
+        html += `<div class="flag-group-header">`;
+        html += `<span>${prefix}  (${flagKeys.length} flag${flagKeys.length > 1 ? 's' : ''})</span>`;
+        html += `<button onclick="clearFlagGroup('${prefix}')">Clear Group</button>`;
+        html += `</div>`;
+        for (const key of flagKeys) {
+          html += `<div class="flag-item">`;
+          html += `<span>${key}</span>`;
+          html += `<button onclick="clearSingleFlag('${key}')">Clear</button>`;
+          html += `</div>`;
+        }
+        html += `</div>`;
+      }
+
+      container.innerHTML = html;
+    }
+
+    function clearSingleFlag(name) {
+      const flags = readFlags();
+      delete flags[name];
+      writeFlags(flags);
+      renderFlagPanel();
+      document.getElementById('info').textContent = `Cleared flag: ${name}`;
+    }
+
+    function clearFlagGroup(prefix) {
+      const flags = readFlags();
+      const toDelete = Object.keys(flags).filter(k => {
+        const parts = k.split('_');
+        const p = parts.length > 1 ? parts.slice(0, -1).join('_') : k;
+        return p === prefix;
+      });
+      for (const k of toDelete) delete flags[k];
+      writeFlags(flags);
+      renderFlagPanel();
+      document.getElementById('info').textContent = `Cleared ${toDelete.length} flag(s) in group: ${prefix}`;
+    }
+
+    function clearAllFlags() {
+      if (!confirm('Clear ALL game flags? This resets all quest progress.')) return;
+      localStorage.removeItem(FLAG_STORAGE_KEY);
+      renderFlagPanel();
+      document.getElementById('info').textContent = 'All flags cleared!';
+    }
+
+    function addFlag() {
+      const input = document.getElementById('flagAddInput');
+      const name = input.value.trim();
+      if (!name) return;
+      const flags = readFlags();
+      flags[name] = true;
+      writeFlags(flags);
+      input.value = '';
+      renderFlagPanel();
+      document.getElementById('info').textContent = `Set flag: ${name}`;
+    }
+
+    document.getElementById('flagAddInput').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') addFlag();
+    });
+
+    // Initial load — load sprite list first, then map
+    (async () => {
+      try {
+        await loadNpcSprites();
+        await loadMap();
+      } catch (err) {
+        document.getElementById('info').textContent = `Startup error: ${err.message}`;
+        console.error(err);
+      }
+    })();
+  </script>
+</body>
+</html>

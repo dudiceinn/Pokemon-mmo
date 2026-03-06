@@ -1,0 +1,38 @@
+{
+  "x": 9,
+  "y": 4,
+  "name": "",
+  "sprite": "POKEBALL",
+  "dir": "down",
+  "type": "npc",
+  "showFlag": "oak_escort_done",
+  "hideFlag": "pokemon_chosen",
+  "walkOnFlag": "",
+  "autoTalk": false,
+  "roam": false,
+  "roamRadius": 3,
+  "dialogs": [
+    {
+      "condition": "",
+      "script": "showimage: charmander\nsay: Charmander!\nsay: The Lizard Pokemon. A Fire type.\nsay: Its flame burns bright in battle!\nchoice: Do you want to choose Charmander?\nsetflag: starter_pending_charmander\nclearflag: starter_pending_bulbasaur\nclearflag: starter_pending_squirtle\nsay: Great choice! Talk to Prof. Oak to confirm!",
+      "lines": [
+        "Charmander!",
+        "The Lizard Pokemon. A Fire type.",
+        "Its flame burns bright in battle!",
+        "Great choice! Talk to Prof. Oak to confirm!"
+      ]
+    },
+    {
+      "condition": "starter_pending_charmander",
+      "script": "showimage: charmander\nsay: You already chose Charmander!\nsay: Talk to Prof. Oak to confirm your choice!",
+      "lines": []
+    }
+  ],
+  "dialog": [
+    "Charmander!",
+    "The Lizard Pokemon. A Fire type.",
+    "Its flame burns bright in battle!",
+    "Great choice! Talk to Prof. Oak to confirm!"
+  ],
+  "extraTiles": []
+}

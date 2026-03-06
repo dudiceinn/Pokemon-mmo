@@ -1,0 +1,146 @@
+{
+  "potion": {
+    "name": "Potion",
+    "description": "Restores 20 HP to one Pokemon.",
+    "icon": "/items/potion.png",
+    "category": "medicine",
+    "stackable": true,
+    "usable": true
+  },
+  "super_potion": {
+    "name": "Super Potion",
+    "description": "Restores 50 HP to one Pokemon.",
+    "icon": "/items/superpotion.png",
+    "category": "medicine",
+    "stackable": true,
+    "usable": true
+  },
+  "hyper_potion": {
+    "name": "Hyper Potion",
+    "description": "Restores 200 HP to one Pokemon.",
+    "icon": "/items/hyperpotion.png",
+    "category": "medicine",
+    "stackable": true,
+    "usable": true
+  },
+  "max_potion": {
+    "name": "Max Potion",
+    "description": "Fully restores HP to one Pokemon.",
+    "icon": "/items/maxpotion.png",
+    "category": "medicine",
+    "stackable": true,
+    "usable": true
+  },
+  "antidote": {
+    "name": "Antidote",
+    "description": "Cures poison from one Pokemon.",
+    "icon": "/items/antidote.png",
+    "category": "medicine",
+    "stackable": true,
+    "usable": true
+  },
+  "burn_heal": {
+    "name": "Burn Heal",
+    "description": "Cures a burn from one Pokemon.",
+    "icon": "/items/burnheal.png",
+    "category": "medicine",
+    "stackable": true,
+    "usable": true
+  },
+  "full_heal": {
+    "name": "Full Heal",
+    "description": "Cures all status conditions of one Pokemon.",
+    "icon": "/items/fullheal.png",
+    "category": "medicine",
+    "stackable": true,
+    "usable": true
+  },
+  "revive": {
+    "name": "Revive",
+    "description": "Revives a fainted Pokemon with half its HP.",
+    "icon": "/items/revive.png",
+    "category": "medicine",
+    "stackable": true,
+    "usable": true
+  },
+  "pokeball": {
+    "name": "Poke Ball",
+    "description": "A device for catching wild Pokemon.",
+    "icon": "/items/pokeball.png",
+    "category": "pokeball",
+    "stackable": true,
+    "usable": true
+  },
+  "great_ball": {
+    "name": "Great Ball",
+    "description": "A high-performance Ball with a higher catch rate.",
+    "icon": "/items/greatball.png",
+    "category": "pokeball",
+    "stackable": true,
+    "usable": true
+  },
+  "ultra_ball": {
+    "name": "Ultra Ball",
+    "description": "An ultra-high performance Ball with a very high catch rate.",
+    "icon": "/items/ultraball.png",
+    "category": "pokeball",
+    "stackable": true,
+    "usable": true
+  },
+  "master_ball": {
+    "name": "Master Ball",
+    "description": "The best Ball. Catches any wild Pokemon without fail.",
+    "icon": "/items/masterball.png",
+    "category": "pokeball",
+    "stackable": true,
+    "usable": true
+  },
+  "rare_candy": {
+    "name": "Rare Candy",
+    "description": "Raises the level of one Pokemon by 1.",
+    "icon": "/items/rarecandy.png",
+    "category": "medicine",
+    "stackable": true,
+    "usable": true
+  },
+  "repel": {
+    "name": "Repel",
+    "description": "Prevents weak wild Pokemon from appearing for 100 steps.",
+    "icon": "/items/repel.png",
+    "category": "battle",
+    "stackable": true,
+    "usable": true
+  },
+  "super_repel": {
+    "name": "Super Repel",
+    "description": "Prevents weak wild Pokemon from appearing for 200 steps.",
+    "icon": "/items/superrepel.png",
+    "category": "battle",
+    "stackable": true,
+    "usable": true
+  },
+  "escape_rope": {
+    "name": "Escape Rope",
+    "description": "Warps back to the entrance of a dungeon.",
+    "icon": "/items/escaperope.png",
+    "category": "battle",
+    "stackable": true,
+    "usable": true
+  },
+  "town_map": {
+    "name": "Town Map",
+    "description": "Shows the layout of the region.",
+    "icon": "/items/townmap.png",
+    "category": "key",
+    "stackable": false,
+    "usable": true
+  },
+  "pokedex": {
+    "name": "Pokedex",
+    "description": "A high-tech encyclopedia that records data on all Pokemon.",
+    "icon": "/items/pokedex.png",
+    "category": "key",
+    "stackable": false,
+    "usable": true
+  }
+}

@@ -11,7 +11,7 @@ export class NameLabel {
   update(sprite, camera) {
     // Sprite top-center in world pixels
     const worldX = sprite.x;
-    const worldY = sprite.y - sprite.height * sprite.originY + 10;
+    const worldY = sprite.y - sprite.height * sprite.originY + 30;
 
     // World to camera-local (in game pixels)
     const camX = worldX - camera.scrollX;

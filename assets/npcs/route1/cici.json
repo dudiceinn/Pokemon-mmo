@@ -1,0 +1,41 @@
+{
+  "x": 2,
+  "y": 1,
+  "name": "Cici",
+  "sprite": "NPC 02",
+  "dir": "right",
+  "type": "npc",
+  "showFlag": "",
+  "hideFlag": "",
+  "walkOnFlag": "",
+  "autoTalk": false,
+  "roam": false,
+  "roamRadius": 3,
+  "extraTiles": [],
+  "dialogs": [
+    {
+      "condition": "quest1_complete",
+      "script": "say: Hi {player}! Want to play?"
+    },
+    {
+      "condition": "quest1_daughter_found",
+      "script": "say: Daddy! You came!\nsay: This nice person told me you were coming!"
+    },
+    {
+      "condition": "quest1_found_cici",
+      "script": "say: Have you already told my dad?\nsay: Please hurry! I'm still waiting here..."
+    },
+    {
+      "condition": "quest1_refused_cici",
+      "script": "say: Oh come on...\nsay: You're a bad person!\nsay: Fine... will you at least tell him now?\nchoice: Will you tell him I'm safe?\nclearflag: quest1_refused_cici\nsetflag: quest1_found_cici"
+    },
+    {
+      "condition": "quest1_find_daughter",
+      "script": "say: ...\nsay: I'm lost...\nsay: I can't find my way back home.\nsay: Can you tell my dad I'm okay?\nsetflag: quest1_refused_cici\nchoice: Will you tell him I'm safe?\nclearflag: quest1_refused_cici\nsetflag: quest1_found_cici"
+    },
+    {
+      "condition": "",
+      "script": "say: ..."
+    }
+  ]
+}

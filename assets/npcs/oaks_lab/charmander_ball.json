@@ -1,0 +1,28 @@
+{
+  "x": 9,
+  "y": 4,
+  "name": "",
+  "sprite": "POKEBALL",
+  "dir": "down",
+  "type": "npc",
+  "showFlag": "oak_escort_done",
+  "hideFlag": "pokemon_chosen",
+  "walkOnFlag": "",
+  "autoTalk": false,
+  "roam": false,
+  "roamRadius": 3,
+  "extraTiles": [],
+  "dialogs": [
+    {
+      "condition": "pokemon_chosen",
+      "script": "say: You already have a starter, {player}!\nsay: Take good care of it!",
+      "lines": []
+    },
+    {
+      "condition": "",
+      "script": "showimage: pokemon/charmander\nsay: Charmander!\nsay: The Lizard Pokemon. A Fire type.\nsay: Its flame burns bright in battle!\nchoice: Do you want to choose Charmander?\nhideimage\ngivepokemon: charmander 5\nsetflag: pokemon_chosen\nsetflag: starter_is_charmander\nclearflag: starter_is_bulbasaur\nclearflag: starter_is_squirtle\nsay: Charmander was added to your party!\nsay: Take good care of it, {player}!\nhidenpc",
+      "lines": []
+    }
+  ],
+  "dialog": []
+}

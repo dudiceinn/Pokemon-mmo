@@ -1,17 +1,32 @@
 import Phaser from 'phaser';
 import { TILE_SIZE, MOVE_DURATION, DIR, DIR_VECTOR } from '@pokemon-mmo/shared';
 
-// Spritesheet frame mapping (12 frames total):
-// 0-2: down (stand, walk1, walk2)
-// 3-5: up (stand, walk1, walk2)
-// 6-8: left (stand, walk1, walk2)
-// 9-11: right (stand, walk1, walk2)
+// Spritesheet frame mapping (16 frames total):
+// Row 0 (frames 0-3): Down (South)
+// Row 1 (frames 4-7): Left (West)
+// Row 2 (frames 8-11): Right (East)
+// Row 3 (frames 12-15): Up (North)
 const DIR_FRAMES = {
-  [DIR.DOWN]:  { stand: 0, walk: [1, 0, 2, 0] },
-  [DIR.UP]:    { stand: 3, walk: [4, 3, 5, 3] },
-  [DIR.LEFT]:  { stand: 6, walk: [7, 6, 8, 6] },
-  [DIR.RIGHT]: { stand: 9, walk: [10, 9, 11, 9] },
+  [DIR.DOWN]:  { 
+    stand: 0,
+    walk: [1, 0, 2, 0, 3, 0]
+  },
+  [DIR.LEFT]:  { 
+    stand: 4,
+    walk: [5, 4, 6, 4, 7, 4]
+  },
+  [DIR.RIGHT]: { 
+    stand: 8,
+    walk: [9, 8, 10, 8, 11, 8]
+  },
+  [DIR.UP]:    { 
+    stand: 12,
+    walk: [13, 12, 14, 12, 15, 12]
+  },
 };
+
+// Scale factor to make 32x48 sprites appear as 16x32
+const SPRITE_SCALE = 0.5; // 50% of original size
 
 export class Player {
   constructor(scene, x, y, spriteKey = 'player') {
@@ -23,28 +38,41 @@ export class Player {
     this.onMoveComplete = null;
     this.spriteKey = spriteKey;
 
-    // Sprite is 16x32, anchored at bottom-center so feet align with tile
+    // Create sprite at half scale to match original 16x32 size
     this.sprite = scene.add.sprite(
       x * TILE_SIZE + TILE_SIZE / 2,
       y * TILE_SIZE + TILE_SIZE,
       spriteKey,
       DIR_FRAMES[DIR.DOWN].stand
     );
-    this.sprite.setOrigin(0.5, 1);
+    this.sprite.setOrigin(0.5, 1); // Anchor at bottom center
     this.sprite.setDepth(10);
+    
+    // Apply scale to make it appear as 16x32
+    this.sprite.setScale(SPRITE_SCALE);
 
     this.createAnimations();
   }
 
   createAnimations() {
     const key = this.spriteKey;
+    
+    // Delete existing animations if they exist (to avoid conflicts)
+    for (const dir of [DIR.DOWN, DIR.LEFT, DIR.RIGHT, DIR.UP]) {
+      const animKey = `${key}_walk_${dir}`;
+      if (this.scene.anims.exists(animKey)) {
+        this.scene.anims.remove(animKey);
+      }
+    }
+
+    // Create new animations for each direction
     for (const [dir, mapping] of Object.entries(DIR_FRAMES)) {
       const animKey = `${key}_walk_${dir}`;
-      if (this.scene.anims.exists(animKey)) continue;
+      
       this.scene.anims.create({
         key: animKey,
         frames: mapping.walk.map(f => ({ key, frame: f })),
-        frameRate: 1000 / MOVE_DURATION * mapping.walk.length,
+        frameRate: 12,
         repeat: 0,
       });
     }
@@ -83,7 +111,7 @@ export class Player {
     // Play walk animation
     this.sprite.play(`${this.spriteKey}_walk_${dir}`);
 
-    // Tween to target tile
+    // Tween to target tile (pixel positions are still based on TILE_SIZE)
     const targetX = newX * TILE_SIZE + TILE_SIZE / 2;
     const targetY = newY * TILE_SIZE + TILE_SIZE;
 
@@ -106,6 +134,8 @@ export class Player {
   }
 
   walkToTile(targetX, targetY, onComplete) {
+    if (this.isMoving) return;
+    
     this.isMoving = true;
     const steps = [];
 
@@ -138,22 +168,26 @@ export class Player {
       const newX = this.tileX + vec.x;
       const newY = this.tileY + vec.y;
 
+      // Play walk animation
       this.sprite.play(`${this.spriteKey}_walk_${dir}`);
 
-      const pixelX = newX * TILE_SIZE + TILE_SIZE / 2;
-      const pixelY = newY * TILE_SIZE + TILE_SIZE;
+      const targetX = newX * TILE_SIZE + TILE_SIZE / 2;
+      const targetY = newY * TILE_SIZE + TILE_SIZE;
 
       this.scene.tweens.add({
         targets: this.sprite,
-        x: pixelX,
-        y: pixelY,
+        x: targetX,
+        y: targetY,
         duration: MOVE_DURATION,
         ease: 'Linear',
         onComplete: () => {
           this.tileX = newX;
           this.tileY = newY;
-          this.sprite.setFrame(DIR_FRAMES[dir].stand);
           stepIdx++;
+          
+          // Set to standing frame after step
+          this.sprite.setFrame(DIR_FRAMES[dir].stand);
+          
           doStep();
         },
       });
@@ -168,7 +202,53 @@ export class Player {
     this.sprite.setPosition(this.pixelX, this.pixelY);
   }
 
+  /**
+   * Called by OverworldScene when the player steps down onto a ledge tile.
+   * Adds a small arc bounce on top of the normal movement tween.
+   */
+  startLedgeHop() {
+    // The move tween is already running — add a Y arc over it using a second tween
+    const startY = this.sprite.y;
+    const hopHeight = TILE_SIZE * 1.2; // pixels to arc upward at peak
+
+    this.scene.tweens.add({
+      targets: this.sprite,
+      y: startY - hopHeight,
+      duration: MOVE_DURATION * 0.45,
+      ease: 'Sine.easeOut',
+      yoyo: true,        // bounces back down automatically
+      onComplete: () => {
+        // Snap to correct pixel position in case of float drift
+        this.sprite.y = this.tileY * TILE_SIZE + TILE_SIZE;
+      },
+    });
+  }
+
+  /**
+   * Crop the sprite so only the top portion shows.
+   * Used when the player walks behind a roof/overhang (COLL_TOPBLOCK tile).
+   * Pass null to restore full sprite.
+   *
+   * The sprite sheet is 32×48 at full res, scaled to 0.5 → rendered as 16×24.
+   * We want to show only the top ~40% (the head), hiding the body.
+   */
+  setRoofCrop(active) {
+    const tex = this.sprite.texture;
+    const frameData = this.sprite.frame;
+    const fw = frameData.realWidth;   // native frame width  (32px)
+    const fh = frameData.realHeight;  // native frame height (48px)
+
+    if (active) {
+      // Show top 40% of the frame — just the head poking above the roof
+      this.sprite.setCrop(0, 0, fw, Math.floor(fh * 0.4));
+    } else {
+      this.sprite.setCrop(0, 0, fw, fh); // full frame
+    }
+  }
+
   destroy() {
-    this.sprite.destroy();
+    if (this.sprite) {
+      this.sprite.destroy();
+    }
   }
 }

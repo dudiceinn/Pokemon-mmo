@@ -64,17 +64,48 @@ _Originally "NPCs & Polish" — expanded to include quest/flag system_
 - More NPC sprites
 - Z-order fix — characters render on top of buildings (see ISSUES.md)
 
-## Phase 7: Quality of Life
+## Phase 7: Inventory & Party System ✅
+- **InventoryManager** — localStorage-backed item storage, mirrors server-ready pattern
+- **PartyManager** — localStorage-backed party storage (up to 6 Pokémon)
+  - Stat calculation using standard Pokémon HP + stat formulas (IV=15, EV=0)
+  - Starting moves from learnset at or below current level
+  - Full CRUD: addPokemon, removePokemon, updatePokemon, hasSpecies
+  - Auto-sync to Inventory UI on every write via `pokemon-party-changed` event
+- **Inventory UI (Inventory.js)** — draggable hotbar + party panel + bag overlay
+  - Party slots render Pokémon icon, level, HP bar
+  - Spritesheet-aware icon rendering (128×64 two-frame sheets, shows male/left frame only)
+- **pokemon.json** — species definitions for Gen 1 starters (Bulbasaur line, Charmander line, Squirtle line)
+  - Base stats, learnsets, evolution data, sprite/cry paths
+- **B key** — toggles bag overlay
+- **P key** — toggles Party Status Window
+- Verify: `window.partyManager.addPokemon('charizard', 36)` adds to party and syncs to UI
+
+## Phase 8: Party Status Window ✅
+- **PokemonStatusWindow.js** — vanilla JS/CSS overlay, no React dependency
+  - Party list (left panel): 6 slots with sprite, name, level, type, HP bar
+  - Detail panel (right): full stats, moves, EXP progress, friendship/bond, evolution hint
+  - Reads directly from `pokemon-mmo-party` localStorage key
+  - Live updates via `pokemon-party-changed` event — reflects battle/heal changes instantly
+  - ESC key or click outside to close
+  - Spritesheet rendering: 128×64 icon sheets cropped to left frame via CSS background-image
+  - Type-colored UI — header, borders and glows match Pokémon's primary type
+  - Fainted state (💀, greyed out, unselectable)
+- Pokémon icon sprites served from `/pokemon/Icons/SPECIESNAME.png`
+- Vite config updated: PNG middleware removed, icons served natively via `publicDir: ../assets`
+
+## Phase 9: Quality of Life
 - Running shoes (hold B to move faster)
 - Smooth camera transitions between maps
 - Player name input on connect (currently uses `prompt()`)
 - Connection status indicator
 - Basic sound effects (footsteps, door)
 
-## Future Ideas (beyond Phase 7)
-- Pokemon encounters (wild grass)
+## Future Ideas (beyond Phase 9)
+- Wild Pokémon encounters (tall grass)
 - Battle system
-- Pokemon team / party
+- More Pokémon species in pokemon.json (beyond Gen 1 starters)
 - Trading between players
 - Chat system
-- Persistent server-side save data
+- Persistent server-side save data (replace localStorage with API calls — PartyManager and InventoryManager are already structured for this migration)
+- Mobile touch button to open Party Status Window
+- Capacitor wrapper for Android/iOS native app

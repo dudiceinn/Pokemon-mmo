@@ -1,0 +1,32 @@
+{
+  "x": 6,
+  "y": 12,
+  "name": "",
+  "sprite": "",
+  "dir": "down",
+  "type": "trigger",
+  "showFlag": "",
+  "hideFlag": "pokemon_chosen",
+  "walkOnFlag": "",
+  "autoTalk": false,
+  "roam": false,
+  "roamRadius": 3,
+  "extraTiles": [
+    {
+      "x": 5,
+      "y": 12
+    },
+    {
+      "x": 7,
+      "y": 12
+    }
+  ],
+  "dialogs": [
+    {
+      "condition": "",
+      "script": "say: You can't leave yet, {player}!\nsay: You haven't chosen your starter Pokemon!\nsay: Check the Pokeballs on the table!\nmoveplayer: 6 11",
+      "lines": []
+    }
+  ],
+  "dialog": []
+}

@@ -1,0 +1,38 @@
+{
+  "x": 10,
+  "y": 4,
+  "name": "",
+  "sprite": "POKEBALL",
+  "dir": "down",
+  "type": "npc",
+  "showFlag": "oak_escort_done",
+  "hideFlag": "pokemon_chosen",
+  "walkOnFlag": "",
+  "autoTalk": false,
+  "roam": false,
+  "roamRadius": 3,
+  "dialogs": [
+    {
+      "condition": "",
+      "script": "showimage: squirtle\nsay: Squirtle!\nsay: The Tiny Turtle Pokemon. A Water type.\nsay: It shelters itself in its shell when in danger!\nchoice: Do you want to choose Squirtle?\nsetflag: starter_pending_squirtle\nclearflag: starter_pending_bulbasaur\nclearflag: starter_pending_charmander\nsay: Great choice! Talk to Prof. Oak to confirm!",
+      "lines": [
+        "Squirtle!",
+        "The Tiny Turtle Pokemon. A Water type.",
+        "It shelters itself in its shell when in danger!",
+        "Great choice! Talk to Prof. Oak to confirm!"
+      ]
+    },
+    {
+      "condition": "starter_pending_squirtle",
+      "script": "showimage: squirtle\nsay: You already chose Squirtle!\nsay: Talk to Prof. Oak to confirm your choice!",
+      "lines": []
+    }
+  ],
+  "dialog": [
+    "Squirtle!",
+    "The Tiny Turtle Pokemon. A Water type.",
+    "It shelters itself in its shell when in danger!",
+    "Great choice! Talk to Prof. Oak to confirm!"
+  ],
+  "extraTiles": []
+}

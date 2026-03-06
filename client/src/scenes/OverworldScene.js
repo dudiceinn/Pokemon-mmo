@@ -6,6 +6,11 @@ import { NPC } from '../entities/NPC.js';
 import { Client } from '../network/Client.js';
 import { DialogBox } from '../systems/DialogBox.js';
 import { FlagManager } from '../systems/FlagManager.js';
+import { Inventory } from '../systems/Inventory.js';
+import { ScriptRunner } from '../systems/ScriptRunner.js';
+import { EncounterManager } from '../systems/EncounterManager.js';
+import { PartyManager } from '../systems/PartyManager.js';
+import { InventoryManager } from '../systems/InventoryManager.js';
 
 export class OverworldScene extends Phaser.Scene {
   constructor() {
@@ -23,6 +28,19 @@ export class OverworldScene extends Phaser.Scene {
   create() {
     this.dialogBox = new DialogBox();
     this.flags = new FlagManager();
+    this.encounterManager = new EncounterManager(this);
+
+    // Party — load saved party from localStorage, or start empty (Oak gives starter)
+    const pokemonDefs = this.cache.json.get('pokemonDefs');
+    const moveDefs    = this.cache.json.get('moveDefs');
+    this.partyManager = new PartyManager(pokemonDefs, moveDefs);
+    window.partyManager = this.partyManager; // fallback for ScriptRunner
+
+    const itemDefs = this.cache.json.get('itemDefs');
+    const inventoryUI = window.inventory ?? null; // set by UIScene / Inventory.js
+    this.inventoryManager = new InventoryManager(inventoryUI, itemDefs);
+    window.inventoryManager = this.inventoryManager; // used by BattleUI + ScriptRunner
+    window.overworldScene = this; // used by InventoryManager overworld item use
 
     this.loadMap(this.currentMapKey);
 
@@ -198,16 +216,33 @@ export class OverworldScene extends Phaser.Scene {
 
   loadMap(key) {
     if (this.groundLayer) this.groundLayer.destroy();
+    if (this.aboveLayer) this.aboveLayer.destroy();
 
     this.currentMapKey = key;
     this.map = this.make.tilemap({ key });
     const tileset = this.map.addTilesetImage(`${key}_tileset`, `${key}_tileset`);
+
+    // Ground layer — renders below player (depth 0)
     this.groundLayer = this.map.createLayer('ground', tileset, 0, 0);
     this.groundLayer.setDepth(0);
+
+    // Above layer — renders above player (depth 20), optional
+    // Contains rooftops, treetops, overhangs — anything that should overlap the player
+    const aboveLayerData = this.map.getLayer('above');
+    if (aboveLayerData) {
+      this.aboveLayer = this.map.createLayer('above', tileset, 0, 0);
+      this.aboveLayer.setDepth(20);
+    } else {
+      this.aboveLayer = null;
+    }
+
     this.collisionLayer = this.map.getLayer('collision');
 
     const rawJSON = this.cache.json.get(`${key}_raw`);
     this.mapWarps = rawJSON?._warps || [];
+
+    // Load spawn tiles from assets/spawns/<mapKey>.json (async, non-blocking)
+    this.encounterManager?.loadSpawns(key, rawJSON);
 
     // Spawn NPCs (from separate npcs/<map>.json file, fallback to _npcs in map JSON)
     this.clearNpcs();
@@ -226,11 +261,17 @@ export class OverworldScene extends Phaser.Scene {
       npc.destroy();
     }
     this.npcs = [];
+    // Also clear any roaming wild pokemon
+    this.encounterManager?.clearWild();
   }
 
-  findNpcAt(x, y) {
-    return this.npcs.find(n => n.tileX === x && n.tileY === y && n._visible) || null;
-  }
+findNpcAt(x, y) {
+  return this.npcs.find(n => {
+    if (!n._visible) return false;
+    if (n.tileX === x && n.tileY === y) return true;
+    return (n.extraTiles || []).some(t => t.x === x && t.y === y);
+  }) || null;
+}
 
   // --- Flag & visibility helpers ---
 
@@ -257,11 +298,12 @@ export class OverworldScene extends Phaser.Scene {
 
   triggerAutoTalk(npc) {
     const dialogResult = npc.getDialog(this.flags);
-    if (dialogResult.lines.length === 0) return;
+    if (!dialogResult.script) return;
     this.cutsceneActive = true;
-    this.dialogBox.open(npc.name, dialogResult.lines, () => {
+    const runner = new ScriptRunner(this, npc, this.playerName);
+    runner.run(dialogResult.script, () => {
       this.cutsceneActive = false;
-      this.runPostDialog(npc, dialogResult);
+      this._runLegacyPostDialog(npc, dialogResult);
     });
   }
 
@@ -288,7 +330,9 @@ export class OverworldScene extends Phaser.Scene {
     });
   }
 
-  runPostDialog(npc, { setFlag, clearFlag, walkTo, teleportPlayer, movePlayer }) {
+  // Legacy post-dialog: handles walkTo/teleportPlayer/movePlayer/flags
+  // still works for old JSON data and for script commands that set these fields
+  _runLegacyPostDialog(npc, { setFlag, clearFlag, walkTo, teleportPlayer, movePlayer }) {
     const afterAll = () => {
       this.applyFlagChanges(setFlag, clearFlag);
     };
@@ -309,6 +353,11 @@ export class OverworldScene extends Phaser.Scene {
     } else {
       afterNpcWalk();
     }
+  }
+
+  // Keep old name as alias so any external callers still work
+  runPostDialog(npc, result) {
+    this._runLegacyPostDialog(npc, result);
   }
 
   checkFlagTriggeredWalks() {
@@ -334,6 +383,9 @@ export class OverworldScene extends Phaser.Scene {
     }
     for (const [, remote] of this.remotePlayers) remote.updateLabel(cam);
 
+    // Tick wild pokemon roam + contact detection
+    this.encounterManager?.update(delta);
+
     if (this.dialogBox.isOpen()) {
       // Mobile action button advances dialog
       if (this.touchAction) {
@@ -343,6 +395,9 @@ export class OverworldScene extends Phaser.Scene {
       return;
     }
     if (this.player.isMoving || this.transitioning || this.cutsceneActive) return;
+
+    // Block movement when bag overlay is open
+    if (window.inventory?.isBagOpen()) return;
 
     // Interact with NPC (Space key or mobile action button)
     const interact = Phaser.Input.Keyboard.JustDown(this.interactKey) || this.touchAction;
@@ -354,16 +409,19 @@ export class OverworldScene extends Phaser.Scene {
       const npc = this.findNpcAt(tx, ty);
       if (npc && npc.type !== 'trigger') {
         const dialogResult = npc.getDialog(this.flags);
-        if (dialogResult.lines.length > 0) {
-          // Face NPC toward player (only for visible NPCs)
+        if (dialogResult.script) {
           if (npc.type === 'npc') {
             const opposite = { [DIR.DOWN]: DIR.UP, [DIR.UP]: DIR.DOWN,
               [DIR.LEFT]: DIR.RIGHT, [DIR.RIGHT]: DIR.LEFT };
             npc.faceDirection(opposite[this.player.dir]);
           }
-          this.dialogBox.open(npc.name, dialogResult.lines, () => {
+          this.cutsceneActive = true;
+          const runner = new ScriptRunner(this, npc, this.playerName);
+          runner.run(dialogResult.script, () => {
+            this.cutsceneActive = false;
             this.interactKey.reset();
-            this.runPostDialog(npc, dialogResult);
+            // Legacy post-dialog actions still work
+            this._runLegacyPostDialog(npc, dialogResult);
           });
           return;
         }
@@ -382,14 +440,6 @@ export class OverworldScene extends Phaser.Scene {
     const targetX = this.player.tileX + vec.x;
     const targetY = this.player.tileY + vec.y;
 
-    // Check warps (doors)
-    const warp = this.findWarp(targetX, targetY);
-    if (warp) {
-      this.player.faceDirection(dir);
-      this.doTransition(warp.map, warp.x, warp.y);
-      return;
-    }
-
     // Check map edge connections
     if (targetX < 0 || targetY < 0 || targetX >= this.map.width || targetY >= this.map.height) {
       const conn = resolveConnection(this.currentMapKey, targetX, targetY);
@@ -403,6 +453,21 @@ export class OverworldScene extends Phaser.Scene {
       }
     }
 
+    // Check if a sign/npc is blocking the target tile BEFORE checking warps.
+    const blockingNpc = this.findNpcAt(targetX, targetY);
+    if (blockingNpc && blockingNpc.type !== 'trigger') {
+      this.player.faceDirection(dir);
+      return;
+    }
+
+    // Check warps — only reached if no NPC is blocking the tile
+    const warp = this.findWarp(targetX, targetY);
+    if (warp) {
+      this.player.faceDirection(dir);
+      this.doTransition(warp.map, warp.x, warp.y);
+      return;
+    }
+
     // Normal movement
     const moved = this.player.tryMove(dir, (x, y) => this.isBlocked(x, y));
     if (moved) {
@@ -410,14 +475,20 @@ export class OverworldScene extends Phaser.Scene {
         this.sendMove();
         this.player.onMoveComplete = null;
 
+        // Check for wild pokemon on this grass tile
+        this.encounterManager.checkStep(this.player.tileX, this.player.tileY);
+
         // Check for trigger NPC on the tile the player just stepped onto
         const triggerNpc = this.findNpcAt(this.player.tileX, this.player.tileY);
         if (triggerNpc && triggerNpc.type === 'trigger') {
           const triggerResult = triggerNpc.getDialog(this.flags);
-          if (triggerResult.lines.length > 0) {
-            this.dialogBox.open(triggerNpc.name, triggerResult.lines, () => {
+          if (triggerResult.script) {
+            this.cutsceneActive = true;
+            const runner = new ScriptRunner(this, triggerNpc, this.playerName);
+            runner.run(triggerResult.script, () => {
+              this.cutsceneActive = false;
               this.interactKey.reset();
-              this.runPostDialog(triggerNpc, triggerResult);
+              this._runLegacyPostDialog(triggerNpc, triggerResult);
             });
           }
         }

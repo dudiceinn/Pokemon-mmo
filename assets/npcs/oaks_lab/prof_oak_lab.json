@@ -1,0 +1,82 @@
+{
+  "x": 7,
+  "y": 2,
+  "name": "Prof. Oak",
+  "sprite": "NPC 00",
+  "dir": "down",
+  "type": "npc",
+  "showFlag": "oak_escort_done",
+  "hideFlag": "",
+  "walkOnFlag": "",
+  "autoTalk": false,
+  "roam": false,
+  "roamRadius": 3,
+  "dialogs": [
+    {
+      "condition": "",
+      "script": "say: Welcome to my lab, {player}!\nsay: See those Pokeballs on the table?\nsay: Each one contains a different starter Pokemon.\nsay: Go take a look and come back when you've decided!",
+      "lines": [
+        "Welcome to my lab, {player}!",
+        "See those Pokeballs on the table?",
+        "Each one contains a different starter Pokemon.",
+        "Go take a look and come back when you've decided!"
+      ]
+    },
+    {
+      "condition": "oak_lab_greeted",
+      "script": "say: Have you decided yet, {player}?\nsay: Go check the Pokeballs on the table and come back!",
+      "lines": [
+        "Have you decided yet, {player}?",
+        "Go check the Pokeballs on the table and come back!"
+      ]
+    },
+    {
+      "condition": "starter_pending_bulbasaur",
+      "script": "say: Ah, so you want Bulbasaur!\nsay: Bulbasaur is a Grass and Poison type.\nsay: A great choice for a beginner, {player}!\ngiveitem: bulbasaur 1\nsetflag: pokemon_chosen\nsetflag: oak_lab_greeted\nclearflag: starter_pending_bulbasaur\nsay: Take good care of it!\nsay: Now, go on your adventure!",
+      "lines": [
+        "Ah, so you want Bulbasaur!",
+        "Bulbasaur is a Grass and Poison type.",
+        "A great choice for a beginner, {player}!",
+        "Take good care of it!",
+        "Now, go on your adventure!"
+      ]
+    },
+    {
+      "condition": "starter_pending_charmander",
+      "script": "say: Ah, so you want Charmander!\nsay: Charmander is a Fire type.\nsay: It's a tough choice but a fine one, {player}!\ngiveitem: charmander 1\nsetflag: pokemon_chosen\nsetflag: oak_lab_greeted\nclearflag: starter_pending_charmander\nsay: Take good care of it!\nsay: Now, go on your adventure!",
+      "lines": [
+        "Ah, so you want Charmander!",
+        "Charmander is a Fire type.",
+        "It's a tough choice but a fine one, {player}!",
+        "Take good care of it!",
+        "Now, go on your adventure!"
+      ]
+    },
+    {
+      "condition": "starter_pending_squirtle",
+      "script": "say: Ah, so you want Squirtle!\nsay: Squirtle is a Water type.\nsay: Excellent taste, {player}!\ngiveitem: squirtle 1\nsetflag: pokemon_chosen\nsetflag: oak_lab_greeted\nclearflag: starter_pending_squirtle\nsay: Take good care of it!\nsay: Now, go on your adventure!",
+      "lines": [
+        "Ah, so you want Squirtle!",
+        "Squirtle is a Water type.",
+        "Excellent taste, {player}!",
+        "Take good care of it!",
+        "Now, go on your adventure!"
+      ]
+    },
+    {
+      "condition": "pokemon_chosen",
+      "script": "say: You've already chosen your partner, {player}!\nsay: Now get out there and start your adventure!",
+      "lines": [
+        "You've already chosen your partner, {player}!",
+        "Now get out there and start your adventure!"
+      ]
+    }
+  ],
+  "dialog": [
+    "Welcome to my lab, {player}!",
+    "See those Pokeballs on the table?",
+    "Each one contains a different starter Pokemon.",
+    "Go take a look and come back when you've decided!"
+  ],
+  "extraTiles": []
+}

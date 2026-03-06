@@ -27,6 +27,7 @@ export class RemotePlayer {
       DIR_FRAMES[this.dir].stand
     );
     this.sprite.setOrigin(0.5, 1);
+	this.sprite.setScale(0.5); // 👈 add this
     this.sprite.setDepth(9);
 
     // HTML name label (crisp at any zoom)

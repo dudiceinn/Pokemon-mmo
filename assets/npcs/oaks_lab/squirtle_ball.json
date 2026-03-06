@@ -1,0 +1,28 @@
+{
+  "x": 10,
+  "y": 4,
+  "name": "",
+  "sprite": "POKEBALL",
+  "dir": "down",
+  "type": "npc",
+  "showFlag": "oak_escort_done",
+  "hideFlag": "pokemon_chosen",
+  "walkOnFlag": "",
+  "autoTalk": false,
+  "roam": false,
+  "roamRadius": 3,
+  "extraTiles": [],
+  "dialogs": [
+    {
+      "condition": "pokemon_chosen",
+      "script": "say: You already have a starter, {player}!\nsay: Take good care of it!",
+      "lines": []
+    },
+    {
+      "condition": "",
+      "script": "showimage: pokemon/squirtle\nsay: Squirtle!\nsay: The Tiny Turtle Pokemon. A Water type.\nsay: It shelters itself in its shell when in danger!\nchoice: Do you want to choose Squirtle?\nhideimage\ngivepokemon: squirtle 5\nsetflag: pokemon_chosen\nsetflag: starter_is_squirtle\nclearflag: starter_is_bulbasaur\nclearflag: starter_is_charmander\nsay: Squirtle was added to your party!\nsay: Take good care of it, {player}!\nhidenpc",
+      "lines": []
+    }
+  ],
+  "dialog": []
+}

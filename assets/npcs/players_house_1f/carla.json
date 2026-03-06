@@ -2,11 +2,12 @@
   "x": 8,
   "y": 4,
   "name": "Carla",
-  "sprite": "npc_woman",
+  "sprite": "NPC 26",
   "dir": "left",
   "type": "npc",
-  "showFlag": "", "hideFlag": "",
-  "walkOnFlag": "", "walkTo": null,
+  "showFlag": "",
+  "hideFlag": "",
+  "walkOnFlag": "",
   "dialog": [
     "No! I am not your MOM!",
     "Hi, I am Carla and i am",
@@ -15,9 +16,7 @@
   "dialogs": [
     {
       "condition": "",
-      "setFlag": "talked_carla",
-      "clearFlag": "",
-      "walkTo": null,
+      "script": "say: No! I am not your MOM!\nsay: Hi, I am Carla and i am\nsay: receptionist of this POKEWORLD.\nhealparty",
       "lines": [
         "No! I am not your MOM!",
         "Hi, I am Carla and i am",
@@ -26,10 +25,14 @@
     },
     {
       "condition": "talked_carla",
-      "setFlag": "",
-      "clearFlag": "",
-      "walkTo": null,
-      "lines": ["Welcome to this Pokemon World."]
+      "script": "say: Welcome to this Pokemon World.",
+      "lines": [
+        "Welcome to this Pokemon World."
+      ]
     }
-  ]
+  ],
+  "extraTiles": [],
+  "autoTalk": false,
+  "roam": false,
+  "roamRadius": 3
 }

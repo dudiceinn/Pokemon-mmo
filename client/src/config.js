@@ -3,6 +3,7 @@ import { TILE_SIZE } from '@pokemon-mmo/shared';
 import { BootScene } from './scenes/BootScene.js';
 import { OverworldScene } from './scenes/OverworldScene.js';
 import { UIScene } from './scenes/UIScene.js';
+import { BattleScene } from './scenes/BattleScene.js';
 
 // Pick the largest integer zoom that fits, snap game res to whole tiles.
 const screenW = window.innerWidth;
@@ -25,5 +26,5 @@ export const gameConfig = {
   zoom,
   parent: document.body,
   backgroundColor: '#000000',
-  scene: [BootScene, OverworldScene, UIScene],
+  scene: [BootScene, OverworldScene, UIScene, BattleScene],
 };

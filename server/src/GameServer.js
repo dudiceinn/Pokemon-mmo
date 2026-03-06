@@ -1,6 +1,14 @@
 import { WebSocketServer } from 'ws';
+import { createServer } from 'http';
 import { MSG } from '@pokemon-mmo/shared';
 import { PlayerState } from './PlayerState.js';
+import fs from 'fs/promises';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+// Adjust this to point at your assets root (where maps/, npcs/, spawns/ live)
+const ASSETS_DIR = path.resolve(__dirname, '../../client/public');
 
 let nextId = 1;
 
@@ -9,17 +17,87 @@ export class GameServer {
     this.port = port;
     this.players = new Map(); // ws → PlayerState
     this.wss = null;
+    this.httpServer = null;
   }
 
   start() {
-    this.wss = new WebSocketServer({ port: this.port });
+    // HTTP server handles /api/save-map; WS upgrades are handled by wss
+    this.httpServer = createServer((req, res) => {
+      // Allow preflight from the editor
+      if (req.method === 'OPTIONS') {
+        res.writeHead(204, {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'POST, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type',
+        }).end();
+        return;
+      }
+      if (req.method === 'POST' && req.url === '/api/save-map') {
+        this._handleSaveMap(req, res);
+      } else {
+        res.writeHead(404).end('Not found');
+      }
+    });
+
+    this.wss = new WebSocketServer({ server: this.httpServer });
 
     this.wss.on('connection', (ws) => {
       this.handleConnection(ws);
     });
 
-    console.log(`[GameServer] WebSocket server listening on port ${this.port}`);
+    this.httpServer.listen(this.port, () => {
+      console.log(`[GameServer] HTTP + WebSocket server listening on port ${this.port}`);
+    });
   }
+
+  // ─── Save-map API ────────────────────────────────────────────────────────────
+
+  async _handleSaveMap(req, res) {
+    res.setHeader('Content-Type', 'application/json');
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    try {
+      const body = await new Promise((resolve, reject) => {
+        let data = '';
+        req.on('data', chunk => (data += chunk));
+        req.on('end', () => resolve(data));
+        req.on('error', reject);
+      });
+
+      const { mapKey, data: mapData, npcs, spawns } = JSON.parse(body);
+      if (!mapKey) throw new Error('Missing mapKey');
+
+      // Save map JSON → maps/<mapKey>.json
+      const mapPath = path.join(ASSETS_DIR, 'maps', `${mapKey}.json`);
+      await fs.writeFile(mapPath, JSON.stringify(mapData, null, 2));
+
+      // Save NPCs → npcs/<mapKey>.json
+      const npcsDir = path.join(ASSETS_DIR, 'npcs');
+      await fs.mkdir(npcsDir, { recursive: true });
+      await fs.writeFile(
+        path.join(npcsDir, `${mapKey}.json`),
+        JSON.stringify(npcs ?? [], null, 2)
+      );
+
+      // Save spawns → spawns/<mapKey>.json
+      const spawnsDir = path.join(ASSETS_DIR, 'spawns');
+      await fs.mkdir(spawnsDir, { recursive: true });
+      await fs.writeFile(
+        path.join(spawnsDir, `${mapKey}.json`),
+        JSON.stringify(spawns ?? [], null, 2)
+      );
+
+      console.log(
+        `[GameServer] Saved ${mapKey}: ${npcs?.length ?? 0} NPCs, ` +
+        `${spawns?.length ?? 0} spawn tiles`
+      );
+      res.writeHead(200).end(JSON.stringify({ ok: true }));
+    } catch (err) {
+      console.error('[GameServer] save-map error:', err.message);
+      res.writeHead(500).end(JSON.stringify({ ok: false, error: err.message }));
+    }
+  }
+
+  // ─── WebSocket handlers ───────────────────────────────────────────────────────
 
   handleConnection(ws) {
     const id = `player_${nextId++}`;

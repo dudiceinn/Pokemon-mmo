@@ -1,29 +1,35 @@
 {
   "x": 12,
-  "y": 2,
-  "name": "Prof. Oak",
-  "sprite": "npc_oak",
+  "y": 0,
+  "name": "Oak",
+  "sprite": "NPC 00",
   "dir": "down",
   "type": "npc",
-  "showFlag": "oak_stop_player",
-  "hideFlag": "oak_escort_step1",
-  "walkOnFlag": "", "walkTo": null,
+  "showFlag": "oak_escort_started",
+  "hideFlag": "oak_escort_done",
+  "walkOnFlag": "",
   "autoTalk": true,
-  "roam": false, "roamRadius": 3,
-  "dialog": ["Come with me, I'll show you where to get your first Pokemon!"],
+  "roam": false,
+  "roamRadius": 3,
   "dialogs": [
     {
       "condition": "",
-      "setFlag": "oak_escort_step1",
-      "clearFlag": "",
-      "walkTo": {"x": 12, "y": 14},
-      "teleportPlayer": null,
-      "movePlayer": {"x": 12, "y": 14},
+      "script": "say: Come with me, {player}!\nsay: My lab is just this way.\nsay: I'll give you your first Pokemon!\nmovenpc: 12 15\nsay: Please follow me!\nmoveplayer: 12 14\nmovenpc: 16 15\nsay: We are almost there.\nmovenpc: 16 13\nmoveplayer: 16 14\nsetflag: oak_escort_done\nteleportmap: oaks_lab 6 12",
       "lines": [
         "Come with me, {player}!",
         "My lab is just this way.",
-        "I'll give you your first Pokemon!"
+        "I'll give you your first Pokemon!",
+        "Please follow me!",
+        "We are almost there."
       ]
     }
-  ]
+  ],
+  "dialog": [
+    "Come with me, {player}!",
+    "My lab is just this way.",
+    "I'll give you your first Pokemon!",
+    "Please follow me!",
+    "We are almost there."
+  ],
+  "extraTiles": []
 }

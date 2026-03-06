@@ -1,0 +1,3384 @@
+[
+  {
+    "x": 16,
+    "y": 13,
+    "encounterRate": 0.15,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 17,
+    "y": 13,
+    "encounterRate": 0.15,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 18,
+    "y": 13,
+    "encounterRate": 0.15,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 19,
+    "y": 13,
+    "encounterRate": 0.15,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 20,
+    "y": 13,
+    "encounterRate": 0.15,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 21,
+    "y": 13,
+    "encounterRate": 0.15,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 18,
+    "y": 32,
+    "encounterRate": 0.15,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 18,
+    "y": 33,
+    "encounterRate": 0.15,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 18,
+    "y": 34,
+    "encounterRate": 0.15,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 18,
+    "y": 35,
+    "encounterRate": 0.15,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 19,
+    "y": 34,
+    "encounterRate": 0.15,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 19,
+    "y": 33,
+    "encounterRate": 0.15,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 19,
+    "y": 32,
+    "encounterRate": 0.15,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 20,
+    "y": 32,
+    "encounterRate": 0.15,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 21,
+    "y": 32,
+    "encounterRate": 0.15,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 21,
+    "y": 33,
+    "encounterRate": 0.15,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 20,
+    "y": 33,
+    "encounterRate": 0.15,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 17,
+    "y": 32,
+    "encounterRate": 0.15,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 17,
+    "y": 33,
+    "encounterRate": 0.15,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 17,
+    "y": 34,
+    "encounterRate": 0.15,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 17,
+    "y": 35,
+    "encounterRate": 0.15,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 19,
+    "y": 35,
+    "encounterRate": 0.15,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 16,
+    "y": 35,
+    "encounterRate": 0.15,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 16,
+    "y": 34,
+    "encounterRate": 0.15,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 15,
+    "y": 34,
+    "encounterRate": 0.15,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 15,
+    "y": 35,
+    "encounterRate": 0.15,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 12,
+    "y": 35,
+    "encounterRate": 0.15,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 13,
+    "y": 35,
+    "encounterRate": 0.15,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 13,
+    "y": 36,
+    "encounterRate": 0.15,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 13,
+    "y": 37,
+    "encounterRate": 0.15,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 13,
+    "y": 38,
+    "encounterRate": 0.15,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 13,
+    "y": 39,
+    "encounterRate": 0.15,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 12,
+    "y": 39,
+    "encounterRate": 0.15,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 12,
+    "y": 38,
+    "encounterRate": 0.15,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 12,
+    "y": 37,
+    "encounterRate": 0.15,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 12,
+    "y": 36,
+    "encounterRate": 0.15,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 10,
+    "y": 32,
+    "encounterRate": 0.15,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 9,
+    "y": 32,
+    "encounterRate": 0.15,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 8,
+    "y": 32,
+    "encounterRate": 0.15,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 7,
+    "y": 32,
+    "encounterRate": 0.15,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 6,
+    "y": 32,
+    "encounterRate": 0.15,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 5,
+    "y": 32,
+    "encounterRate": 0.15,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 5,
+    "y": 33,
+    "encounterRate": 0.15,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 6,
+    "y": 33,
+    "encounterRate": 0.15,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 7,
+    "y": 33,
+    "encounterRate": 0.15,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 8,
+    "y": 34,
+    "encounterRate": 0.15,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 9,
+    "y": 33,
+    "encounterRate": 0.15,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 10,
+    "y": 33,
+    "encounterRate": 0.15,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 8,
+    "y": 33,
+    "encounterRate": 0.15,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 6,
+    "y": 34,
+    "encounterRate": 0.15,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 7,
+    "y": 34,
+    "encounterRate": 0.15,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 7,
+    "y": 35,
+    "encounterRate": 0.15,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 8,
+    "y": 35,
+    "encounterRate": 0.15,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 6,
+    "y": 35,
+    "encounterRate": 0.15,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 5,
+    "y": 35,
+    "encounterRate": 0.15,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 4,
+    "y": 35,
+    "encounterRate": 0.15,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 3,
+    "y": 35,
+    "encounterRate": 0.15,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 3,
+    "y": 34,
+    "encounterRate": 0.15,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 4,
+    "y": 34,
+    "encounterRate": 0.15,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 5,
+    "y": 34,
+    "encounterRate": 0.15,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 4,
+    "y": 33,
+    "encounterRate": 0.15,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 4,
+    "y": 32,
+    "encounterRate": 0.15,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 2,
+    "y": 35,
+    "encounterRate": 0.15,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 2,
+    "y": 34,
+    "encounterRate": 0.15,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 16,
+    "y": 14,
+    "encounterRate": 0.15,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 17,
+    "y": 14,
+    "encounterRate": 0.15,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 18,
+    "y": 14,
+    "encounterRate": 0.15,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 19,
+    "y": 14,
+    "encounterRate": 0.15,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 20,
+    "y": 14,
+    "encounterRate": 0.15,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 21,
+    "y": 14,
+    "encounterRate": 0.15,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 21,
+    "y": 15,
+    "encounterRate": 0.15,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 21,
+    "y": 16,
+    "encounterRate": 0.15,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 21,
+    "y": 17,
+    "encounterRate": 0.15,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 20,
+    "y": 17,
+    "encounterRate": 0.15,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 19,
+    "y": 17,
+    "encounterRate": 0.15,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 18,
+    "y": 17,
+    "encounterRate": 0.15,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 17,
+    "y": 17,
+    "encounterRate": 0.15,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 16,
+    "y": 17,
+    "encounterRate": 0.15,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 16,
+    "y": 16,
+    "encounterRate": 0.15,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 16,
+    "y": 15,
+    "encounterRate": 0.15,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 17,
+    "y": 15,
+    "encounterRate": 0.15,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 17,
+    "y": 16,
+    "encounterRate": 0.15,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 18,
+    "y": 16,
+    "encounterRate": 0.15,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 18,
+    "y": 15,
+    "encounterRate": 0.15,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 19,
+    "y": 15,
+    "encounterRate": 0.15,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 20,
+    "y": 16,
+    "encounterRate": 0.15,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 20,
+    "y": 15,
+    "encounterRate": 0.15,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 19,
+    "y": 16,
+    "encounterRate": 0.15,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 12,
+    "y": 24,
+    "encounterRate": 0.25,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 13,
+    "y": 24,
+    "encounterRate": 0.25,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 14,
+    "y": 24,
+    "encounterRate": 0.25,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 15,
+    "y": 24,
+    "encounterRate": 0.25,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 16,
+    "y": 24,
+    "encounterRate": 0.25,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 16,
+    "y": 25,
+    "encounterRate": 0.25,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 16,
+    "y": 26,
+    "encounterRate": 0.25,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 17,
+    "y": 26,
+    "encounterRate": 0.25,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 17,
+    "y": 27,
+    "encounterRate": 0.25,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 17,
+    "y": 28,
+    "encounterRate": 0.25,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 17,
+    "y": 25,
+    "encounterRate": 0.25,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 17,
+    "y": 24,
+    "encounterRate": 0.25,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 15,
+    "y": 25,
+    "encounterRate": 0.25,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 14,
+    "y": 25,
+    "encounterRate": 0.25,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 13,
+    "y": 25,
+    "encounterRate": 0.25,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 12,
+    "y": 25,
+    "encounterRate": 0.25,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 12,
+    "y": 26,
+    "encounterRate": 0.25,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 12,
+    "y": 27,
+    "encounterRate": 0.25,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 13,
+    "y": 27,
+    "encounterRate": 0.25,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 14,
+    "y": 27,
+    "encounterRate": 0.25,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 14,
+    "y": 28,
+    "encounterRate": 0.25,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 15,
+    "y": 28,
+    "encounterRate": 0.25,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 15,
+    "y": 27,
+    "encounterRate": 0.25,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 16,
+    "y": 27,
+    "encounterRate": 0.25,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 16,
+    "y": 28,
+    "encounterRate": 0.25,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 15,
+    "y": 26,
+    "encounterRate": 0.25,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 14,
+    "y": 26,
+    "encounterRate": 0.25,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 13,
+    "y": 26,
+    "encounterRate": 0.25,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 12,
+    "y": 28,
+    "encounterRate": 0.25,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 13,
+    "y": 28,
+    "encounterRate": 0.25,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 10,
+    "y": 6,
+    "encounterRate": 0.25,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 11,
+    "y": 6,
+    "encounterRate": 0.25,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 12,
+    "y": 6,
+    "encounterRate": 0.25,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 13,
+    "y": 6,
+    "encounterRate": 0.25,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 15,
+    "y": 6,
+    "encounterRate": 0.25,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 17,
+    "y": 6,
+    "encounterRate": 0.25,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 19,
+    "y": 6,
+    "encounterRate": 0.25,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 20,
+    "y": 6,
+    "encounterRate": 0.25,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 21,
+    "y": 6,
+    "encounterRate": 0.25,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 21,
+    "y": 7,
+    "encounterRate": 0.25,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 21,
+    "y": 8,
+    "encounterRate": 0.25,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 21,
+    "y": 9,
+    "encounterRate": 0.25,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 21,
+    "y": 10,
+    "encounterRate": 0.25,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 20,
+    "y": 10,
+    "encounterRate": 0.25,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 19,
+    "y": 10,
+    "encounterRate": 0.25,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 18,
+    "y": 10,
+    "encounterRate": 0.25,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 17,
+    "y": 10,
+    "encounterRate": 0.25,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 16,
+    "y": 10,
+    "encounterRate": 0.25,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 15,
+    "y": 10,
+    "encounterRate": 0.25,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 14,
+    "y": 10,
+    "encounterRate": 0.25,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 13,
+    "y": 10,
+    "encounterRate": 0.25,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 12,
+    "y": 10,
+    "encounterRate": 0.25,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 11,
+    "y": 10,
+    "encounterRate": 0.25,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 10,
+    "y": 10,
+    "encounterRate": 0.25,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 10,
+    "y": 9,
+    "encounterRate": 0.25,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 10,
+    "y": 8,
+    "encounterRate": 0.25,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 10,
+    "y": 7,
+    "encounterRate": 0.25,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 11,
+    "y": 7,
+    "encounterRate": 0.25,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 11,
+    "y": 8,
+    "encounterRate": 0.25,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 11,
+    "y": 9,
+    "encounterRate": 0.25,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 12,
+    "y": 9,
+    "encounterRate": 0.25,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 12,
+    "y": 8,
+    "encounterRate": 0.25,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 12,
+    "y": 7,
+    "encounterRate": 0.25,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 13,
+    "y": 8,
+    "encounterRate": 0.25,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 13,
+    "y": 9,
+    "encounterRate": 0.25,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 14,
+    "y": 7,
+    "encounterRate": 0.25,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 14,
+    "y": 8,
+    "encounterRate": 0.25,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 14,
+    "y": 9,
+    "encounterRate": 0.25,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 14,
+    "y": 6,
+    "encounterRate": 0.25,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 15,
+    "y": 8,
+    "encounterRate": 0.25,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 15,
+    "y": 9,
+    "encounterRate": 0.25,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 16,
+    "y": 9,
+    "encounterRate": 0.25,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 17,
+    "y": 9,
+    "encounterRate": 0.25,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 18,
+    "y": 9,
+    "encounterRate": 0.25,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 19,
+    "y": 9,
+    "encounterRate": 0.25,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 20,
+    "y": 9,
+    "encounterRate": 0.25,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 20,
+    "y": 8,
+    "encounterRate": 0.25,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 19,
+    "y": 8,
+    "encounterRate": 0.25,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 18,
+    "y": 8,
+    "encounterRate": 0.25,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 17,
+    "y": 8,
+    "encounterRate": 0.25,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 16,
+    "y": 8,
+    "encounterRate": 0.25,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 18,
+    "y": 7,
+    "encounterRate": 0.25,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 19,
+    "y": 7,
+    "encounterRate": 0.25,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 17,
+    "y": 7,
+    "encounterRate": 0.25,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 16,
+    "y": 7,
+    "encounterRate": 0.25,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 15,
+    "y": 7,
+    "encounterRate": 0.25,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 16,
+    "y": 6,
+    "encounterRate": 0.25,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 18,
+    "y": 6,
+    "encounterRate": 0.25,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 20,
+    "y": 7,
+    "encounterRate": 0.25,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  },
+  {
+    "x": 13,
+    "y": 7,
+    "encounterRate": 0.25,
+    "pokemon": [
+      {
+        "speciesId": "pidgey",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      },
+      {
+        "speciesId": "rattata",
+        "minLevel": 2,
+        "maxLevel": 4,
+        "weight": 50
+      }
+    ]
+  }
+]

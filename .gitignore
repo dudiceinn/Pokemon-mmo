@@ -3,3 +3,7 @@ dist/
 .vite/
 *.log
 assets/pokefirered/
+assets/sprites/
+assets/pokemon/
+assets/Items/
+assets/battle/

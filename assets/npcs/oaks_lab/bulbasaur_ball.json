@@ -1,0 +1,28 @@
+{
+  "x": 8,
+  "y": 4,
+  "name": "",
+  "sprite": "POKEBALL",
+  "dir": "down",
+  "type": "npc",
+  "showFlag": "oak_escort_done",
+  "hideFlag": "pokemon_chosen",
+  "walkOnFlag": "",
+  "autoTalk": false,
+  "roam": false,
+  "roamRadius": 3,
+  "extraTiles": [],
+  "dialogs": [
+    {
+      "condition": "pokemon_chosen",
+      "script": "say: You already have a starter, {player}!\nsay: Take good care of it!",
+      "lines": []
+    },
+    {
+      "condition": "",
+      "script": "showimage: pokemon/bulbasaur\nsay: Bulbasaur!\nsay: The Seed Pokemon. A Grass and Poison type.\nsay: A great choice for a beginner!\nchoice: Do you want to choose Bulbasaur?\nhideimage\ngivepokemon: bulbasaur 5\nsetflag: pokemon_chosen\nsetflag: starter_is_bulbasaur\nclearflag: starter_is_charmander\nclearflag: starter_is_squirtle\nsay: Bulbasaur was added to your party!\nsay: Take good care of it, {player}!\nhidenpc",
+      "lines": []
+    }
+  ],
+  "dialog": []
+}

@@ -416,5 +416,21 @@
       "tilewidth": 16,
       "tileheight": 16
     }
+  ],
+  "_warps": [
+    {
+      "x": 7,
+      "y": 13,
+      "destMap": "pallet_town",
+      "destX": 16,
+      "destY": 14
+    },
+    {
+      "x": 6,
+      "y": 13,
+      "destMap": "pallet_town",
+      "destX": 16,
+      "destY": 14
+    }
   ]
 }

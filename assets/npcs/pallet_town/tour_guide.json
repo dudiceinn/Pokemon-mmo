@@ -1,0 +1,53 @@
+{
+  "x": 8,
+  "y": 8,
+  "name": "Tour Guide",
+  "sprite": "NPC 01",
+  "dir": "down",
+  "type": "npc",
+  "showFlag": "",
+  "hideFlag": "tour_complete",
+  "walkOnFlag": "",
+  "autoTalk": false,
+  "roam": false,
+  "dialogs": [
+    {
+      "condition": "",
+      "script": "say: Hello, {player}! Welcome to Pallet Town!\nsay: I'll show you around. Follow me!\nmovenpc: 15 8\nmoveplayer: 14 8\nsay: Over here is your Rival's house.\nsay: Your rival lives here — he's always one step ahead!\nmovenpc: 16 14\nmoveplayer: 15 14\nsay: And this is Professor Oak's Lab.\nsay: The Professor studies Pokemon from all over the world.\nsay: If you ever need advice, come here!\nmovenpc: 11 2\nmoveplayer: 11 3\nsay: Finally, up here is the exit to Route 1.\nsay: Head north when you're ready to start your adventure!\nsay: That's the full tour, {player}. Good luck out there!\nmovenpc: 8 8\nsetflag: tour_complete",
+      "lines": [
+        "Hello, {player}! Welcome to Pallet Town!",
+        "I'll show you around. Follow me!",
+        "Over here is your Rival's house.",
+        "Your rival lives here — he's always one step ahead!",
+        "And this is Professor Oak's Lab.",
+        "The Professor studies Pokemon from all over the world.",
+        "If you ever need advice, come here!",
+        "Finally, up here is the exit to Route 1.",
+        "Head north when you're ready to start your adventure!",
+        "That's the full tour, {player}. Good luck out there!"
+      ]
+    },
+    {
+      "condition": "tour_complete",
+      "script": "say: Hope the tour was helpful, {player}!\nsay: Remember — Route 1 is to the north, Oak's Lab is to the south-east!",
+      "lines": [
+        "Hope the tour was helpful, {player}!",
+        "Remember — Route 1 is to the north, Oak's Lab is to the south-east!"
+      ]
+    }
+  ],
+  "dialog": [
+    "Hello, {player}! Welcome to Pallet Town!",
+    "I'll show you around. Follow me!",
+    "Over here is your Rival's house.",
+    "Your rival lives here — he's always one step ahead!",
+    "And this is Professor Oak's Lab.",
+    "The Professor studies Pokemon from all over the world.",
+    "If you ever need advice, come here!",
+    "Finally, up here is the exit to Route 1.",
+    "Head north when you're ready to start your adventure!",
+    "That's the full tour, {player}. Good luck out there!"
+  ],
+  "extraTiles": [],
+  "roamRadius": 3
+}

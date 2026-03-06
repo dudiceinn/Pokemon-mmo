@@ -26,7 +26,10 @@ export class BootScene extends Phaser.Scene {
       progressBar.destroy();
       progressBox.destroy();
     });
-
+	
+	this.load.json('itemDefs', '/data/items.json');
+	this.load.json('pokemonDefs', '/data/pokemon.json');
+	this.load.json('moveDefs', '/data/moves.json');
     // Load all map tilesets and tilemaps
     for (const key of Object.keys(MAPS)) {
       this.load.image(`${key}_tileset`, `/tilesets/${key}_tileset.png`);
@@ -39,41 +42,114 @@ export class BootScene extends Phaser.Scene {
 
     // Sprites
     this.load.spritesheet('player', '/sprites/player.png', {
-      frameWidth: 16, frameHeight: 32,
+      frameWidth: 32,
+      frameHeight: 48,
     });
     this.load.spritesheet('player_green', '/sprites/player_green.png', {
-      frameWidth: 16, frameHeight: 32,
+      frameWidth: 32,
+      frameHeight: 48,
     });
 
-    // NPC sprites — add new NPC sprite PNGs to assets/sprites/ and list them here
-    const NPC_SPRITES = [
-      'npc_agatha', 'npc_balding_man', 'npc_battle_girl', 'npc_beauty', 'npc_biker',
-      'npc_bill', 'npc_blackbelt', 'npc_blaine', 'npc_blue', 'npc_boy',
-      'npc_brock', 'npc_bruno', 'npc_bug_catcher', 'npc_cable_club_receptionist',
-      'npc_cameraman', 'npc_camper', 'npc_captain', 'npc_celio', 'npc_channeler',
-      'npc_chef', 'npc_clerk', 'npc_cooltrainer_f', 'npc_cooltrainer_m', 'npc_daisy',
-      'npc_erika', 'npc_fat_man', 'npc_fisher', 'npc_gba_kid', 'npc_gentleman',
-      'npc_giovanni', 'npc_gym_guy', 'npc_hiker', 'npc_koga', 'npc_lance',
-      'npc_lass', 'npc_little_boy', 'npc_little_girl', 'npc_lorelei', 'npc_lt_surge',
-      'npc_man', 'npc_mg_deliveryman', 'npc_misty', 'npc_mom', 'npc_mr_fuji',
-      'npc_nurse', 'npc_oak', 'npc_old_man_1', 'npc_old_man_2', 'npc_old_man_lying_down',
-      'npc_old_woman', 'npc_picnicker', 'npc_policeman', 'npc_rich_boy', 'npc_rocker',
-      'npc_rocket_f', 'npc_rocket_m', 'npc_rs_brendan', 'npc_rs_may', 'npc_sabrina',
-      'npc_sailor', 'npc_scientist', 'npc_sitting_boy', 'npc_super_nerd',
-      'npc_swimmer_f_land', 'npc_swimmer_f_water', 'npc_swimmer_m_land', 'npc_swimmer_m_water',
-      'npc_teachy_tv_host', 'npc_trainer_tower_dude', 'npc_tuber_f', 'npc_tuber_m_land',
-      'npc_tuber_m_water', 'npc_union_room_receptionist', 'npc_unused_male_receptionist',
-      'npc_unused_man', 'npc_unused_woman', 'npc_woman', 'npc_woman_1', 'npc_woman_2',
-      'npc_woman_3', 'npc_worker_f', 'npc_worker_m', 'npc_youngster',
-    ];
-    for (const key of NPC_SPRITES) {
-      this.load.spritesheet(key, `/sprites/${key}.png`, {
-        frameWidth: 16, frameHeight: 32,
-      });
+    // Load the NPC sprites list JSON file FIRST
+    this.load.json('npcSprites', '/data/npc-sprites.json');
+
+    // Load spawn files so we know which pokemon sprites to preload
+    for (const key of Object.keys(MAPS)) {
+      this.load.json(`${key}_spawns`, `/spawns/${key}.json`);
     }
   }
 
   create() {
-    this.scene.start('OverworldScene');
+    // Get the NPC sprites list from the loaded JSON
+    const npcSpritesData = this.cache.json.get('npcSprites');
+    
+    if (!npcSpritesData || !npcSpritesData.sprites) {
+      console.error('❌ Failed to load npc-sprites.json');
+      console.log('Available cache keys:', this.cache.json.getKeys());
+      
+      // Fallback to hardcoded list if JSON fails
+      const fallbackSprites = [
+        'NPC 00', 'NPC 01', 'NPC 02', 'NPC 03', 'NPC 04', 'NPC 05',
+        'NPC 06', 'NPC 07', 'NPC 08', 'NPC 09', 'NPC 10',
+        'NPC 11', 'NPC 12', 'NPC 13', 'NPC 14', 'NPC 15',
+        'NPC 16', 'NPC 17', 'NPC 18', 'NPC 19', 'NPC 20',
+        'NPC 21', 'NPC 22', 'NPC 23', 'NPC 24', 'NPC 25',
+        'NPC 26', 'NPC 27', 'NPC 28', 'NPC 29', 'POKEBALL',
+      ];
+      
+      console.log('Using fallback sprite list');
+      this.loadNPCSprites(fallbackSprites);
+      return;
+    }
+
+    const NPC_SPRITES = npcSpritesData.sprites;
+    console.log('📋 Loaded NPC sprite list:', NPC_SPRITES);
+    
+    this.loadNPCSprites(NPC_SPRITES);
+	
+  }
+  
+  loadNPCSprites(spriteList) {
+    // Load all the NPC spritesheets
+   for (const key of spriteList) {
+  if (key === 'POKEBALL') {
+    this.load.spritesheet(key, `/sprites/${key}.png`, {
+      frameWidth: 32,
+      frameHeight: 32, // 128x128 ÷ 4 = 32x32 frames
+    });
+  } else {
+    this.load.spritesheet(key, `/sprites/${key}.png`, {
+      frameWidth: 32,
+      frameHeight: 48,
+    });
+  }
+}
+
+    // Preload pokemon follower sprites referenced in spawn files
+    // Use a file-error handler so a missing sprite doesn't crash the load
+    this.load.on('fileerror', (file) => {
+      console.warn(`[BootScene] Could not load: ${file.src} — skipping`);
+    });
+
+    const seenPoke = new Set();
+    for (const key of Object.keys(MAPS)) {
+      const spawns = this.cache.json.get(`${key}_spawns`);
+      if (!Array.isArray(spawns)) continue;
+      for (const tile of spawns) {
+        for (const p of (tile.pokemon || [])) {
+          if (!p.speciesId || seenPoke.has(p.speciesId)) continue;
+          seenPoke.add(p.speciesId);
+          const spriteKey = `poke_${p.speciesId.toLowerCase()}`;  // always lowercase key
+          if (!this.textures.exists(spriteKey)) {
+            // Load as plain image — WildPokemon._createSprite will slice into frames
+            // based on actual sheet dimensions (avoids hardcoding frame size)
+            this.load.image(spriteKey, `/pokemon/followers/${p.speciesId.toUpperCase()}.png`);
+          }
+        }
+      }
+    }
+    if (seenPoke.size > 0) {
+      console.log(`[BootScene] Preloading ${seenPoke.size} pokemon sprite(s):`, [...seenPoke]);
+    }
+
+    // Start loading the sprites
+    this.load.start();
+
+    // When all sprites are loaded, start the game
+    this.load.once('complete', () => {
+      console.log('✅ All NPC sprites loaded successfully');
+      
+      // Verify a few sprites are loaded
+      const testSprites = spriteList.slice(0, 3);
+      testSprites.forEach(key => {
+        if (this.textures.exists(key)) {
+          console.log(`✅ ${key} loaded`);
+        } else {
+          console.warn(`⚠️ ${key} not found`);
+        }
+      });
+      
+      this.scene.start('OverworldScene');
+    });
   }
 }

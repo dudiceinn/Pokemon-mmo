@@ -1,0 +1,21 @@
+[
+  {
+    "id": "oak",
+    "name": "Prof. Oak",
+    "type": "npc",
+    "x": 10,
+    "y": 8,
+    "sprite": "NPC 03",
+    "direction": "down",
+    "dialogs": [
+      {
+        "condition": { "flagAbsent": "has_starter" },
+        "script": "say: Hello, {player}! Welcome to the world of Pokémon!\nsay: I'm Professor Oak. Every trainer needs a Pokémon partner.\nsay: I have three here with me. Choose wisely!\nshowimage: pokemon/Front/BULBASAUR\nchoice: Take BULBASAUR (Grass / Poison)?\ngivepokemon: bulbasaur 5\nsetflag: has_starter\nhideimage\nsay: Bulbasaur — a fine choice!\njump: done\nhideimage\nshowimage: pokemon/Front/CHARMANDER\nchoice: Take CHARMANDER (Fire)?\ngivepokemon: charmander 5\nsetflag: has_starter\nhideimage\nsay: Charmander — a spirited pick!\njump: done\nhideimage\nshowimage: pokemon/Front/SQUIRTLE\nchoice: Take SQUIRTLE (Water)?\ngivepokemon: squirtle 5\nsetflag: has_starter\nhideimage\nsay: Squirtle — excellent choice!\njump: done\nhideimage\nsay: Come back when you are ready to choose your partner!\njump: end\nlabel: done\nsay: Take good care of your new partner, {player}!\nsay: Head into the tall grass and start your adventure!\nlabel: end"
+      },
+      {
+        "condition": { "flagPresent": "has_starter" },
+        "script": "say: You already have a Pokémon partner!\nsay: Get out there and fill up that Pokédex!"
+      }
+    ]
+  }
+]
