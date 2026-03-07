@@ -51,16 +51,22 @@ export class BattleScene extends Phaser.Scene {
     // UI is built immediately below so battle never waits on audio.
     this._loadAudioInBackground(sfx, startBgm);
 
+    // If BGM already cached from a previous battle, start it immediately
+    if (this.cache.audio.exists('bgm_wild_battle')) {
+      startBgm('bgm_wild_battle');
+    }
+
     // ── Build ExpBar (pass scene for sound access) ─────────────────────────
     const expBar = new ExpBar(this);
 
     this._ui = new BattleUI(this._battleState, expBar, (outcome) => {
       console.log('[BattleScene] onEnd callback, outcome:', outcome);
-      // Victory jingle
+      // Victory jingle / catch already stopped BGM
       if (outcome.victory) {
         this._bgm?.stop();
         startBgm('bgm_victory', { loop: false, volume: 0.6 });
-      } else {
+      } else if (!outcome.caught) {
+        // Catch handler already stopped BGM + played sfx
         this._bgm?.stop();
       }
 
@@ -72,6 +78,7 @@ export class BattleScene extends Phaser.Scene {
         console.log('[BattleScene] Resuming OverworldScene, clearing cutsceneActive');
         ow.cutsceneActive = false;
         this.scene.resume('OverworldScene');
+        ow.resumeOverworldBgm?.();
         if (outcome.blackedOut) ow.events?.emit('blacked_out');
         if (outcome.caught)     ow.events?.emit('pokemon_caught', {
           speciesId: this._battleState.enemyPokemon.speciesId,
@@ -79,8 +86,9 @@ export class BattleScene extends Phaser.Scene {
       }
     });
 
-    // ── Expose sfx to UI for hit/faint sounds ─────────────────────────────
+    // ── Expose sound API to UI for hit/faint/catch sounds ──────────────────
     this._ui.sfx = sfx;
+    this._ui.stopBgm = () => { this._bgm?.stop(); this._bgm = null; };
   }
 
   /** Load all battle audio in background via fetch (bypasses IDM). */
@@ -96,6 +104,7 @@ export class BattleScene extends Phaser.Scene {
       { key: 'sfx_hit_not_very', path: '/audio/sfx/hit_not_very' },
       { key: 'sfx_faint',        path: '/audio/sfx/faint' },
       { key: 'sfx_catch_success',path: '/audio/sfx/catch_success' },
+      { key: 'sfx_click',        path: '/audio/sfx/click' },
     ];
 
     const ctx = this.sound.context;

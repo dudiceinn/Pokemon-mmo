@@ -428,11 +428,47 @@ npSpriteSelect.appendChild(noneOpt);
       });
     }
 
-    const MAPS = [
+    // Auto-discover maps from assets/maps/ — falls back to hardcoded list
+    let MAPS = [
       'pallet_town', 'route1',
       'players_house_1f', 'players_house_2f',
       'rivals_house', 'oaks_lab',
     ];
+
+    async function discoverMaps() {
+      try {
+        const resp = await fetch('/maps/');
+        if (!resp.ok) return;
+        const html = await resp.text();
+        // Vite directory listing returns links to .json files
+        const matches = html.match(/href="([^"]+\.json)"/g);
+        if (matches && matches.length > 0) {
+          MAPS = matches.map(m => m.match(/href="([^"]+)\.json"/)[1]).sort();
+        }
+      } catch {}
+      // Also try a known map list endpoint
+      try {
+        // Scan for any .json files in /maps/ by trying common names
+        const knownMaps = [
+          'pallet_town', 'route1', 'players_house_1f', 'players_house_2f',
+          'rivals_house', 'oaks_lab', 'viridian_city', 'viridian_city_gym',
+          'viridian_city_house', 'viridian_city_school', 'viridian_city_mart',
+          'viridian_city_pokemon_center_1f', 'viridian_city_pokemon_center_2f',
+          'viridian_forest', 'pewter_city', 'route2', 'route22',
+          'cerulean_city', 'route3', 'route4', 'mt_moon_1f',
+        ];
+        const found = [];
+        await Promise.all(knownMaps.map(async k => {
+          try {
+            const r = await fetch(`/maps/${k}.json`, { method: 'HEAD' });
+            if (r.ok) found.push(k);
+          } catch {}
+        }));
+        if (found.length > MAPS.length) {
+          MAPS = [...new Set([...MAPS, ...found])].sort();
+        }
+      } catch {}
+    }
 
     // Hardcoded warps from shared/maps.js — loaded as defaults if no _warps in JSON
     const HARDCODED_WARPS = {
@@ -462,12 +498,16 @@ npSpriteSelect.appendChild(noneOpt);
       ],
     };
 
-    // Populate map dropdown
-    MAPS.forEach(k => {
-      const opt = document.createElement('option');
-      opt.value = k; opt.textContent = k;
-      mapSelect.appendChild(opt);
-    });
+    // Populate map dropdown (called after discoverMaps)
+    function populateMapDropdown() {
+      mapSelect.innerHTML = '';
+      MAPS.forEach(k => {
+        const opt = document.createElement('option');
+        opt.value = k; opt.textContent = k;
+        mapSelect.appendChild(opt);
+      });
+    }
+    populateMapDropdown();
     mapSelect.addEventListener('change', () => loadMap());
 
     function populateWarpDestSelect(defaultMap) {
@@ -1713,9 +1753,12 @@ npSpriteSelect.appendChild(noneOpt);
       if (e.key === 'Enter') addFlag();
     });
 
-    // Initial load — load sprite list first, then map
+    // Initial load — discover maps, load sprite list, then map
     (async () => {
       try {
+        await discoverMaps();
+        populateMapDropdown();
+        populateWarpDestSelect();
         await loadNpcSprites();
         await loadMap();
       } catch (err) {

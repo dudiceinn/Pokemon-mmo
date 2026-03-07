@@ -9,7 +9,7 @@
  *   Player (back,  facing enemy):  /assets/pokemon/Back/<SPECIESID>.png
  */
 
-import { PHASE } from '../systems/BattleState.js';
+import { PHASE, typeMultiplier } from '../systems/BattleState.js';
 import { abilityDesc } from '../systems/AbilityReader.js';
 
 // ─── Colour maps ──────────────────────────────────────────────────────────────
@@ -192,11 +192,26 @@ const CSS = `
   }
   /* Enemy nameplate: top-LEFT */
   .nameplate.enemy {
-    top: 4%; left: 2%;
+    top: 8%; left: 2%;
   }
   /* Player nameplate: bottom-RIGHT */
   .nameplate.player {
-    bottom: 20%; right: 2%;
+    bottom: 5%; right: 2%;
+  }
+
+  /* Type badges */
+  .type-badges { display: flex; gap: 4px; margin-top: -1px; }
+  .type-badge {
+    font-family: 'Rajdhani', 'Exo 2', sans-serif;
+    font-size: clamp(7px, 0.75vw, 10px);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #fff;
+    padding: 0px 6px;
+    border-radius: 3px;
+    text-shadow: 0 1px 1px rgba(0,0,0,0.4);
+    line-height: 1.4;
   }
 
   .nameplate-top {
@@ -343,11 +358,11 @@ const CSS = `
   }
 
   /* Main menu buttons — white on dark */
-  .battle-btn {
+  #battle-overlay .battle-btn {
     font-family: 'Rajdhani', 'Exo 2', sans-serif;
     font-size: clamp(13px,1.5vw,16px); color: #f0f0f0; font-weight: 700; letter-spacing: 0.05em;
     background: transparent; border: none; cursor: pointer;
-    padding: 4px 4px 4px 18px;
+    padding: 4px 4px 4px 28px;
     display: flex; align-items: center; text-align: left;
     line-height: 1.6; letter-spacing: 0.05em;
     user-select: none; position: relative;
@@ -355,10 +370,10 @@ const CSS = `
     white-space: nowrap;
     text-shadow: 1px 1px 0 #000;
   }
-  .battle-btn::before { content: ''; position: absolute; left: 5px; font-size: 0.75em; line-height: 1; color: #f0f0f0; }
-  .battle-btn:hover::before, .battle-btn:focus::before { content: '▶'; }
-  .battle-btn:hover, .battle-btn:focus { outline: none; color: #ffd700; text-shadow: 1px 1px 0 #000; }
-  .battle-btn:hover::before, .battle-btn:focus::before { color: #ffd700; }
+  #battle-overlay .battle-btn::before { content: ''; position: absolute; left: 10px; font-size: 0.7em; line-height: 1; color: #f0f0f0; top: 50%; transform: translateY(-50%); }
+  #battle-overlay .battle-btn:hover::before, #battle-overlay .battle-btn:focus::before { content: '▶'; }
+  #battle-overlay .battle-btn:hover, #battle-overlay .battle-btn:focus { outline: none; color: #ffd700; text-shadow: 1px 1px 0 #000; }
+  #battle-overlay .battle-btn:hover::before, #battle-overlay .battle-btn:focus::before { color: #ffd700; }
   .battle-btn:active { transform: translateX(2px); }
   .battle-btn.disabled { opacity: 0.38; cursor: not-allowed; pointer-events: none; }
 
@@ -385,7 +400,7 @@ const CSS = `
     justify-items: start;
   }
 
-  .fight-btn {
+  #battle-overlay .fight-btn {
     font-family: 'Rajdhani', 'Exo 2', sans-serif;
     font-size: clamp(13px, 1.6vw, 17px); font-weight: 700;
     color: #181818; background: transparent; border: none;
@@ -397,14 +412,14 @@ const CSS = `
     -webkit-tap-highlight-color: transparent;
     display: flex; align-items: center;
   }
-  .fight-btn::before {
+  #battle-overlay .fight-btn::before {
     content: ''; position: absolute; left: 8px;
     font-size: 0.55em; line-height: 1; color: #181818;
     top: 50%; transform: translateY(-50%);
   }
-  .fight-btn:hover::before, .fight-btn:focus::before, .fight-btn.selected::before { content: '▶'; }
-  .fight-btn:hover, .fight-btn:focus, .fight-btn.selected { outline: none; }
-  .fight-btn.disabled { opacity: 0.35; cursor: not-allowed; pointer-events: none; }
+  #battle-overlay .fight-btn:hover::before, #battle-overlay .fight-btn:focus::before, #battle-overlay .fight-btn.selected::before { content: '▶'; }
+  #battle-overlay .fight-btn:hover, #battle-overlay .fight-btn:focus, #battle-overlay .fight-btn.selected { outline: none; }
+  #battle-overlay .fight-btn.disabled { opacity: 0.35; cursor: not-allowed; pointer-events: none; }
 
   /* PP / Type info panel — fixed width right side */
   .fight-info {
@@ -439,6 +454,14 @@ const CSS = `
     text-shadow: 0 1px 2px rgba(0,0,0,0.4); white-space: nowrap;
     letter-spacing: 0.06em; text-transform: uppercase;
   }
+  .fi-effectiveness {
+    font-family: 'Rajdhani', 'Exo 2', sans-serif;
+    font-size: clamp(10px, 1.1vw, 13px);
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    margin-top: 2px;
+    min-height: 1.2em;
+  }
   .fi-back {
     font-family: 'Rajdhani', 'Exo 2', sans-serif;
     font-size: clamp(13px, 1.4vw, 16px);
@@ -456,6 +479,119 @@ const CSS = `
     padding: 4px 6px; text-decoration: underline;
   }
   .back-btn:hover { color: #ffd700; }
+
+  /* ── Stat stage badges (above nameplate) ── */
+  .stage-badges {
+    display: flex; flex-wrap: wrap; gap: 3px;
+    pointer-events: none;
+    margin-bottom: 3px;
+  }
+  .stage-badge {
+    font-family: 'Rajdhani', 'Exo 2', sans-serif;
+    font-size: clamp(8px, 0.9vw, 11px);
+    font-weight: 700;
+    padding: 1px 5px;
+    border-radius: 3px;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+    animation: stage-pop 0.25s cubic-bezier(0.22,1,0.36,1) both;
+  }
+  .stage-badge.buff {
+    color: #fff;
+    background: #2a8c3a;
+    border: 1px solid #3cb850;
+    text-shadow: 0 1px 1px rgba(0,0,0,0.3);
+  }
+  .stage-badge.debuff {
+    color: #fff;
+    background: #a83232;
+    border: 1px solid #cc4444;
+    text-shadow: 0 1px 1px rgba(0,0,0,0.3);
+  }
+  @keyframes stage-pop {
+    from { transform: scale(0.5); opacity: 0; }
+    to   { transform: scale(1);   opacity: 1; }
+  }
+
+  /* Pokeball catch animation */
+  .pokeball-sprite {
+    position: absolute;
+    width: 52px; height: 52px;
+    z-index: 10;
+    pointer-events: none;
+    image-rendering: pixelated;
+  }
+  /* Catch success particles */
+  .catch-particle {
+    position: absolute;
+    pointer-events: none;
+    z-index: 11;
+    font-size: 14px;
+    animation: particle-burst var(--dur, 0.8s) ease-out forwards;
+  }
+  .catch-sparkle {
+    position: absolute;
+    pointer-events: none;
+    z-index: 11;
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: #ffd700;
+    box-shadow: 0 0 6px 2px #ffd70088;
+    animation: sparkle-burst var(--dur, 0.7s) ease-out forwards;
+  }
+  @keyframes particle-burst {
+    0%   { transform: translate(0,0) scale(0.5); opacity: 1; }
+    60%  { opacity: 1; }
+    100% { transform: translate(var(--tx), var(--ty)) scale(1.2) rotate(var(--rot, 0deg)); opacity: 0; }
+  }
+  @keyframes sparkle-burst {
+    0%   { transform: translate(0,0) scale(0.3); opacity: 1; }
+    50%  { opacity: 1; }
+    100% { transform: translate(var(--tx), var(--ty)) scale(0); opacity: 0; }
+  }
+  @keyframes ball-throw {
+    0%   { bottom: 10%; right: 70%; opacity: 1; transform: scale(0.5) rotate(0deg); }
+    50%  { bottom: 60%; right: 30%; transform: scale(1) rotate(360deg); }
+    100% { bottom: 40%; right: 14%; opacity: 1; transform: scale(0.7) rotate(720deg); }
+  }
+  @keyframes ball-wiggle {
+    0%,100% { transform: scale(0.7) rotate(0deg); }
+    20%     { transform: scale(0.7) rotate(20deg); }
+    40%     { transform: scale(0.7) rotate(-20deg); }
+    60%     { transform: scale(0.7) rotate(12deg); }
+    80%     { transform: scale(0.7) rotate(-6deg); }
+  }
+  @keyframes ball-click {
+    0%   { transform: scale(0.7); }
+    50%  { transform: scale(0.9); filter: brightness(2); }
+    100% { transform: scale(0); opacity: 0; }
+  }
+  /* Break-free animations — ball bursts open */
+  @keyframes ball-break-1 {
+    0%   { transform: scale(0.7); }
+    30%  { transform: scale(1.2) rotate(-20deg); filter: brightness(2); }
+    60%  { transform: scale(1.4) rotate(10deg); opacity: 0.6; }
+    100% { transform: scale(1.8) rotate(0deg); opacity: 0; }
+  }
+  @keyframes ball-break-2 {
+    0%   { transform: scale(0.7); }
+    20%  { transform: scale(0.8) rotate(15deg); }
+    50%  { transform: scale(1.2) rotate(-10deg); filter: brightness(2.5); }
+    100% { transform: scale(1.6) translateY(-20px); opacity: 0; }
+  }
+  @keyframes ball-break-3 {
+    0%   { transform: scale(0.7); }
+    25%  { transform: scale(1.0) rotate(25deg); }
+    50%  { transform: scale(0.8) rotate(-25deg); filter: brightness(1.8); }
+    75%  { transform: scale(1.3); filter: brightness(3); }
+    100% { transform: scale(1.8) rotate(0deg); opacity: 0; }
+  }
+  /* Enemy flash when breaking free */
+  @keyframes break-free-flash {
+    0%   { opacity: 0; transform: scale(0.3); }
+    40%  { opacity: 1; transform: scale(1.1); filter: brightness(2); }
+    100% { opacity: 1; transform: scale(1); filter: brightness(1); }
+  }
 
   /* Overlays */
   #battle-flash { position: fixed; inset: 0; z-index: 100002; background: #fff; pointer-events: none; opacity: 0; }
@@ -503,6 +639,9 @@ export class BattleUI {
     this._bs.onResult(r => this._onResult(r));
     this._playIntro();
   }
+
+  /** Play UI click sound. */
+  _click() { if (this.sfx) this.sfx('sfx_click', { volume: 0.5 }); }
 
   // ── DOM ───────────────────────────────────────────────────────────────────
 
@@ -611,8 +750,8 @@ export class BattleUI {
     const hasAbility = !!pokemon.ability;
     el.style.minWidth = '250px';
     el.style.height   = isPlayer
-      ? (hasAbility ? '96px' : '80px')
-      : (hasAbility ? '74px' : '60px');
+      ? (hasAbility ? '110px' : '94px')
+      : (hasAbility ? '88px' : '74px');
 
     const ratio  = Math.max(0, pokemon.hp / pokemon.maxHp);
     const color  = hpColor(ratio);
@@ -639,11 +778,17 @@ export class BattleUI {
       expBar = `<div class="exp-row"><span class="exp-label">EXP</span><div class="exp-track"><div class="exp-fill" style="width:${expPct.toFixed(1)}%"></div></div></div>`;
     }
 
+    const types = pokemon.types ?? [];
+    const typeBadges = types.map(t =>
+      `<span class="type-badge" style="background:${TYPE_COLORS[t] ?? '#888'}">${t}</span>`
+    ).join('');
+
     el.innerHTML = `
       <div class="nameplate-top">
         <span class="poke-name">${pokemon.name}${genderSymbol(pokemon.gender)}</span>
         <span class="poke-level">Lv.${pokemon.level}</span>
       </div>
+      <div class="type-badges">${typeBadges}</div>
       <div class="hp-row">
         <span class="hp-label">HP</span>
         <div class="hp-track" style="height:15px">
@@ -658,6 +803,9 @@ export class BattleUI {
       const badgeEl = el.querySelector('.ability-badge');
       if (badgeEl) this._bindAbilityTooltip(badgeEl, pokemon.ability);
     }
+
+    // Render stat stage badges above nameplate
+    this._renderStageBadges(el, pokemon, isPlayer);
   }
 
   _refreshPlates() {
@@ -690,6 +838,38 @@ export class BattleUI {
     if (abilityEl && !abilityEl.classList.contains('ability-throb')) {
       abilityEl.classList.toggle('ability-glow', _isAbilityActive(pokemon));
     }
+
+    // Refresh stat stage badges
+    this._renderStageBadges(plateEl, pokemon, isPlayer);
+  }
+
+  _renderStageBadges(plateEl, pokemon, isPlayer) {
+    const STAT_LABELS = {
+      atk: 'ATK', def: 'DEF', spatk: 'SPA',
+      spdef: 'SPD', spd: 'SPE', accuracy: 'ACC', evasion: 'EVA',
+    };
+    if (!plateEl) return;
+
+    // Remove existing badge container inside this plate
+    plateEl.querySelector('.stage-badges')?.remove();
+
+    const stages = pokemon.stages;
+    const nonZero = Object.entries(STAT_LABELS).filter(([key]) => stages[key] !== 0);
+    if (nonZero.length === 0) return;
+
+    const container = document.createElement('div');
+    container.className = 'stage-badges';
+
+    for (const [key, label] of nonZero) {
+      const val = stages[key];
+      const badge = document.createElement('span');
+      badge.className = `stage-badge ${val > 0 ? 'buff' : 'debuff'}`;
+      badge.textContent = `${label}${val > 0 ? '+' : ''}${val}`;
+      container.appendChild(badge);
+    }
+
+    // Insert as first child so badges appear above the nameplate content
+    plateEl.insertBefore(container, plateEl.firstChild);
   }
 
   _playExpAnimation(result, onDone) {
@@ -778,9 +958,15 @@ export class BattleUI {
       case 'catch_result':
         this._busy = true;
         this._clearMenu();
-        this._playCatch(result.wobbles, result.caught, result.log, () => {
+        this._playCatch(result.wobbles, result.caught, result.log, result.ballId, () => {
           this._refreshPlates();
-          this._handlePhase(result);
+          if (result.caught) {
+            // BGM + SFX already triggered in _playCatch on ball click
+            setTimeout(() => this._endBattle({ caught: true }), 2500);
+          } else {
+            // Ball animation done — now enemy gets a free turn
+            this._bs.resolveFailedCatch();
+          }
         });
         break;
       case 'flee_result':
@@ -799,6 +985,8 @@ export class BattleUI {
         break;
       case PHASE.VICTORY:
         console.log('[BattleUI] VICTORY — starting faint sprite');
+        // Stop battle BGM so EXP gain SFX can be heard clearly
+        if (this.stopBgm) this.stopBgm();
         this._faintSprite(true, () => {
           console.log('[BattleUI] VICTORY — faint done, starting EXP animation');
           this._playExpAnimation(result, () => {
@@ -824,7 +1012,7 @@ export class BattleUI {
         });
         break;
       case PHASE.CAUGHT:
-        this._showLog(result.log, () => this._endBattle({ caught: true }));
+        // Handled directly in catch_result callback (after ball animation)
         break;
       case PHASE.FLED:
         this._endBattle({ fled: true });
@@ -875,32 +1063,53 @@ export class BattleUI {
         <div class="fi-label">PP</div>
         <div class="fi-pp">--/--</div>
         <div class="fi-type-row"><span class="fi-type-badge" style="background:#888">------</span></div>
+        <div class="fi-effectiveness"></div>
       </div>
       <button class="fi-back">← BACK</button>
     `;
-    info.querySelector('.fi-back').addEventListener('click', () => this._showMainMenu());
+    info.querySelector('.fi-back').addEventListener('click', () => { this._click(); this._showMainMenu(); });
 
+    const enemyTypes = this._bs.enemyPokemon.types ?? [];
     const updateInfo = (move) => {
-      const ppEl  = info.querySelector('.fi-pp');
-      const badge = info.querySelector('.fi-type-badge');
-      const label = info.querySelector('.fi-label');
-      if (label) label.textContent = move ? 'PP' : 'PP';
-      if (!move) { ppEl.textContent = '--/--'; ppEl.className = 'fi-pp'; badge.textContent = '------'; badge.style.background = '#888'; return; }
+      const ppEl   = info.querySelector('.fi-pp');
+      const badge  = info.querySelector('.fi-type-badge');
+      const label  = info.querySelector('.fi-label');
+      const effEl  = info.querySelector('.fi-effectiveness');
+      if (label) label.textContent = 'PP';
+      if (!move) {
+        ppEl.textContent = '--/--'; ppEl.className = 'fi-pp';
+        badge.textContent = '------'; badge.style.background = '#888';
+        effEl.textContent = ''; effEl.style.color = '#888';
+        return;
+      }
       const empty = move.pp <= 0;
       ppEl.textContent = `${move.pp}/${move.maxPp}`;
       ppEl.className = 'fi-pp' + (empty ? ' empty' : '');
       badge.textContent = move.type.toUpperCase();
       badge.style.background = TYPE_COLORS[move.type] ?? '#888';
+
+      // Effectiveness indicator
+      if (move.category === 'status') {
+        effEl.textContent = ''; effEl.style.color = '#888';
+      } else {
+        const mult = typeMultiplier(move.type, enemyTypes);
+        if (mult === 0)       { effEl.textContent = 'No effect';          effEl.style.color = '#666'; }
+        else if (mult < 1)    { effEl.textContent = 'Not very effective'; effEl.style.color = '#a06030'; }
+        else if (mult > 1)    { effEl.textContent = 'Super effective!';   effEl.style.color = '#30a040'; }
+        else                  { effEl.textContent = '';                    effEl.style.color = '#888'; }
+      }
     };
 
     const firstValidMove = moves.find(m => m && m.pp > 0) ?? moves.find(m => m);
     updateInfo(firstValidMove ?? null);
 
     let selectedBtn = null;
-    const selectBtn = (btn) => {
+    const selectBtn = (btn, playSound = true) => {
+      if (btn === selectedBtn) return;
       if (selectedBtn) selectedBtn.classList.remove('selected');
       selectedBtn = btn;
       if (btn) btn.classList.add('selected');
+      if (playSound) this._click();
     };
 
     for (let i = 0; i < 4; i++) {
@@ -915,12 +1124,13 @@ export class BattleUI {
         btn.addEventListener('focus',      () => { updateInfo(move); selectBtn(btn); });
       }
 
-      if (move && move === firstValidMove && !selectedBtn) selectBtn(btn);
+      if (move && move === firstValidMove && !selectedBtn) selectBtn(btn, false);
 
       if (move && move.pp > 0) {
         const slot = i;
         btn.addEventListener('click', () => {
           if (this._busy) return;
+          this._click();
           this._busy = true;
           this._clearMenu();
           this._bs.submitAction({ type: 'move', slot });
@@ -1004,7 +1214,8 @@ export class BattleUI {
     const btn = document.createElement('button');
     btn.className = 'battle-btn';
     btn.textContent = label;
-    btn.addEventListener('click', onClick);
+    btn.addEventListener('mouseenter', () => this._click());
+    btn.addEventListener('click', () => { this._click(); onClick(); });
     return btn;
   }
 
@@ -1014,7 +1225,7 @@ export class BattleUI {
     const btn = document.createElement('button');
     btn.className = 'back-btn';
     btn.textContent = '← Back';
-    btn.addEventListener('click', onClick);
+    btn.addEventListener('click', () => { this._click(); onClick(); });
     row.appendChild(btn);
     this._menu.appendChild(row);
   }
@@ -1040,6 +1251,7 @@ export class BattleUI {
       this._dialogText.textContent = text;
       this._dialogArrow.style.display = 'block';
       const advance = () => {
+        this._click();
         this._dialogEl.removeEventListener('click', advance);
         clearTimeout(auto);
         this._dialogArrow.style.display = 'none';
@@ -1055,7 +1267,7 @@ export class BattleUI {
       if (cursor >= chars.length) finish();
     }, 24);
 
-    this._dialogEl.addEventListener('click', () => { if (!done) finish(); }, { once: true });
+    this._dialogEl.addEventListener('click', () => { if (!done) { this._click(); finish(); } }, { once: true });
   }
 
   _showLog(entries, onDone) {
@@ -1169,17 +1381,128 @@ export class BattleUI {
     }, 50);
   }
 
-  _playCatch(wobbles, caught, log, onDone) {
-    let i = 0;
-    const t = setInterval(() => {
-      this._enemySprite.style.opacity = (i % 2 === 0) ? '0.15' : '1';
-      if (++i > 5) {
-        clearInterval(t);
-        this._enemySprite.style.opacity = caught ? '0' : '1';
-        const msg = ['The ball missed!','...','... ...','... ... ...'][Math.min(wobbles,3)];
-        this._showLog([msg, ...log], onDone);
+  _playCatch(wobbles, caught, log, ballId, onDone) {
+    const fieldEl = this._root?.querySelector('#battle-field');
+    if (!fieldEl) { this._showLog(log, onDone); return; }
+
+    // Map ballId to sprite filename
+    const BALL_SPRITES = {
+      pokeball:    'POKEBALL',
+      great_ball:  'GREATBALL',
+      ultra_ball:  'ULTRABALL',
+      master_ball: 'MASTERBALL',
+    };
+    const spriteFile = BALL_SPRITES[ballId] || 'POKEBALL';
+
+    // Create pokeball element
+    const ball = document.createElement('img');
+    ball.className = 'pokeball-sprite';
+    ball.src = `/Items/${spriteFile}.png`;
+    ball.alt = 'Pokéball';
+    ball.style.animation = 'ball-throw 0.8s cubic-bezier(0.2,0.8,0.4,1) forwards';
+    fieldEl.appendChild(ball);
+
+    // After throw lands (0.8s), lock position and shrink enemy
+    setTimeout(() => {
+      // Lock ball at landing position so wiggle doesn't move it
+      ball.style.animation = 'none';
+      ball.style.bottom = '40%';
+      ball.style.right = '14%';
+      ball.style.transform = 'scale(0.7)';
+
+      this._enemySprite.style.transition = 'opacity 0.3s, transform 0.3s';
+      this._enemySprite.style.opacity = '0';
+      this._enemySprite.style.transform = 'scale(0.3)';
+
+      // Start wiggle after a pause (enemy absorbed)
+      setTimeout(() => {
+        let wiggleCount = 0;
+        const maxWiggle = Math.min(wobbles, 3);
+
+        const doWiggle = () => {
+          if (wiggleCount < maxWiggle) {
+            wiggleCount++;
+            ball.style.animation = 'none';
+            void ball.offsetWidth;
+            ball.style.animation = 'ball-wiggle 1s ease-in-out';
+            // Wait for full wiggle (1s) + pause (0.5s) before next
+            setTimeout(doWiggle, 1500);
+          } else {
+            // Wiggling done — caught or escaped?
+            if (caught) {
+              // Ball clicks shut — stop BGM + play catch tune immediately
+              if (this.stopBgm) this.stopBgm();
+              if (this.sfx) this.sfx('sfx_catch_success');
+              ball.style.animation = 'ball-click 0.4s ease forwards';
+              // Spawn particles at ball position before it shrinks away
+              this._spawnCatchParticles(fieldEl, ball);
+              setTimeout(() => {
+                ball.remove();
+                this._showLog(log, onDone);
+              }, 500);
+            } else {
+              // Pokemon breaks free — random burst animation
+              const breakAnims = ['ball-break-1', 'ball-break-2', 'ball-break-3'];
+              const pick = breakAnims[Math.floor(Math.random() * breakAnims.length)];
+              ball.style.animation = `${pick} 0.5s ease forwards`;
+              setTimeout(() => {
+                ball.remove();
+                // Enemy flashes back into view
+                this._enemySprite.style.transition = 'none';
+                this._enemySprite.style.animation = 'break-free-flash 0.5s ease forwards';
+                setTimeout(() => {
+                  this._enemySprite.style.animation = '';
+                  this._enemySprite.style.opacity = '1';
+                  this._enemySprite.style.transform = 'scale(1)';
+                  this._showLog(log, onDone);
+                }, 550);
+              }, 500);
+            }
+          }
+        };
+
+        doWiggle();
+      }, 500);
+    }, 850);
+  }
+
+  /** Spawn star + sparkle particles at the ball's position on catch success. */
+  _spawnCatchParticles(container, ball) {
+    const rect = ball.getBoundingClientRect();
+    const cRect = container.getBoundingClientRect();
+    const cx = rect.left - cRect.left + rect.width / 2;
+    const cy = rect.top - cRect.top + rect.height / 2;
+
+    const count = 10;
+    for (let i = 0; i < count; i++) {
+      const angle = (Math.PI * 2 * i) / count + (Math.random() - 0.5) * 0.5;
+      const dist = 40 + Math.random() * 60;
+      const tx = `${Math.cos(angle) * dist}px`;
+      const ty = `${Math.sin(angle) * dist}px`;
+      const dur = `${0.5 + Math.random() * 0.5}s`;
+
+      const el = document.createElement('span');
+      if (i % 2 === 0) {
+        // Star particle
+        el.className = 'catch-particle';
+        el.textContent = '\u2605';
+        el.style.color = ['#ffd700', '#ff6', '#fff', '#f90'][i % 4];
+      } else {
+        // Gold sparkle dot
+        el.className = 'catch-sparkle';
       }
-    }, 90);
+      el.style.left = `${cx}px`;
+      el.style.top = `${cy}px`;
+      el.style.setProperty('--tx', tx);
+      el.style.setProperty('--ty', ty);
+      el.style.setProperty('--dur', dur);
+      el.style.setProperty('--rot', `${Math.random() * 360}deg`);
+      container.appendChild(el);
+
+      // Self-remove after animation
+      const ms = parseFloat(dur) * 1000 + 100;
+      setTimeout(() => el.remove(), ms);
+    }
   }
 
   _swapToNext(nextPokemon) {

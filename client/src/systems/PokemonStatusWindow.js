@@ -21,8 +21,11 @@ const POKEMON_DEFS = {
 };
 
 const TYPE_COLORS = {
-  fire:'#FF6B35', water:'#3FA7D6', grass:'#59C15D',
-  poison:'#A259C4', flying:'#80B0FF', normal:'#9E9E9E',
+  normal:'#A8A77A', fire:'#EE8130', water:'#6390F0', grass:'#7AC74C',
+  electric:'#F7D02C', ice:'#96D9D6', fighting:'#C22E28', poison:'#A33EA1',
+  ground:'#E2BF65', flying:'#A98FF3', psychic:'#F95587', bug:'#A6B91A',
+  rock:'#B6A136', ghost:'#735797', dragon:'#6F35FC', dark:'#705746',
+  fairy:'#D685AD', steel:'#B7B7CE',
 };
 
 const STAT_COLORS = {
@@ -168,8 +171,34 @@ const CSS = `
 .psw-stat-val { font-size:11px; color:#ccd; width:28px; text-align:right; font-weight:bold; }
 
 #psw-moves-grid { display:grid; grid-template-columns:1fr 1fr; gap:6px; }
-.psw-move-chip { background:#0f1f35; border:1px solid #1e3a5f; border-radius:6px; padding:7px 10px; font-size:11px; color:#a8c0e0; text-align:center; font-family:inherit; }
-.psw-move-chip.empty { background:#080e18; border-color:#111; color:#222; }
+.psw-move-chip { background:#0f1f35; border:1px solid #1e3a5f; border-radius:6px; padding:7px 10px; font-size:11px; color:#a8c0e0; text-align:center; font-family:inherit; cursor:pointer; transition:border-color 0.15s, background 0.15s; }
+.psw-move-chip:hover { border-color:#3a6faf; background:#142a48; }
+.psw-move-chip.empty { background:#080e18; border-color:#1a1a2e; color:#445; cursor:pointer; }
+.psw-move-chip.empty:hover { border-color:#3a6faf; }
+
+/* Move picker overlay */
+.psw-move-picker-overlay { position:absolute; inset:0; background:rgba(0,0,0,0.7); z-index:50; display:flex; align-items:center; justify-content:center; }
+.psw-move-picker { background:#0c1628; border:2px solid #2a4a7a; border-radius:10px; width:90%; max-width:420px; max-height:80%; display:flex; flex-direction:column; overflow:hidden; }
+.psw-picker-header { display:flex; align-items:center; justify-content:space-between; padding:10px 14px; border-bottom:1px solid #1a2a4a; }
+.psw-picker-title { font-size:13px; font-weight:bold; color:#8ab4f0; }
+.psw-picker-close { background:none; border:none; color:#667; font-size:16px; cursor:pointer; padding:2px 6px; }
+.psw-picker-close:hover { color:#f44; }
+.psw-picker-list { overflow-y:auto; padding:6px; flex:1; }
+.psw-pool-move { display:flex; align-items:center; gap:8px; padding:8px 10px; border-radius:6px; cursor:pointer; border:1px solid transparent; margin-bottom:3px; transition:background 0.12s; }
+.psw-pool-move:hover { background:#162040; border-color:#2a4a7a; }
+.psw-pool-move.equipped { opacity:0.4; cursor:default; }
+.psw-pool-move.equipped:hover { background:transparent; border-color:transparent; }
+.psw-pool-move.locked { opacity:0.35; cursor:default; }
+.psw-pool-move.locked:hover { background:transparent; border-color:transparent; }
+.psw-pool-tag.locked { color:#88a; font-style:italic; }
+.psw-pool-type { font-size:9px; font-weight:bold; color:#fff; padding:1px 6px; border-radius:3px; text-transform:uppercase; letter-spacing:0.04em; }
+.psw-pool-name { font-size:12px; color:#c0d8f0; font-weight:600; flex:1; }
+.psw-pool-meta { font-size:10px; color:#556; white-space:nowrap; }
+.psw-pool-tag { font-size:9px; color:#f80; font-weight:bold; margin-left:4px; }
+.psw-picker-remove { display:flex; align-items:center; justify-content:center; padding:8px; border-top:1px solid #1a2a4a; }
+.psw-picker-remove button { background:#3a1515; border:1px solid #6a2222; color:#f88; font-size:11px; padding:5px 16px; border-radius:5px; cursor:pointer; font-family:inherit; }
+.psw-picker-remove button:hover { background:#4a1a1a; }
+.psw-picker-remove button.disabled { opacity:0.3; cursor:not-allowed; }
 
 #psw-bottom-row { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
 .psw-mini-label { font-size:10px; color:#556; letter-spacing:1px; text-transform:uppercase; margin-bottom:6px; }
@@ -437,13 +466,12 @@ export class PokemonStatusWindow {
         <span class="psw-stat-val">${v}</span>
       </div>`).join('');
 
-    const moveChips = moves4.map(m => {
-      if (!m) return `<div class="psw-move-chip empty">— — —</div>`;
-      // m is a {moveId, name, pp, maxPp, type, category} object from PokemonInstance.serialize()
+    const moveChips = moves4.map((m, idx) => {
+      if (!m) return `<div class="psw-move-chip empty" data-slot="${idx}">+ Add Move</div>`;
       const moveName = m.name ?? String(m.moveId ?? m).replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
       const ppText   = (m.pp != null && m.maxPp != null) ? `<span class="psw-move-pp">${m.pp}/${m.maxPp}</span>` : '';
       const typeCol  = TYPE_COLORS[m.type] || '#555';
-      return `<div class="psw-move-chip" style="border-color:${typeCol}44;">
+      return `<div class="psw-move-chip" data-slot="${idx}" style="border-color:${typeCol}44;">
         <span class="psw-move-name">${moveName}</span>
         ${ppText}
         ${m.type ? `<span class="psw-move-type" style="background:${typeCol};">${m.type}</span>` : ''}
@@ -541,5 +569,113 @@ export class PokemonStatusWindow {
         if (tip) tip.classList.remove('visible');
       });
     }
+
+    // Bind move chip click → open move picker
+    this.elDetail.querySelectorAll('.psw-move-chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        const slotIndex = parseInt(chip.dataset.slot, 10);
+        this._openMovePicker(pokemon, slotIndex);
+      });
+    });
+  }
+
+  _openMovePicker(pokemon, slotIndex) {
+    // Remove existing picker
+    this.elDetail.querySelector('.psw-move-picker-overlay')?.remove();
+
+    const pool = pokemon.movePool ?? [];
+    const equippedIds = new Set(pokemon.moves.filter(Boolean).map(m => m.moveId));
+    const equippedCount = pokemon.moves.filter(Boolean).length;
+    const currentMove = pokemon.moves[slotIndex];
+
+    const overlay = document.createElement('div');
+    overlay.className = 'psw-move-picker-overlay';
+
+    const picker = document.createElement('div');
+    picker.className = 'psw-move-picker';
+
+    // Header
+    const header = document.createElement('div');
+    header.className = 'psw-picker-header';
+    header.innerHTML = `<span class="psw-picker-title">Slot ${slotIndex + 1} — Choose a Move</span>`;
+    const closeBtn = document.createElement('button');
+    closeBtn.className = 'psw-picker-close';
+    closeBtn.textContent = '✕';
+    closeBtn.addEventListener('click', () => overlay.remove());
+    header.appendChild(closeBtn);
+    picker.appendChild(header);
+
+    // Move list — show full learnset (unlocked + locked)
+    const list = document.createElement('div');
+    list.className = 'psw-picker-list';
+
+    const learnset = pokemon.fullLearnset ?? [];
+    const poolIds = new Set(pool.map(m => m.moveId));
+
+    for (const entry of learnset) {
+      const isEquipped = equippedIds.has(entry.moveId);
+      const isUnlocked = entry.unlocked && poolIds.has(entry.moveId);
+      const isLocked = !entry.unlocked;
+      const row = document.createElement('div');
+      row.className = 'psw-pool-move'
+        + (isEquipped ? ' equipped' : '')
+        + (isLocked ? ' locked' : '');
+
+      const typeCol = TYPE_COLORS[entry.type] || '#555';
+      const catLabel = entry.category === 'physical' ? 'PHY' : entry.category === 'special' ? 'SPC' : 'STS';
+      const powerLabel = entry.power ? `Pow:${entry.power}` : '';
+      const poolEntry = pool.find(m => m.moveId === entry.moveId);
+      const ppText = poolEntry ? `${poolEntry.pp}/${poolEntry.maxPp}` : `${entry.pp}/${entry.pp}`;
+
+      row.innerHTML = `
+        <span class="psw-pool-type" style="background:${isLocked ? '#333' : typeCol}">${entry.type}</span>
+        <span class="psw-pool-name">${entry.name}</span>
+        <span class="psw-pool-meta">${catLabel} ${powerLabel} PP:${ppText}</span>
+        ${isEquipped ? '<span class="psw-pool-tag">EQUIPPED</span>' : ''}
+        ${isLocked ? `<span class="psw-pool-tag locked">Lv.${entry.level}</span>` : ''}
+      `;
+
+      if (isUnlocked && !isEquipped) {
+        row.addEventListener('click', () => {
+          pokemon.equipMove(entry.moveId, slotIndex);
+          this._savePokemon();
+          overlay.remove();
+          this._renderDetail();
+        });
+      }
+      list.appendChild(row);
+    }
+
+    if (learnset.length === 0) {
+      list.innerHTML = '<div style="color:#445;text-align:center;padding:20px;font-size:12px;">No moves in learnset</div>';
+    }
+
+    picker.appendChild(list);
+
+    // Remove button (only if >1 move equipped and slot has a move)
+    if (currentMove && equippedCount > 1) {
+      const removeRow = document.createElement('div');
+      removeRow.className = 'psw-picker-remove';
+      const removeBtn = document.createElement('button');
+      removeBtn.textContent = 'Remove Move';
+      removeBtn.addEventListener('click', () => {
+        pokemon.unequipMove(slotIndex);
+        this._savePokemon();
+        overlay.remove();
+        this._renderDetail();
+      });
+      removeRow.appendChild(removeBtn);
+      picker.appendChild(removeRow);
+    }
+
+    overlay.appendChild(picker);
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
+    this.elDetail.style.position = 'relative';
+    this.elDetail.appendChild(overlay);
+  }
+
+  _savePokemon() {
+    const pm = window.partyManager;
+    if (pm) pm.save();
   }
 }

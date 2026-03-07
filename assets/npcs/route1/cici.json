@@ -27,7 +27,7 @@
     },
     {
       "condition": "quest1_find_daughter",
-      "script": "say: ...\nsay: I'm lost...\nsay: I can't find my way back home.\nsay: Can you take me back to my dad?\nsetflag: quest1_refused_cici\nchoice: Will you take me to him?\nclearflag: quest1_refused_cici\nsetflag: quest1_found_cici\nstartfollow\nsay: Oh thank you! Lead the way, {player}!\nsay: I'll follow right behind you!"
+      "script": "say: ...\nsay: I'm lost...\nsay: I can't find my way back home.\nsay: Can you take me back to my dad?\nchoice: Will you take me to him?\nsetflag: quest1_found_cici\nstartfollow\nsay: Oh thank you! Lead the way, {player}!\nsay: I'll follow right behind you!"
     },
     {
       "condition": "",

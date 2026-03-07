@@ -61,7 +61,7 @@ export default defineConfig({
           // Request: /audio/bgm/wild_battle → serves assets/audio/bgm/wild_battle.mp3
           if (urlPath.startsWith('/audio/')) {
             const hasExt = urlPath.match(/\.(mp3|ogg|wav)$/i);
-            const basePath = urlPath.slice(1); // strip leading /
+            const basePath = decodeURIComponent(urlPath.slice(1)); // strip leading / and decode %20 etc.
             const tryExts = hasExt ? [''] : ['.mp3', '.ogg', '.wav'];
             const MIME = { mp3: 'audio/mpeg', ogg: 'audio/ogg', wav: 'audio/wav' };
             for (const ext of tryExts) {

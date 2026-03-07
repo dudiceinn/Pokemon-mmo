@@ -43,10 +43,9 @@
 - Simple name display above players
 - Verify: 2 browsers on LAN see each other walking in Pallet Town
 
-## Phase 6: NPCs & Quest System 🔧 (In Progress)
+## Phase 6: NPCs & Quest System ✅
 _Originally "NPCs & Polish" — expanded to include quest/flag system_
 
-### Done
 - Static NPC placement from map data
 - NPC sprites (npc_oak, npc_boy, npc_woman)
 - NPC interaction (face NPC + press Space → dialog box)
@@ -56,13 +55,7 @@ _Originally "NPCs & Polish" — expanded to include quest/flag system_
 - **Flag system** — persistent game state flags in localStorage
 - **Conditional NPC dialogs** — NPCs show different dialog based on flags (condition, setFlag, clearFlag)
 - **Collision editor upgrades** — dialog list UI with conditional dialog entries
-
-### TODO
-- Simple quest chains — chain NPCs together using flags
-- Item / inventory system (basic)
-- Quest log UI
-- More NPC sprites
-- Z-order fix — characters render on top of buildings (see ISSUES.md)
+- Z-order fix — player renders behind buildings/roofs correctly
 
 ## Phase 7: Inventory & Party System ✅
 - **InventoryManager** — localStorage-backed item storage, mirrors server-ready pattern
@@ -93,19 +86,74 @@ _Originally "NPCs & Polish" — expanded to include quest/flag system_
 - Pokémon icon sprites served from `/pokemon/Icons/SPECIESNAME.png`
 - Vite config updated: PNG middleware removed, icons served natively via `publicDir: ../assets`
 
-## Phase 9: Quality of Life
+## Phase 9: Wild Encounters & Battle System ✅
+- **Wild encounter system** — tall grass tiles trigger random encounters based on spawn tables
+- **EncounterManager** — reads `assets/spawns/<mapKey>.json` for per-tile species/level ranges
+- **BattleState.js** — full turn-based battle engine
+  - Type effectiveness chart (all 17 types, dual-type support)
+  - Damage formula (level, base power, ATK/DEF or SPA/SPD, STAB, type effectiveness, critical hits)
+  - Status conditions: burn, poison, paralysis, sleep, freeze (with turn counters and end-of-turn damage)
+  - Stat stages (±6 clamping, 7 stats: atk, def, spatk, spdef, spd, accuracy, evasion)
+  - Phase machine: INTRO → PLAYER_TURN → RESOLVE → VICTORY/FAINTED/CAUGHT
+  - PP tracking per move
+  - Struggle when all PP exhausted
+- **BattleUI.js** — full-screen HTML/CSS overlay (not Phaser rendering)
+  - Animated HP bars with color transitions (green → yellow → red)
+  - Move menu with type-colored buttons, PP display, and power/accuracy tooltips
+  - Battle log with typewriter text animation
+  - Pokemon sprites (front/back) with intro slide-in animations
+  - Stat stage badges above nameplates (green for buffs, red for debuffs)
+- **BattleScene.js** — Phaser scene lifecycle wrapper
+  - Audio loaded via `fetch()` + Web Audio API (bypasses IDM interception)
+  - Battle BGM and SFX (hit sounds, faint, victory jingle)
+- **Pokeball catching** — catch rate formula, ball throw animation, shake sequence
+- **Caught Pokemon** added to party automatically
+
+## Phase 10: Ability System ✅
+- **AbilityReader.js** — single source of truth for all ability behavior
+  - Declarative ability definitions with hooks: `atkBoost`, `defMult`, `onEntry`, `onContact`, `onEndOfTurn`, `blocksStatus`, `blocksFlinch`, `blocksRecoil`, `statMult`
+  - 28 fully working abilities with battle logic + UI integration
+  - 17 display-only abilities (badge shows, logic TBD)
+- **Ability badge** on battle nameplates — shows ability name with animated gold throb when active
+- Abilities integrated into damage calc, status application, and turn resolution
+- See `docs/ABILITY_READER_GUIDE.md` for full ability list and developer guide
+
+## Phase 11: EXP & Leveling System ✅
+- **EXP gain** on victory — standard Pokemon EXP formula (base exp, level scaling)
+- **ExpBar.js** — animated EXP bar overlay after battle victory
+  - Smooth fill animation with level-up detection
+  - Multi-level-up support (fill → flash → stat card → repeat)
+  - Level-up stat card shows before/after stats for each stat
+  - SFX for EXP gain and level up
+- **Stat recalculation** on level up — HP, ATK, DEF, SPA, SPD, SPE updated from base stats
+- **Move learning** on level up — new moves from learnset offered at appropriate levels
+
+## Phase 12: Pokemon Roster Expansion ✅
+- **pokemon.json** expanded beyond Gen 1 starters
+  - Full evolution lines with level-based evolution triggers
+  - Species-specific abilities assigned
+  - Learnsets with level-up moves
+  - Base stats, types, catch rates, base EXP yields
+- Follower sprites, front/back battle sprites, and icon sprites per species
+
+## Quality of Life
 - Running shoes (hold B to move faster)
 - Smooth camera transitions between maps
+
+## Future Ideas
+- Simple quest chains — chain NPCs together using flags
+- Quest log UI
+- More NPC sprites and dialog trees
 - Player name input on connect (currently uses `prompt()`)
 - Connection status indicator
-- Basic sound effects (footsteps, door)
-
-## Future Ideas (beyond Phase 9)
-- Wild Pokémon encounters (tall grass)
-- Battle system
-- More Pokémon species in pokemon.json (beyond Gen 1 starters)
+- Sound effects (footsteps, door, overworld BGM)
 - Trading between players
 - Chat system
 - Persistent server-side save data (replace localStorage with API calls — PartyManager and InventoryManager are already structured for this migration)
 - Mobile touch button to open Party Status Window
 - Capacitor wrapper for Android/iOS native app
+- Weather system (rain, sun, sandstorm) with ability interactions
+- Trainer battles (NPC-initiated battles with AI opponent)
+- Evolution animations and evolution stones
+- Item / inventory system for battle items (Potions, status heals)
+- More Pokemon species and generations

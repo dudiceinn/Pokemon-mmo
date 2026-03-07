@@ -5,6 +5,7 @@ export const MAPS = {
   pallet_town: {
     key: 'pallet_town',
     name: 'Pallet Town',
+    bgm: 'Pixel Dawn Over Maple Town',
     width: 24,
     height: 20,
     connections: [
@@ -21,10 +22,12 @@ export const MAPS = {
   route1: {
     key: 'route1',
     name: 'Route 1',
+    bgm: 'Pixel Dawn Over Maple Town',
     width: 24,
     height: 40,
     connections: [
       { direction: 'down', map: 'pallet_town', offset: 0 },
+      { direction: 'up', map: 'viridian_city', offset: 12 },
     ],
     warps: [],
     spawnX: 12,
@@ -33,6 +36,7 @@ export const MAPS = {
   players_house_1f: {
     key: 'players_house_1f',
     name: "Player's House 1F",
+    bgm: null,
     width: 13,
     height: 10,
     connections: [],
@@ -48,6 +52,7 @@ export const MAPS = {
   players_house_2f: {
     key: 'players_house_2f',
     name: "Player's House 2F",
+    bgm: null,
     width: 12,
     height: 9,
     connections: [],
@@ -60,6 +65,7 @@ export const MAPS = {
   rivals_house: {
     key: 'rivals_house',
     name: "Rival's House",
+    bgm: null,
     width: 13,
     height: 10,
     connections: [],
@@ -74,6 +80,7 @@ export const MAPS = {
   oaks_lab: {
     key: 'oaks_lab',
     name: "Prof. Oak's Lab",
+    bgm: null,
     width: 13,
     height: 14,
     connections: [],
@@ -83,6 +90,19 @@ export const MAPS = {
     ],
     spawnX: 6,
     spawnY: 12,
+  },
+  viridian_city: {
+    key: 'viridian_city',
+    name: 'Viridian City',
+    bgm: 'Pixel Dawn Over Maple Town',
+    width: 48,
+    height: 40,
+    connections: [
+      { direction: 'down', map: 'route1', offset: -12 },
+    ],
+    warps: [],
+    spawnX: 24,
+    spawnY: 38,
   },
 };
 

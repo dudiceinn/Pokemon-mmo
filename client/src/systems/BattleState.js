@@ -68,7 +68,7 @@ const TYPE_CHART = {
   steel:    { fire:0.5, water:0.5, electric:0.5, ice:2, rock:2, steel:0.5, fairy:2 },
 };
 
-function typeMultiplier(moveType, defenderTypes) {
+export function typeMultiplier(moveType, defenderTypes) {
   let mult = 1;
   for (const dt of defenderTypes) {
     mult *= TYPE_CHART[moveType]?.[dt] ?? 1;
@@ -97,6 +97,45 @@ const STATUS_CURE = {
   burn_heal: ['burn'],
   full_heal: ['poison','burn','paralysis','sleep','freeze'],
 };
+
+// Map stat-only effects to { stat, delta, target:'self'|'foe' }
+const STAT_EFFECT_MAP = {
+  raise_atk:        { stats: [['atk', +1]],              target: 'self' },
+  raise_def:        { stats: [['def', +1]],              target: 'self' },
+  raise_spatk2:     { stats: [['spatk', +2]],            target: 'self' },
+  raise_spd2:       { stats: [['spd', +2]],              target: 'self' },
+  raise_def_spdef:  { stats: [['def', +1], ['spdef', +1]], target: 'self' },
+  raise_atk_def_acc:{ stats: [['atk', +1], ['def', +1]], target: 'self' },
+  raise_eva:        { stats: [['evasion', +1]],          target: 'self' },
+  lower_atk:        { stats: [['atk', -1]],              target: 'foe' },
+  lower_def:        { stats: [['def', -1]],              target: 'foe' },
+  lower_def2:       { stats: [['def', -2]],              target: 'foe' },
+  lower_spatk2:     { stats: [['spatk', -2]],            target: 'foe' },
+};
+
+// Effects that inflict a primary status on the foe (100% chance, status-category moves)
+const STATUS_INFLICT_EFFECTS = new Set([
+  'burn', 'paralyze', 'poison', 'sleep', 'freeze',
+]);
+
+/** Returns true if a status move's stat effect would be completely wasted. */
+function isStatMoveUseless(move, user, foe) {
+  if (move.category !== 'status') return false;
+  const info = STAT_EFFECT_MAP[move.effect];
+  if (!info) return false;
+  const target = info.target === 'self' ? user : foe;
+  return info.stats.every(([stat, delta]) => {
+    const cur = target.stages[stat];
+    return delta > 0 ? cur >= 6 : cur <= -6;
+  });
+}
+
+/** Returns true if a status move would fail because foe already has a status. */
+function isStatusMoveUseless(move, foe) {
+  if (move.category !== 'status') return false;
+  if (!STATUS_INFLICT_EFFECTS.has(move.effect)) return false;
+  return !!foe.status;
+}
 
 export class BattleState {
   /**
@@ -216,10 +255,15 @@ export class BattleState {
       || playerSpd >= enemySpd
       || (playerSpd === enemySpd && Math.random() < 0.5);
 
-    // Enemy picks a random move
-    const enemyMoves  = this._enemyPokemon.moves.filter(m => m.pp > 0);
-    const enemyMove   = enemyMoves.length
-      ? enemyMoves[Math.floor(Math.random() * enemyMoves.length)]
+    // Enemy picks a random move (prefer moves that aren't wasted stat boosts)
+    const enemyMovesAll = this._enemyPokemon.moves.filter(m => m.pp > 0);
+    const enemyMovesUseful = enemyMovesAll.filter(m =>
+      !isStatMoveUseless(m, this._enemyPokemon, this._playerPokemon)
+      && !isStatusMoveUseless(m, this._playerPokemon)
+    );
+    const enemyMovePool = enemyMovesUseful.length ? enemyMovesUseful : enemyMovesAll;
+    const enemyMove   = enemyMovePool.length
+      ? enemyMovePool[Math.floor(Math.random() * enemyMovePool.length)]
       : null;
     const enemySlot   = enemyMove
       ? this._enemyPokemon.moves.findIndex(m => m.moveId === enemyMove.moveId)
@@ -370,14 +414,35 @@ export class BattleState {
     if (caught) {
       this._phase = PHASE.CAUGHT;
       enemy.resetStages();
-      const added = this._partyManager.addInstance(enemy);
-      say(`Gotcha! ${enemy.name} was caught!`);
+      let added = this._partyManager.addInstance(enemy);
+      if (!added) {
+        // Party full — try PC storage
+        const storage = window.storageManager;
+        const spot = storage?.depositAuto(enemy);
+        if (spot) {
+          say(`Gotcha! ${enemy.name} was caught!`);
+          say(`Party is full — ${enemy.name} was sent to ${storage.getBoxName(spot.box)}.`);
+          added = true;
+        } else {
+          say(`Gotcha! ${enemy.name} was caught!`);
+          say(`But your party and PC are both full! ${enemy.name} had to be released...`);
+        }
+      } else {
+        say(`Gotcha! ${enemy.name} was caught!`);
+      }
       this._applyBattleEndAbilities();
-      this._emit({ type: 'catch_result', caught: true, wobbles, log, phase: PHASE.CAUGHT, addedToParty: added });
+      this._emit({ type: 'catch_result', caught: true, wobbles: 3, log, phase: PHASE.CAUGHT, addedToParty: added, ballId });
       return;
     }
 
-    say(`Oh no! ${enemy.name} broke free!`);
+    this._emit({ type: 'catch_result', caught: false, wobbles, log: [`Oh no! ${enemy.name} broke free!`], phase: PHASE.PLAYER_TURN, ballId });
+  }
+
+  /** Called by UI after failed catch ball animation finishes. Enemy gets a free turn. */
+  resolveFailedCatch() {
+    const log  = [];
+    const say  = (text) => log.push({ type: 'text', text });
+    const snap = () => log.push({ type: 'hp_update', playerHp: this._playerPokemon.hp, playerMaxHp: this._playerPokemon.maxHp, enemyHp: this._enemyPokemon.hp, enemyMaxHp: this._enemyPokemon.maxHp });
     this._enemyTakesFreeTurn(log, say, snap);
   }
 
@@ -630,7 +695,10 @@ export class BattleState {
       ? this._playerPokemon.name : this._enemyPokemon.name;
 
     const tryStatus = (status, chance, label) => {
-      if (defender.status) return;
+      if (defender.status) {
+        if (chance >= 1.0) say(`But it failed! ${defName} already has a status condition!`);
+        return;
+      }
       // Immunity abilities
       if (abilityBlocksStatus(defender, status)) {
         const blockerSide = defender === this._playerPokemon ? 'player' : 'enemy';
@@ -687,31 +755,33 @@ export class BattleState {
         break;
       }
 
-      case 'lower_atk':   { const d = defender.modifyStage('atk',  -1); if(d) say(`${defName}'s Attack fell!`); break; }
-      case 'lower_def':   { const d = defender.modifyStage('def',  -1); if(d) say(`${defName}'s Defense fell!`); break; }
-      case 'lower_def2':  { const d = defender.modifyStage('def',  -2); if(d) say(`${defName}'s Defense sharply fell!`); break; }
-      case 'lower_spatk2':{ const d = defender.modifyStage('spatk',-2); if(d) say(`${defName}'s Sp. Atk sharply fell!`); break; }
-      case 'spd_down_10pct':  { if(Math.random()<0.10){ const d=defender.modifyStage('spd',-1);   if(d) say(`${defName}'s Speed fell!`); } break; }
-      case 'spdef_down_10pct':{ if(Math.random()<0.10){ const d=defender.modifyStage('spdef',-1); if(d) say(`${defName}'s Sp. Def fell!`); } break; }
-      case 'spdef_down_20pct':{ if(Math.random()<0.20){ const d=defender.modifyStage('spdef',-1); if(d) say(`${defName}'s Sp. Def fell!`); } break; }
+      case 'lower_atk':   { const d = defender.modifyStage('atk',  -1); if(d) say(`${defName}'s Attack fell!`); else say(`${defName}'s Attack won't go any lower!`); break; }
+      case 'lower_def':   { const d = defender.modifyStage('def',  -1); if(d) say(`${defName}'s Defense fell!`); else say(`${defName}'s Defense won't go any lower!`); break; }
+      case 'lower_def2':  { const d = defender.modifyStage('def',  -2); if(d) say(`${defName}'s Defense sharply fell!`); else say(`${defName}'s Defense won't go any lower!`); break; }
+      case 'lower_spatk2':{ const d = defender.modifyStage('spatk',-2); if(d) say(`${defName}'s Sp. Atk sharply fell!`); else say(`${defName}'s Sp. Atk won't go any lower!`); break; }
+      case 'spd_down_10pct':  { if(Math.random()<0.10){ const d=defender.modifyStage('spd',-1);   if(d) say(`${defName}'s Speed fell!`); else say(`${defName}'s Speed won't go any lower!`); } break; }
+      case 'spdef_down_10pct':{ if(Math.random()<0.10){ const d=defender.modifyStage('spdef',-1); if(d) say(`${defName}'s Sp. Def fell!`); else say(`${defName}'s Sp. Def won't go any lower!`); } break; }
+      case 'spdef_down_20pct':{ if(Math.random()<0.20){ const d=defender.modifyStage('spdef',-1); if(d) say(`${defName}'s Sp. Def fell!`); else say(`${defName}'s Sp. Def won't go any lower!`); } break; }
 
-      case 'raise_atk':   { const d = attacker.modifyStage('atk',  +1); if(d) say(`${attName}'s Attack rose!`); break; }
-      case 'raise_def':   { const d = attacker.modifyStage('def',  +1); if(d) say(`${attName}'s Defense rose!`); break; }
-      case 'raise_spatk2':{ const d = attacker.modifyStage('spatk',+2); if(d) say(`${attName}'s Sp. Atk sharply rose!`); break; }
-      case 'raise_spd2':  { const d = attacker.modifyStage('spd',  +2); if(d) say(`${attName}'s Speed sharply rose!`); break; }
+      case 'raise_atk':   { const d = attacker.modifyStage('atk',  +1); if(d) say(`${attName}'s Attack rose!`); else say(`${attName}'s Attack won't go any higher!`); break; }
+      case 'raise_def':   { const d = attacker.modifyStage('def',  +1); if(d) say(`${attName}'s Defense rose!`); else say(`${attName}'s Defense won't go any higher!`); break; }
+      case 'raise_spatk2':{ const d = attacker.modifyStage('spatk',+2); if(d) say(`${attName}'s Sp. Atk sharply rose!`); else say(`${attName}'s Sp. Atk won't go any higher!`); break; }
+      case 'raise_spd2':  { const d = attacker.modifyStage('spd',  +2); if(d) say(`${attName}'s Speed sharply rose!`); else say(`${attName}'s Speed won't go any higher!`); break; }
       case 'raise_def_spdef': {
-        attacker.modifyStage('def',   +1);
-        attacker.modifyStage('spdef', +1);
-        say(`${attName}'s Defense and Sp. Def rose!`);
+        const d1 = attacker.modifyStage('def',   +1);
+        const d2 = attacker.modifyStage('spdef', +1);
+        if (d1 || d2) say(`${attName}'s Defense and Sp. Def rose!`);
+        else say(`${attName}'s stats won't go any higher!`);
         break;
       }
       case 'raise_atk_def_acc': {
-        attacker.modifyStage('atk', +1);
-        attacker.modifyStage('def', +1);
-        say(`${attName}'s Attack and Defense rose!`);
+        const d1 = attacker.modifyStage('atk', +1);
+        const d2 = attacker.modifyStage('def', +1);
+        if (d1 || d2) say(`${attName}'s Attack and Defense rose!`);
+        else say(`${attName}'s stats won't go any higher!`);
         break;
       }
-      case 'raise_eva': { attacker.modifyStage('evasion', +1); say(`${attName} became harder to hit!`); break; }
+      case 'raise_eva': { const d = attacker.modifyStage('evasion', +1); if(d) say(`${attName} became harder to hit!`); else say(`${attName}'s evasion won't go any higher!`); break; }
 
       case 'two_turn':
       case 'disable_last_move':
@@ -849,9 +919,14 @@ export class BattleState {
   // ── Enemy free turn (after item use / failed catch / failed flee) ─────────
 
   _enemyTakesFreeTurn(log, say, snap) {
-    const enemyMoves = this._enemyPokemon.moves.filter(m => m.pp > 0);
-    if (enemyMoves.length && !this._enemyPokemon.isFainted) {
-      const move = enemyMoves[Math.floor(Math.random() * enemyMoves.length)];
+    const enemyMovesAll2 = this._enemyPokemon.moves.filter(m => m.pp > 0);
+    const enemyMovesUseful2 = enemyMovesAll2.filter(m =>
+      !isStatMoveUseless(m, this._enemyPokemon, this._playerPokemon)
+      && !isStatusMoveUseless(m, this._playerPokemon)
+    );
+    const enemyMovePool2 = enemyMovesUseful2.length ? enemyMovesUseful2 : enemyMovesAll2;
+    if (enemyMovePool2.length && !this._enemyPokemon.isFainted) {
+      const move = enemyMovePool2[Math.floor(Math.random() * enemyMovePool2.length)];
       const slot = this._enemyPokemon.moves.findIndex(m => m.moveId === move.moveId);
       if (slot >= 0) this._enemyPokemon.useMove(slot);
       this._applyMove(move, this._enemyPokemon, this._playerPokemon, log, say, snap);

@@ -302,11 +302,11 @@
     {
       "firstgid": 1,
       "columns": 16,
-      "image": "../tilesets/players_house_1f_tileset.png",
+      "image": "../tilesets/pallet_town_players_house_1f_tileset.png",
       "imagewidth": 256,
       "imageheight": 672,
       "margin": 0,
-      "name": "players_house_1f_tileset",
+      "name": "pallet_town_players_house_1f_tileset",
       "spacing": 0,
       "tilecount": 664,
       "tilewidth": 16,

@@ -14,13 +14,13 @@
   "dialogs": [
     {
       "condition": "",
-      "script": "say: Come with me, {player}!\nsay: My lab is just this way.\nsay: I'll give you your first Pokemon!\nmovenpc: 12 15\nsay: Please follow me!\nmoveplayer: 12 14\nmovenpc: 16 15\nsay: We are almost there.\nmovenpc: 16 13\nmoveplayer: 16 14\nsetflag: oak_escort_done\nteleportmap: oaks_lab 6 12",
+      "script": "say: Come with me, {player}!\nsay: My lab is just this way.\nsay: I'll give you your first Pokemon!\nmovenpc: 12 1\nescortnpc\nmovenpc: 12 15\nsay: Please follow me!\nmovenpc: 16 15\nsay: Hmm, where is my keys..\nmovenpc: 16 13\nstopescort\nsetflag: oak_escort_done\nteleportmap: oaks_lab 6 11",
       "lines": [
         "Come with me, {player}!",
         "My lab is just this way.",
         "I'll give you your first Pokemon!",
         "Please follow me!",
-        "We are almost there."
+        "Hmm, where is my keys.."
       ]
     }
   ],
@@ -29,7 +29,7 @@
     "My lab is just this way.",
     "I'll give you your first Pokemon!",
     "Please follow me!",
-    "We are almost there."
+    "Hmm, where is my keys.."
   ],
   "extraTiles": []
 }

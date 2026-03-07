@@ -11,23 +11,27 @@
   "dialog": [
     "No! I am not your MOM!",
     "Hi, I am Carla and i am",
-    "receptionist of this POKEWORLD."
+    "receptionist of this POKEWORLD.",
+    "Here, let me heal your Pokemon!",
+    "Your Pokemon are fully healed!"
   ],
   "dialogs": [
     {
-      "condition": "",
-      "script": "say: No! I am not your MOM!\nsay: Hi, I am Carla and i am\nsay: receptionist of this POKEWORLD.\nhealparty",
+      "condition": "talked_carla",
+      "script": "say: Welcome back! Let me heal your Pokemon.\nsound: HealTrainer\nhealparty\nwait: 3000\nsay: Your Pokemon are fully healed!\nchoice: Want to use the PC?\nopenpc\nsay: See you!",
       "lines": [
-        "No! I am not your MOM!",
-        "Hi, I am Carla and i am",
-        "receptionist of this POKEWORLD."
+        "Welcome back!"
       ]
     },
     {
-      "condition": "talked_carla",
-      "script": "say: Welcome to this Pokemon World.",
+      "condition": "",
+      "script": "say: No! I am not your MOM!\nsay: Hi, I am Carla and i am\nsay: receptionist of this POKEWORLD.\nsay: Here, let me heal your Pokemon!\nsound: HealTrainer\nhealparty\nwait: 3000\nsay: Your Pokemon are fully healed!\nsetflag: talked_carla",
       "lines": [
-        "Welcome to this Pokemon World."
+        "No! I am not your MOM!",
+        "Hi, I am Carla and i am",
+        "receptionist of this POKEWORLD.",
+        "Here, let me heal your Pokemon!",
+        "Your Pokemon are fully healed!"
       ]
     }
   ],

@@ -268,14 +268,5 @@
       "tilewidth": 16,
       "tileheight": 16
     }
-  ],
-  "_warps": [
-    {
-      "x": 10,
-      "y": 2,
-      "destMap": "players_house_1f",
-      "destX": 10,
-      "destY": 3
-    }
   ]
 }

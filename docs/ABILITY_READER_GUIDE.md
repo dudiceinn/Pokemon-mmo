@@ -238,15 +238,19 @@ These are the functions exported from `AbilityReader.js` and used by the rest of
 
 ## Currently Implemented Abilities
 
-| ID | Name | Type | Effect |
+### Fully Working (battle logic + UI badge + throb animation)
+
+| ID | Name | Hook | Effect |
 |---|---|---|---|
 | `overgrow` | Overgrow | atkBoost | +50% Grass damage at ≤33% HP |
 | `blaze` | Blaze | atkBoost | +50% Fire damage at ≤33% HP |
 | `torrent` | Torrent | atkBoost | +50% Water damage at ≤33% HP |
 | `swarm` | Swarm | atkBoost | +50% Bug damage at ≤33% HP |
 | `intimidate` | Intimidate | onEntry | Lowers foe's ATK by 1 on entry |
+| `pressure` | Pressure | onEntry | Announces on entry; doubles opponent PP cost |
+| `trace` | Trace | onEntry | Copies the opponent's ability on entry |
 | `levitate` | Levitate | defMult | Immune to Ground moves |
-| `flash_fire` | Flash Fire | defMult | Immune to Fire moves |
+| `flash_fire` | Flash Fire | defMult + atkBoost | Immune to Fire; after absorbing one, +50% Fire damage |
 | `water_absorb` | Water Absorb | defMult | Immune to Water moves |
 | `volt_absorb` | Volt Absorb | defMult | Immune to Electric moves |
 | `lightning_rod` | Lightning Rod | defMult | Immune to Electric moves |
@@ -254,4 +258,37 @@ These are the functions exported from `AbilityReader.js` and used by the rest of
 | `static` | Static | onContact | 30% paralysis on physical contact |
 | `poison_point` | Poison Point | onContact | 30% poison on physical contact |
 | `flame_body` | Flame Body | onContact | 30% burn on physical contact |
-| `effect_spore` | Effect Spore | onContact | 30% random status on physical contact |
+| `effect_spore` | Effect Spore | onContact | 30% random status (par/psn/slp) on contact |
+| `guts` | Guts | statMult | +50% ATK when statused; suppresses burn ATK penalty |
+| `synchronize` | Synchronize | passive | Reflects burn/poison/paralysis back to inflictor |
+| `insomnia` | Insomnia | blocksStatus | Prevents sleep |
+| `vital_spirit` | Vital Spirit | blocksStatus | Prevents sleep |
+| `limber` | Limber | blocksStatus | Prevents paralysis |
+| `inner_focus` | Inner Focus | blocksFlinch | Prevents flinching |
+| `oblivious` | Oblivious | blocksConfusion | Prevents confusion and infatuation |
+| `own_tempo` | Own Tempo | blocksConfusion | Prevents confusion |
+| `rock_head` | Rock Head | blocksRecoil | Prevents recoil damage |
+| `shed_skin` | Shed Skin | onEndOfTurn | 33% chance to cure status each turn |
+| `natural_cure` | Natural Cure | onBattleEnd | Cures all status when withdrawn/battle ends |
+
+### Display Only (badge shows, no battle logic yet)
+
+| ID | Name | Description |
+|---|---|---|
+| `shield_dust` | Shield Dust | Blocks secondary effects of moves |
+| `compound_eyes` | Compound Eyes | +30% accuracy |
+| `keen_eye` | Keen Eye | Prevents accuracy drops; ignores evasion boosts |
+| `hyper_cutter` | Hyper Cutter | Prevents ATK from being lowered |
+| `clear_body` | Clear Body | Prevents all stat reductions |
+| `shell_armor` | Shell Armor | Prevents critical hits |
+| `early_bird` | Early Bird | Wakes from sleep in half the turns |
+| `damp` | Damp | Prevents self-destruct/explosion |
+| `magnet_pull` | Magnet Pull | Traps Steel-types |
+| `soundproof` | Soundproof | Immune to sound-based moves |
+| `swift_swim` | Swift Swim | Doubles Speed in rain |
+| `chlorophyll` | Chlorophyll | Doubles Speed in sun |
+| `sand_veil` | Sand Veil | +20% evasion in sandstorm |
+| `run_away` | Run Away | Guarantees escape from wild battles |
+| `pickup` | Pickup | May pick up items after battle |
+| `stench` | Stench | 10% flinch chance on contact |
+| `cute_charm` | Cute Charm | 30% infatuation on contact |

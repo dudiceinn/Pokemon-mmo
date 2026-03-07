@@ -11,6 +11,8 @@ import { ScriptRunner } from '../systems/ScriptRunner.js';
 import { EncounterManager } from '../systems/EncounterManager.js';
 import { PartyManager } from '../systems/PartyManager.js';
 import { InventoryManager } from '../systems/InventoryManager.js';
+import { StorageManager } from '../systems/StorageManager.js';
+import { StorageUI } from '../systems/StorageUI.js';
 
 export class OverworldScene extends Phaser.Scene {
   constructor() {
@@ -45,6 +47,11 @@ export class OverworldScene extends Phaser.Scene {
     window.inventoryManager = this.inventoryManager; // used by BattleUI + ScriptRunner
     window.overworldScene = this; // used by InventoryManager overworld item use
 
+    // PC Storage
+    this.storageManager = new StorageManager(pokemonDefs, moveDefs);
+    this.storageUI = new StorageUI(this.storageManager, this.partyManager, pokemonDefs);
+    window.storageManager = this.storageManager;
+
     this.loadMap(this.currentMapKey);
 
     const mapData = MAPS[this.currentMapKey];
@@ -52,6 +59,18 @@ export class OverworldScene extends Phaser.Scene {
 
     this.cameras.main.startFollow(this.player.sprite, true);
     this.cameras.main.setBounds(0, 0, this.map.widthInPixels, this.map.heightInPixels);
+
+    // ── Overworld BGM ──────────────────────────────────────────────────────
+    this._owBgmSource = null;
+    this._owBgmGain = null;
+    this._owBgmKey = null;
+    this._owBgmCacheKey = null;
+    this._owBgmPaused = false;
+    this._owBgmStartCtxTime = null;
+    this._owBgmStartOffset = 0;
+    this._owBgmSavedOffset = 0;
+    this._owAudioCache = {};
+    this._playMapBgm(this.currentMapKey);
 
     this.cursors = this.input.keyboard.createCursorKeys();
     this.wasd = this.input.keyboard.addKeys({
@@ -258,6 +277,147 @@ export class OverworldScene extends Phaser.Scene {
       this.npcs.push(npc);
     }
     this.updateNpcVisibility();
+
+    // Switch BGM if this map has a different track
+    this._playMapBgm(key);
+  }
+
+  /** Play (or switch) overworld BGM based on map config (raw Web Audio API). */
+  _playMapBgm(mapKey) {
+    const mapDef = MAPS[mapKey];
+    const bgmName = mapDef?.bgm || null;
+
+    // Same track already playing — do nothing
+    if (bgmName === this._owBgmKey) return;
+
+    // Stop current BGM (don't save position — switching tracks)
+    this._stopOwBgmSource(false);
+    this._owBgmKey = bgmName;
+    this._owBgmSavedOffset = 0;
+
+    // No BGM for this map (e.g. indoors)
+    if (!bgmName) return;
+
+    const cacheKey = `bgm_ow_${mapKey}`;
+    const ctx = this.sound.context;
+    if (ctx.state === 'suspended') ctx.resume();
+
+    // If already decoded, play immediately
+    if (this._owAudioCache?.[cacheKey]) {
+      if (!this._owBgmPaused) this._startOwBgmSource(cacheKey);
+      return;
+    }
+
+    // Load via fetch (bypasses IDM), then play
+    (async () => {
+      try {
+        const res = await fetch(`/audio/bgm/${encodeURIComponent(bgmName)}`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const buf = await res.arrayBuffer();
+        if (!buf.byteLength) throw new Error('empty response');
+        const decoded = await ctx.decodeAudioData(buf);
+        if (!this._owAudioCache) this._owAudioCache = {};
+        this._owAudioCache[cacheKey] = decoded;
+        // Only play if still on the same map and not paused for battle
+        if (this._owBgmKey === bgmName && !this._owBgmPaused) {
+          this._startOwBgmSource(cacheKey);
+        }
+      } catch (e) {
+        console.warn(`[OverworldScene] BGM load failed: ${bgmName} — ${e.message}`);
+      }
+    })();
+  }
+
+  /** Start a looping AudioBufferSource from cache, optionally at an offset. */
+  _startOwBgmSource(cacheKey, offset = 0) {
+    this._stopOwBgmSource(false);
+    const ctx = this.sound.context;
+    const decoded = this._owAudioCache?.[cacheKey];
+    if (!decoded) return;
+
+    const gainNode = ctx.createGain();
+    gainNode.gain.value = 0.4;
+    gainNode.connect(ctx.destination);
+
+    const source = ctx.createBufferSource();
+    source.buffer = decoded;
+    source.loop = true;
+    source.connect(gainNode);
+    source.start(0, offset);
+
+    this._owBgmSource = source;
+    this._owBgmGain = gainNode;
+    this._owBgmCacheKey = cacheKey;
+    this._owBgmStartCtxTime = ctx.currentTime;
+    this._owBgmStartOffset = offset;
+  }
+
+  /** Stop the raw AudioBufferSource. If saving position, stores offset. */
+  _stopOwBgmSource(savePosition = true) {
+    if (this._owBgmSource) {
+      if (savePosition && this._owBgmStartCtxTime != null) {
+        const ctx = this.sound.context;
+        const elapsed = ctx.currentTime - this._owBgmStartCtxTime + this._owBgmStartOffset;
+        const decoded = this._owAudioCache?.[this._owBgmCacheKey];
+        this._owBgmSavedOffset = decoded ? elapsed % decoded.duration : 0;
+      }
+      try { this._owBgmSource.stop(); } catch (_) {}
+      this._owBgmSource.disconnect();
+      this._owBgmSource = null;
+    }
+    if (this._owBgmGain) {
+      this._owBgmGain.disconnect();
+      this._owBgmGain = null;
+    }
+  }
+
+  /** Stop overworld BGM (called when entering battle). Saves playback position. */
+  stopOverworldBgm() {
+    this._owBgmPaused = true;
+    this._stopOwBgmSource(true);
+  }
+
+  /** Resume overworld BGM (called when returning from battle). Resumes from saved position. */
+  resumeOverworldBgm() {
+    this._owBgmPaused = false;
+    if (this._owBgmCacheKey) {
+      this._startOwBgmSource(this._owBgmCacheKey, this._owBgmSavedOffset || 0);
+    }
+  }
+
+  /** Play a one-shot SFX by name (filename without .mp3 in assets/audio/sfx/). */
+  playSfx(name) {
+    const cacheKey = `sfx_ow_${name}`;
+    const ctx = this.sound.context;
+    if (ctx.state === 'suspended') ctx.resume();
+
+    const playFromCache = () => {
+      const decoded = this._owAudioCache[cacheKey];
+      if (!decoded) return;
+      const source = ctx.createBufferSource();
+      source.buffer = decoded;
+      source.connect(ctx.destination);
+      source.start(0);
+    };
+
+    if (this._owAudioCache[cacheKey]) {
+      playFromCache();
+      return;
+    }
+
+    (async () => {
+      try {
+        const res = await fetch(`/audio/sfx/${encodeURIComponent(name)}`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const buf = await res.arrayBuffer();
+        if (!buf.byteLength) throw new Error('empty response');
+        const decoded = await ctx.decodeAudioData(buf);
+        this._owAudioCache[cacheKey] = decoded;
+        playFromCache();
+      } catch (e) {
+        console.warn(`[OverworldScene] SFX load failed: ${name} — ${e.message}`);
+      }
+    })();
   }
 
   _buildAboveSprites(key) {

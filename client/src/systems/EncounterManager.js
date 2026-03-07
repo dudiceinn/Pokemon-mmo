@@ -211,6 +211,7 @@ export class EncounterManager {
       scene.battleWildData = { speciesId: wildPokemon.speciesId, level: wildPokemon.level };
 
       // Step 6 complete: launch BattleScene
+      scene.stopOverworldBgm?.();
       scene.scene.launch('BattleScene', { battleState });
       scene.scene.pause('OverworldScene');
     });

@@ -240,7 +240,7 @@
         1,
         0,
         0,
-        1,
+        0,
         0,
         0,
         0,
@@ -311,22 +311,6 @@
       "tilecount": 824,
       "tilewidth": 16,
       "tileheight": 16
-    }
-  ],
-  "_warps": [
-    {
-      "x": 4,
-      "y": 8,
-      "destMap": "pallet_town",
-      "destX": 15,
-      "destY": 8
-    },
-    {
-      "x": 5,
-      "y": 8,
-      "destMap": "pallet_town",
-      "destX": 15,
-      "destY": 8
     }
   ]
 }

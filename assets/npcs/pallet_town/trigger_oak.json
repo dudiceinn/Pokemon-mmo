@@ -14,7 +14,7 @@
   "dialogs": [
     {
       "condition": "",
-      "script": "say: You can't go outside without a Pokemon!\nmoveplayer: 11 3\nsetflag: oak_escort_started",
+      "script": "say: You can't go outside without a Pokemon!\nmoveplayer: 13 1\nsetflag: oak_escort_started",
       "lines": [
         "You can't go outside without a Pokemon!"
       ]

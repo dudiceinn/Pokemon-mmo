@@ -59,12 +59,17 @@ export class DialogBox {
   }
 
   advance() {
+    this._playClick();
     this.lineIndex++;
     if (this.lineIndex >= this.lines.length) {
       this.close();
     } else {
       this.showCurrentLine();
     }
+  }
+
+  _playClick() {
+    window.overworldScene?.playSfx?.('click');
   }
 
   close() {

@@ -19,7 +19,7 @@
  *   reducemoney: amount           — Remove PokéDollars from player
  *   checkmoney: amount            — Skip next block if player has less than amount
  *   wait: ms                      — Wait N milliseconds (e.g. pause between dialog)
- *   sound: key                    — Play a sound effect
+ *   sound: filename               — Play a sound effect (filename without .mp3 from assets/audio/sfx/). Loaded via fetch + Web Audio.
  *   showimage: path               — Show passive image popup above dialog (e.g. showimage: pokemon/bulbasaur). Does not block input.
  *   hideimage                     — Remove the image popup.
  *   choice: question text         — Yes/No prompt. Yes = continue script. No = skip rest of script.
@@ -27,6 +27,7 @@
  *   label: label_name             — Define a jump target (no-op during execution)
  *   givepokemon: speciesId level  — Add a Pokémon to the player's party via PartyManager (level optional, default 5). Shows receive animation.
  *   healparty                     — Restore all party Pokémon to full HP via PartyManager.
+ *   openpc                        — Open the PC Storage box overlay. Script pauses until closed.
  *   escortnpc                     — Enable escort mode: every movenpc auto-walks the player 1 tile behind the NPC simultaneously.
  *   stopescort                    — Disable escort mode. Use moveplayer manually again after this.
  *   startfollow                   — NPC begins following the player in real-time (player leads, NPC trails). Player is never blocked.
@@ -397,7 +398,9 @@ if (commands[idx].cmd === 'say') {
 
       case 'sound': {
         const key = args[0];
-        if (key && this.scene.sound) {
+        if (key && this.scene.playSfx) {
+          this.scene.playSfx(key);
+        } else if (key && this.scene.sound) {
           try { this.scene.sound.play(key); } catch {}
         }
         next();
@@ -514,6 +517,21 @@ case 'healparty': {
   }
 
   next();
+  break;
+}
+
+      // ---------------------------------------------------------------
+      // openpc
+      // Opens the PC Storage box overlay. Script pauses until closed.
+      // ---------------------------------------------------------------
+case 'openpc': {
+  const storageUI = this.scene.storageUI;
+  if (storageUI) {
+    storageUI.open(() => next());
+  } else {
+    console.warn('[ScriptRunner] openpc: no storageUI on scene');
+    next();
+  }
   break;
 }
 

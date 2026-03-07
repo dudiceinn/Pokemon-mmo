@@ -42,7 +42,10 @@ export class PokemonInstance {
       spd:   PokemonInstance._calcStat(species.baseStats.spd,   level),
     };
 
-    // ── Moves (last 4 learned at or below current level) ──────────────────
+    // ── Move pool (all moves learned at or below current level) ────────────
+    this._movePool = PokemonInstance._buildMovePool(species.learnset, level, moveDefs);
+
+    // ── Equipped moves (last 4 from pool — mimics main series) ───────────
     this._moves = PokemonInstance._buildMoveSlots(species.learnset, level, moveDefs);
 
     // ── Status ─────────────────────────────────────────────────────────────
@@ -81,6 +84,22 @@ export class PokemonInstance {
   get sprite()     { return this._species.sprite ?? null; }
   get cry()        { return this._species.cry ?? null; }
   get ability()    { return this._ability; }
+
+  /** Full learnset with move defs for UI display (includes locked moves). */
+  get fullLearnset() {
+    const seen = new Set();
+    return this._species.learnset.map(e => {
+      if (seen.has(e.move)) return null;
+      seen.add(e.move);
+      const def = this._moveDefs[e.move];
+      if (!def) return null;
+      return {
+        moveId: e.move, level: e.level, unlocked: this._level >= e.level,
+        name: def.name, type: def.type, power: def.power,
+        accuracy: def.accuracy, category: def.category, pp: def.pp,
+      };
+    }).filter(Boolean);
+  }
 
   get evolvesTo()      { return this._species.evolvesTo ?? null; }
   get evolvesAtLevel() { return this._species.evolvesAtLevel ?? null; }
@@ -224,6 +243,21 @@ export class PokemonInstance {
   /** @returns {Array<{moveId, name, type, power, accuracy, pp, maxPp, category, effect}>} */
   get moves() { return this._moves.map(m => ({ ...m })); }
 
+  /** Full pool of all learned moves (including unequipped), enriched with move defs. */
+  get movePool() {
+    return this._movePool.map(m => {
+      const def = this._moveDefs[m.moveId];
+      return {
+        ...m,
+        name:     def?.name     ?? m.moveId,
+        type:     def?.type     ?? 'normal',
+        power:    def?.power    ?? 0,
+        accuracy: def?.accuracy ?? 0,
+        category: def?.category ?? 'physical',
+      };
+    });
+  }
+
   /**
    * Deduct 1 PP from a move slot.
    * @param {number} slotIndex  0–3
@@ -233,12 +267,16 @@ export class PokemonInstance {
     const move = this._moves[slotIndex];
     if (!move || move.pp <= 0) return false;
     move.pp -= 1;
+    // Sync PP to pool
+    const poolEntry = this._movePool.find(m => m.moveId === move.moveId);
+    if (poolEntry) poolEntry.pp = move.pp;
     return true;
   }
 
-  /** Restore all PP on all moves (e.g. after battle). */
+  /** Restore all PP on all moves (equipped + pool). */
   restorePP() {
-    this._moves.forEach(m => { m.pp = m.maxPp; });
+    this._movePool.forEach(m => { m.pp = m.maxPp; });
+    this._moves.forEach(m => { if (m) m.pp = m.maxPp; });
   }
 
   // ── Level & Evolution ─────────────────────────────────────────────────────
@@ -286,20 +324,19 @@ export class PokemonInstance {
       spd:   { before: statsBefore.spd,   after: this._stats.spd     },
     };
 
-    // Learn any newly available moves
-    const newMoves = PokemonInstance._buildMoveSlots(
-      this._species.learnset, newLevel, this._moveDefs
-    );
-    // Add moves unlocked at exactly this level that aren't already known
-    const knownIds = new Set(this._moves.map(m => m.moveId));
+    // Learn any newly available moves — add to pool and auto-equip if <4
+    const poolIds = new Set(this._movePool.map(m => m.moveId));
+    const equippedIds = new Set(this._moves.map(m => m.moveId));
     for (const entry of this._species.learnset) {
-      if (entry.level === newLevel && !knownIds.has(entry.move)) {
-        if (this._moves.length < 4) {
-          const def = this._moveDefs[entry.move];
-          if (def) this._moves.push(PokemonInstance._moveSlot(entry.move, def));
+      if (entry.level === newLevel && !poolIds.has(entry.move)) {
+        const def = this._moveDefs[entry.move];
+        if (!def) continue;
+        // Always add to pool
+        this._movePool.push({ moveId: entry.move, pp: def.pp, maxPp: def.pp, source: 'level' });
+        // Auto-equip if <4 moves equipped
+        if (this._moves.filter(Boolean).length < 4) {
+          this._moves.push(PokemonInstance._moveSlot(entry.move, def));
         }
-        // If party already has 4 moves, caller (BattleState / UI) handles
-        // move-forget flow — we just surface the new move via newMovesAtLevel()
       }
     }
   }
@@ -328,6 +365,66 @@ export class PokemonInstance {
     const def = this._moveDefs[moveId];
     if (!def) throw new Error(`PokemonInstance: unknown moveId "${moveId}"`);
     this._moves[slotIndex] = PokemonInstance._moveSlot(moveId, def);
+  }
+
+  /**
+   * Equip a move from the pool into a battle slot.
+   * If the slot already has a move, its PP is saved back to the pool.
+   * @param {string} moveId   - Must exist in _movePool
+   * @param {number} slotIndex - 0–3
+   */
+  equipMove(moveId, slotIndex) {
+    if (slotIndex < 0 || slotIndex > 3) return;
+    // Ensure move is in pool
+    const poolEntry = this._movePool.find(m => m.moveId === moveId);
+    if (!poolEntry) return;
+    // Can't equip a move that's already in another slot
+    if (this._moves.some(m => m && m.moveId === moveId)) return;
+
+    // Save outgoing move's PP back to pool
+    const outgoing = this._moves[slotIndex];
+    if (outgoing) {
+      const outPool = this._movePool.find(m => m.moveId === outgoing.moveId);
+      if (outPool) outPool.pp = outgoing.pp;
+    }
+
+    // Build full slot from moveDefs, copy PP from pool
+    const def = this._moveDefs[moveId];
+    if (!def) return;
+    const slot = PokemonInstance._moveSlot(moveId, def);
+    slot.pp = poolEntry.pp;
+    this._moves[slotIndex] = slot;
+  }
+
+  /**
+   * Unequip a move from a battle slot (slot becomes null).
+   * Only allowed if more than 1 move is equipped.
+   * @param {number} slotIndex - 0–3
+   */
+  unequipMove(slotIndex) {
+    const equipped = this._moves.filter(Boolean);
+    if (equipped.length <= 1) return;
+    const outgoing = this._moves[slotIndex];
+    if (!outgoing) return;
+    // Save PP back to pool
+    const poolEntry = this._movePool.find(m => m.moveId === outgoing.moveId);
+    if (poolEntry) poolEntry.pp = outgoing.pp;
+    this._moves[slotIndex] = null;
+    // Compact: remove nulls and shift moves to front
+    this._moves = [...this._moves.filter(Boolean)];
+  }
+
+  /**
+   * Add a move to the pool (for TM/HM teaching).
+   * No-op if already known.
+   * @param {string} moveId
+   * @param {string} source - 'level' | 'tm' | 'hm'
+   */
+  addToMovePool(moveId, source = 'tm') {
+    if (this._movePool.some(m => m.moveId === moveId)) return;
+    const def = this._moveDefs[moveId];
+    if (!def) return;
+    this._movePool.push({ moveId, pp: def.pp, maxPp: def.pp, source });
   }
 
   /** @returns {boolean} true if species should evolve at current level */
@@ -384,9 +481,14 @@ export class PokemonInstance {
       currentHp:  this._currentHp,
       status:     this._status,
       sleepTurns: this._sleepTurns,
-      moves: this._moves.map(m => ({
+      moves: this._moves.filter(Boolean).map(m => ({
         moveId: m.moveId,
         pp:     m.pp,
+      })),
+      movePool: this._movePool.map(m => ({
+        moveId: m.moveId,
+        pp:     m.pp,
+        source: m.source,
       })),
     };
   }
@@ -407,15 +509,30 @@ export class PokemonInstance {
     inst._status     = obj.status     ?? null;
     inst._sleepTurns = obj.sleepTurns ?? 0;
 
-    // Restore saved move PP (move defs come from moveDefs for accuracy)
+    // Restore move pool (backwards compat: rebuild from learnset if missing)
+    if (Array.isArray(obj.movePool) && obj.movePool.length > 0) {
+      inst._movePool = obj.movePool.map(saved => {
+        const def = moveDefs[saved.moveId];
+        if (!def) return null;
+        return { moveId: saved.moveId, pp: Math.min(saved.pp, def.pp), maxPp: def.pp, source: saved.source ?? 'level' };
+      }).filter(Boolean);
+    }
+    // else: constructor already built _movePool from learnset — keep it
+
+    // Restore saved equipped moves PP
     if (Array.isArray(obj.moves) && obj.moves.length > 0) {
       inst._moves = obj.moves.map(saved => {
         const def = moveDefs[saved.moveId];
         if (!def) return null;
         const slot = PokemonInstance._moveSlot(saved.moveId, def);
-        slot.pp = Math.min(saved.pp, slot.maxPp); // guard against stale data
+        slot.pp = Math.min(saved.pp, slot.maxPp);
         return slot;
       }).filter(Boolean);
+      // Sync equipped PP back to pool entries
+      for (const m of inst._moves) {
+        const poolEntry = inst._movePool.find(p => p.moveId === m.moveId);
+        if (poolEntry) poolEntry.pp = m.pp;
+      }
     }
 
     return inst;
@@ -447,6 +564,21 @@ export class PokemonInstance {
    * Build the 4 move slots from a learnset at a given level.
    * Takes the last 4 moves learned at or below level (mimics main-series).
    */
+  /** Build the full move pool from a learnset at a given level (all moves learned). */
+  static _buildMovePool(learnset, level, moveDefs) {
+    const seen = new Set();
+    return learnset
+      .filter(e => e.level <= level)
+      .map(e => {
+        if (seen.has(e.move)) return null;
+        seen.add(e.move);
+        const def = moveDefs[e.move];
+        if (!def) return null;
+        return { moveId: e.move, pp: def.pp, maxPp: def.pp, source: 'level' };
+      })
+      .filter(Boolean);
+  }
+
   static _buildMoveSlots(learnset, level, moveDefs) {
     const eligible = learnset
       .filter(e => e.level <= level)

@@ -978,6 +978,21 @@ stopfollow
 clearflag: pikachu_following
 say: Pikachu stopped following you.
 ```
+### 20. NPCs can be blocked by the player
+When using `movenpc:`, the NPC cannot walk through the player. If the player is standing in the NPC's path, the movement will fail and the script will hang.
+
+WRONG: NPC starts at (10,5), player at (10,6), NPC tries to walk south:
+movenpc: 10 10  ← NPC tries to walk through player at (10,6) and gets stuck
+
+RIGHT: Move the player out of the way first, or have the NPC walk around:
+moveplayer: 10 7  ← player moves down first
+movenpc: 10 10    ← now NPC has a clear path
+
+Or for escort sequences, move the player slightly ahead first:
+moveplayer: 10 7  ← clear the path
+escortnpc
+movenpc: 10 10    ← NPC follows with player trailing behind
+
 
 **How companion follow works:**
 - The NPC walks to the tile the player just vacated each time the player moves one step
@@ -1096,6 +1111,7 @@ Two or more `giveitem:` commands in a row are fine. Each toast notification show
 ### 19. Never put setflag before a walkOnFlag NPC is ready to walk mid-script
 `setflag` triggers `checkFlagTriggeredWalks` which can start an NPC walk — this flips `cutsceneActive` and breaks the current script. This is handled internally by deferring `checkFlagTriggeredWalks` to the next tick, so it is safe to use `setflag` at any point in a script. Just be aware that `walkOnFlag` NPCs won't start walking until after the current script fully completes.
 
+
 ---
 
 ## Rules for Quest Design
@@ -1123,7 +1139,7 @@ Two or more `giveitem:` commands in a row are fine. Each toast notification show
 21. **Don't mix escortnpc and startfollow** — They are separate systems. Use one at a time.
 22. **Multiple giveitem lines are fine** — They display sequentially. Each toast fully dismisses before the next one appears.
 23. **setflag is safe anywhere in a script** — `walkOnFlag` NPCs triggered by the flag will wait until after the script finishes before walking.
-
+24. **Clear the path before NPC movement** — If an NPC needs to walk and the player is standing in their way, use `moveplayer:` first to get the player out of the NPC's path, or design the NPC's route to go around the player's expected position.
 ---
 
 ## Creating a Quest Checklist

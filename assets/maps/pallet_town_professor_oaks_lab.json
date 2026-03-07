@@ -406,11 +406,11 @@
     {
       "firstgid": 1,
       "columns": 16,
-      "image": "../tilesets/oaks_lab_tileset.png",
+      "image": "../tilesets/pallet_town_professor_oaks_lab_tileset.png",
       "imagewidth": 256,
       "imageheight": 816,
       "margin": 0,
-      "name": "oaks_lab_tileset",
+      "name": "pallet_town_professor_oaks_lab_tileset",
       "spacing": 0,
       "tilecount": 815,
       "tilewidth": 16,
