@@ -10,6 +10,7 @@
  */
 
 import { PHASE } from '../systems/BattleState.js';
+import { abilityDesc } from '../systems/AbilityReader.js';
 
 // ─── Colour maps ──────────────────────────────────────────────────────────────
 
@@ -43,6 +44,27 @@ function frontSprite(speciesId) {
 }
 function backSprite(speciesId) {
   return `/pokemon/Back/${speciesId.toUpperCase()}.png`;
+}
+
+// Low-HP threshold shared by Overgrow / Blaze / Torrent / Swarm
+const LOW_HP_ABILITIES = new Set(['overgrow', 'blaze', 'torrent', 'swarm']);
+
+/**
+ * Returns true if the ability badge should show its steady glow right now.
+ * Low-HP abilities glow once HP ≤ 33%; all others are always-on.
+ */
+function _isAbilityActive(pokemon) {
+  if (!pokemon?.ability) return false;
+  if (LOW_HP_ABILITIES.has(pokemon.ability)) {
+    return pokemon.hp / pokemon.maxHp <= 0.33;
+  }
+  // All other implemented abilities (Intimidate, Levitate, Static, etc.) are always-on
+  return true;
+}
+
+/** Pretty-prints an ability id → display name. */
+function _abilityDisplayName(id) {
+  return id.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
 }
 
 function genderSymbol(gender) {
@@ -241,6 +263,29 @@ const CSS = `
     color: #555; background: #e0ddc8; border: 1px solid #bbb;
     padding: 1px 6px; border-radius: 3px; letter-spacing: 0.03em;
     font-weight: 600; margin-top: 2px;
+    transition: color 0.35s, background 0.35s, border-color 0.35s, box-shadow 0.35s;
+  }
+  /* Steady glow — low-HP abilities (Overgrow / Blaze / Torrent) */
+  .ability-badge.ability-glow {
+    color: #fff2cc;
+    background: #3a2000;
+    border-color: #ffaa00;
+    box-shadow: 0 0 5px 1px #ffaa0077, inset 0 0 3px #ffee8844;
+    animation: ability-pulse 1.4s ease-in-out infinite;
+  }
+  @keyframes ability-pulse {
+    0%, 100% { box-shadow: 0 0 4px 1px #ffaa0055, inset 0 0 2px #ffee8833; }
+    50%       { box-shadow: 0 0 12px 4px #ffcc44bb, inset 0 0 6px #ffee8899; }
+  }
+  /* One-shot throb — fires when ability triggers (e.g. Intimidate on entry) */
+  .ability-badge.ability-throb {
+    animation: ability-throb 0.7s ease-out forwards;
+  }
+  @keyframes ability-throb {
+    0%   { color: #555;    background: #e0ddc8; border-color: #bbb;    box-shadow: none; transform: scale(1);    }
+    20%  { color: #fff;    background: #7a3800; border-color: #ff8800; box-shadow: 0 0 18px 6px #ff880099;      transform: scale(1.25); }
+    55%  { color: #fff2cc; background: #3a2000; border-color: #ffaa00; box-shadow: 0 0 10px 3px #ffaa0077;      transform: scale(1.08); }
+    100% { color: #fff2cc; background: #3a2000; border-color: #ffaa00; box-shadow: 0 0 5px 1px #ffaa0055;       transform: scale(1);    }
   }
   .status-badge {
     display: inline-block; font-size: clamp(5px, 0.75vw, 7px);
@@ -419,15 +464,37 @@ const CSS = `
   #battle-fade  { position: fixed; inset: 0; z-index: 100001; background: #000; pointer-events: none; opacity: 0; transition: opacity 0.5s ease; }
   #battle-fade.active { opacity: 1; }
 
+  /* ── Ability tooltip ── */
+  .ability-tooltip {
+    position: fixed;
+    z-index: 100010;
+    background: #1a1a2e;
+    border: 1px solid #ffaa00;
+    border-radius: 6px;
+    padding: 6px 10px;
+    font-family: 'Rajdhani', 'Exo 2', sans-serif;
+    font-size: clamp(11px, 1.1vw, 13px);
+    color: #f0e8cc;
+    max-width: 220px;
+    pointer-events: none;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.7);
+    line-height: 1.4;
+    white-space: normal;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+  }
+  .ability-tooltip.visible { opacity: 1; }
+
 `;
 
 // ─── BattleUI ────────────────────────────────────────────────────────────────
 
 export class BattleUI {
-  constructor(battleState, onEnd) {
-    this._bs    = battleState;
-    this._onEnd = onEnd;
-    this._busy  = false;
+  constructor(battleState, expBar, onEnd) {
+    this._bs     = battleState;
+    this._expBar = expBar ?? null;
+    this._onEnd  = onEnd;
+    this._busy   = false;
     this._prevPlayerHp = battleState.playerPokemon.hp;
     this._prevEnemyHp  = battleState.enemyPokemon.hp;
 
@@ -449,6 +516,38 @@ export class BattleUI {
     document.head.appendChild(s);
     // Debug: verify key values loaded
     console.log('[BattleUI] Styles injected. fight-grid paddingLeft should be 60px, fight-btn 32px');
+
+    // Shared tooltip element — one instance reused for all ability badges
+    if (!document.getElementById('ability-tooltip')) {
+      this._tooltip = document.createElement('div');
+      this._tooltip.id = 'ability-tooltip';
+      this._tooltip.className = 'ability-tooltip';
+      document.body.appendChild(this._tooltip);
+    } else {
+      this._tooltip = document.getElementById('ability-tooltip');
+    }
+  }
+
+  // ── Tooltip helpers ───────────────────────────────────────────────────────
+
+  _bindAbilityTooltip(badgeEl, abilityId) {
+    badgeEl.addEventListener('mouseenter', () => this._showTooltip(badgeEl, abilityId));
+    badgeEl.addEventListener('mouseleave', () => this._hideTooltip());
+    badgeEl.style.cursor = 'help';
+  }
+
+  _showTooltip(anchorEl, abilityId) {
+    const desc = abilityDesc(abilityId);
+    if (!desc) return;
+    this._tooltip.textContent = desc;
+    this._tooltip.classList.add('visible');
+    const r = anchorEl.getBoundingClientRect();
+    this._tooltip.style.left = `${r.left + r.width / 2}px`;
+    this._tooltip.style.top  = `${r.top - 6}px`;
+  }
+
+  _hideTooltip() {
+    if (this._tooltip) this._tooltip.classList.remove('visible');
   }
 
   _buildDOM() {
@@ -508,9 +607,12 @@ export class BattleUI {
   // ── Nameplates ────────────────────────────────────────────────────────────
 
   _renderPlate(el, pokemon, isPlayer) {
-    // Guaranteed dimensions regardless of CSS cache
+    // Height: taller when ability badge is present
+    const hasAbility = !!pokemon.ability;
     el.style.minWidth = '250px';
-    el.style.height   = isPlayer ? '80px' : '60px';
+    el.style.height   = isPlayer
+      ? (hasAbility ? '96px' : '80px')
+      : (hasAbility ? '74px' : '60px');
 
     const ratio  = Math.max(0, pokemon.hp / pokemon.maxHp);
     const color  = hpColor(ratio);
@@ -519,9 +621,13 @@ export class BattleUI {
       ? `<div class="status-badge" style="background:${STATUS_COLORS[pokemon.status]??'#888'}">${STATUS_ABBR[pokemon.status]??pokemon.status}</div>`
       : '';
     const hpNums = isPlayer ? `<div class="hp-numbers">${pokemon.hp} / ${pokemon.maxHp}</div>` : '';
-    const abilityBadge = !isPlayer && pokemon.ability
-      ? `<div class="ability-badge">${pokemon.ability.replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase())}</div>`
+
+    // Ability badge — shown on both player and enemy
+    const abilityActive = hasAbility && _isAbilityActive(pokemon);
+    const abilityBadge  = hasAbility
+      ? `<div class="ability-badge${abilityActive ? ' ability-glow' : ''}">${_abilityDisplayName(pokemon.ability)}</div>`
       : '';
+
     let expBar = '';
     if (isPlayer) {
       const pLv      = pokemon.level;
@@ -546,6 +652,12 @@ export class BattleUI {
       </div>
       ${hpNums}${abilityBadge}${status}${expBar}
     `;
+
+    // Bind tooltip to ability badge if present
+    if (hasAbility) {
+      const badgeEl = el.querySelector('.ability-badge');
+      if (badgeEl) this._bindAbilityTooltip(badgeEl, pokemon.ability);
+    }
   }
 
   _refreshPlates() {
@@ -572,6 +684,45 @@ export class BattleUI {
       b.textContent = STATUS_ABBR[pokemon.status] ?? pokemon.status;
       plateEl.appendChild(b);
     }
+
+    // Refresh ability badge glow — low-HP abilities activate mid-battle
+    const abilityEl = plateEl.querySelector('.ability-badge');
+    if (abilityEl && !abilityEl.classList.contains('ability-throb')) {
+      abilityEl.classList.toggle('ability-glow', _isAbilityActive(pokemon));
+    }
+  }
+
+  _playExpAnimation(result, onDone) {
+    const playerName = this._bs.playerPokemon.name;
+
+    // ── Delegate to the full-screen ExpBar component if available ─────────
+    if (this._expBar && result.expGained) {
+      // Also update the inline nameplate EXP fill to the final value
+      // so it's correct when battle ends and ExpBar is gone.
+      this._updateInlineExpFill();
+      this._expBar.animateGain(result, playerName, onDone);
+      return;
+    }
+
+    // ── Fallback: animate only the inline nameplate EXP bar ──────────────
+    this._animateExpBar(onDone);
+  }
+
+  _updateInlineExpFill() {
+    const fill = this._playerPlate?.querySelector('.exp-fill');
+    if (!fill) return;
+    const p       = this._bs.playerPokemon;
+    const level   = p.level;
+    const expNow  = p.exp;
+    const expThis = Math.pow(level, 3);
+    const expNext = Math.pow(level + 1, 3);
+    const pct = level >= 100 ? 100
+      : Math.max(0, Math.min(100, ((expNow - expThis) / (expNext - expThis)) * 100));
+    // Update level number on nameplate too (in case of level-up)
+    const lvEl = this._playerPlate?.querySelector('.poke-level');
+    if (lvEl) lvEl.textContent = `Lv.${level}`;
+    fill.style.transition = 'width 0.5s ease';
+    fill.style.width = pct + '%';
   }
 
   _animateExpBar(onDone) {
@@ -647,24 +798,12 @@ export class BattleUI {
         this._showMainMenu();
         break;
       case PHASE.VICTORY:
+        console.log('[BattleUI] VICTORY — starting faint sprite');
         this._faintSprite(true, () => {
-          const lines = [];
-          // EXP message
-          if (result.expGained) {
-            lines.push(`${result.playerName} gained ${result.expGained} EXP!`);
-          }
-          // Level up messages
-          if (result.levelsGained?.length) {
-            for (const lv of result.levelsGained) {
-              lines.push(`${result.playerName} grew to Lv.${lv}!`);
-            }
-          }
-          // Evolution hint
-          if (result.didEvolve) {
-            lines.push(`${result.playerName} is evolving!`);
-          }
-          this._showLog(lines, () => {
-            this._animateExpBar(() => this._endBattle({ victory: true }));
+          console.log('[BattleUI] VICTORY — faint done, starting EXP animation');
+          this._playExpAnimation(result, () => {
+            console.log('[BattleUI] VICTORY — EXP done, calling _endBattle');
+            this._endBattle({ victory: true });
           });
         });
         break;
@@ -944,6 +1083,25 @@ export class BattleUI {
         return;
       }
 
+      if (entry.type === 'ability_active') {
+        // Flash the ability badge on the correct nameplate with a one-shot throb
+        const plateEl = entry.side === 'player' ? this._playerPlate : this._enemyPlate;
+        const abilityEl = plateEl?.querySelector('.ability-badge');
+        if (abilityEl) {
+          // Remove then re-add so animation restarts even if already glowing
+          abilityEl.classList.remove('ability-throb', 'ability-glow');
+          void abilityEl.offsetWidth; // force reflow
+          abilityEl.classList.add('ability-throb');
+          // After throb finishes, settle into steady glow
+          setTimeout(() => {
+            abilityEl.classList.remove('ability-throb');
+            abilityEl.classList.add('ability-glow');
+          }, 700);
+        }
+        show(i + 1);
+        return;
+      }
+
       if (entry.type === 'text') {
         this._showDialog(entry.text, () => show(i + 1));
         return;
@@ -1040,13 +1198,23 @@ export class BattleUI {
   // ── End ───────────────────────────────────────────────────────────────────
 
   _endBattle(outcome) {
+    console.log('[BattleUI] _endBattle called with:', outcome);
     this._clearMenu();
     this._fade.classList.add('active');
-    setTimeout(() => this._onEnd(outcome), 500);
+    setTimeout(() => {
+      console.log('[BattleUI] Fade done, calling onEnd');
+      this._onEnd(outcome);
+    }, 500);
   }
 
   destroy() {
     this._root?.remove();
     this._root = null;
+    this._hideTooltip();
+    // Remove the battle ability tooltip from DOM
+    document.getElementById('ability-tooltip')?.remove();
+    this._tooltip = null;
+    // Hide overworld PSW tooltip in case it was stuck visible
+    document.getElementById('psw-ability-tooltip')?.classList.remove('visible');
   }
 }

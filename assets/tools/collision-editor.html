@@ -378,7 +378,7 @@
     let mapKey = '';
     let tilesetImg = null;
     let collisionData = [];
-    let aboveData = [];  // tile IDs for the 'above' layer (renders over player)
+    let aboveData = [];  // tile IDs for the 'above' layer (cropped, renders over player)
     let warps = [];
     let spawns = [];
     let npcs = [];
@@ -495,7 +495,7 @@ npSpriteSelect.appendChild(noneOpt);
         collision: 'Collision mode: click/drag to paint fully blocked tiles.',
         topblock: 'Top Block mode: click/drag to paint tiles that block from above only (fixes walking-on-roof).',
         ledge: 'Ledge mode: click/drag to paint ledge tiles — player can hop down but not walk up.',
-        above: 'Above mode: click/drag to mark tiles that render ABOVE the player (rooftops, shelves, treetops).',
+        above: 'Above mode: click/drag to mark roof-edge tiles (cropped — head visible, body hidden).',
         warp: 'Warp mode: click a tile to place or edit a warp. Blue tiles = existing warps.',
         npc: 'NPC mode: click to place/edit NPC. Drag existing NPC to move. Yellow tiles = NPCs.',
         spawn: 'Spawn mode: click a tile to place or edit a grass/encounter spawn. Green tiles = spawns.',
@@ -530,6 +530,7 @@ npSpriteSelect.appendChild(noneOpt);
       // Above layer — duplicate tile IDs that render over the player
       const aboveLayer = currentMap.layers.find(l => l.name === 'above');
       aboveData = aboveLayer ? [...aboveLayer.data] : new Array(mapW * mapH).fill(0);
+
 
       // Warps — prefer _warps from JSON (editor-saved), fallback to hardcoded
       if (currentMap._warps && currentMap._warps.length > 0) {
@@ -848,7 +849,6 @@ npSpriteSelect.appendChild(noneOpt);
         collisionData[idx] = COLL_LEDGE;
         render();
       } else if (mode === 'above') {
-        // Copy the ground tile into the above layer
         const groundLayer = currentMap.layers.find(l => l.name === 'ground');
         aboveData[idx] = groundLayer.data[idx];
         render();
@@ -1476,6 +1476,7 @@ npSpriteSelect.appendChild(noneOpt);
         currentMap.layers = currentMap.layers.filter(l => l.name !== 'above');
       }
 
+
       currentMap._warps = warps.map(w => ({ ...w }));
       // Remove _npcs and _spawns from map data (now stored separately)
       delete currentMap._npcs;
@@ -1556,6 +1557,7 @@ npSpriteSelect.appendChild(noneOpt);
       } else {
         mapSnapshot.layers = mapSnapshot.layers.filter(l => l.name !== 'above');
       }
+
 
       mapSnapshot._warps = warps.map(w => ({ ...w }));
       // Spawns and NPCs stored in separate folders — remove from map JSON

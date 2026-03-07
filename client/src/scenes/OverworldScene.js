@@ -269,10 +269,10 @@ export class OverworldScene extends Phaser.Scene {
       const srcImg = this.textures.get(`${key}_tileset`).getSourceImage();
       const tsCols = this.map.tilesets[0].columns;
       const w = this.map.width;
-      // Skip top 8px of each tile, draw bottom 8px.
+      // Skip top 9.5px of each tile, draw bottom strip.
       // This covers the player's body/legs but leaves their head/face visible.
-      const skipTop = 9;
-      const drawH = TILE_SIZE - skipTop; // 12px
+      const skipTop = 9.5;
+      const drawH = TILE_SIZE - skipTop;
 
       for (let i = 0; i < aboveLayer.data.length; i++) {
         const gid = aboveLayer.data[i];
@@ -284,7 +284,6 @@ export class OverworldScene extends Phaser.Scene {
         const srcX = (tileId % tsCols) * TILE_SIZE;
         const srcY = Math.floor(tileId / tsCols) * TILE_SIZE;
 
-        // Canvas with bottom portion of tile only
         const c = document.createElement('canvas');
         c.width = TILE_SIZE;
         c.height = drawH;
@@ -297,7 +296,6 @@ export class OverworldScene extends Phaser.Scene {
         if (this.textures.exists(texKey)) this.textures.remove(texKey);
         this.textures.addCanvas(texKey, c);
 
-        // Position: shifted down by skipTop, centered on the 12px strip
         const sprite = this.add.image(
           tx * TILE_SIZE + TILE_SIZE / 2,
           ty * TILE_SIZE + skipTop + drawH / 2,

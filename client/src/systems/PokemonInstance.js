@@ -10,6 +10,8 @@
  *   const p2 = PokemonInstance.deserialize(saved, pokemonDefs, moveDefs);
  */
 
+import { abilityStatMultiplier, abilitySuppressBurnAtkPenalty } from './AbilityReader.js';
+
 export class PokemonInstance {
   /**
    * @param {string} speciesId   - Key into pokemonDefs (e.g. 'bulbasaur')
@@ -54,6 +56,10 @@ export class PokemonInstance {
     // Sleep turn counter
     this._sleepTurns = 0;
 
+    // ── Experience ─────────────────────────────────────────────────────────
+    // Cubic EXP curve: total EXP for level N = N³
+    this._exp = Math.pow(level, 3);
+
     // ── Misc ───────────────────────────────────────────────────────────────
     this._gender  = gender ?? PokemonInstance._randomGender();
     this._nickname = null;
@@ -78,6 +84,47 @@ export class PokemonInstance {
 
   get evolvesTo()      { return this._species.evolvesTo ?? null; }
   get evolvesAtLevel() { return this._species.evolvesAtLevel ?? null; }
+
+  get exp() { return this._exp; }
+
+  /** EXP needed to reach a given level (cubic curve). */
+  static expForLevel(level) { return Math.pow(level, 3); }
+
+  /** Total EXP needed for next level-up from current level. */
+  _expForNextLevel() {
+    return PokemonInstance.expForLevel(this._level + 1) - this._exp;
+  }
+
+  /**
+   * Add EXP and level up as many times as needed.
+   * @param {number} amount
+   * @returns {number[]} array of levels gained (e.g. [6, 7] if levelled twice)
+   */
+  gainExp(amount) {
+    if (this._level >= 100) return [];
+    this._exp += amount;
+    const levelsGained = [];
+    const statDeltas   = {};   // level → delta object
+    while (this._level < 100 && this._exp >= PokemonInstance.expForLevel(this._level + 1)) {
+      this.levelUp(this._level + 1);
+      levelsGained.push(this._level);
+      if (this._lastLevelUpDeltas) statDeltas[this._level] = this._lastLevelUpDeltas;
+    }
+    this._lastGainStatDeltas = statDeltas;
+    return levelsGained;
+  }
+
+  /**
+   * Calculate EXP reward for defeating an enemy pokemon.
+   * Simplified Gen-1 style: (baseExpYield * enemyLevel) / 7
+   * baseExpYield defaults to sum of base stats / 4 if not defined.
+   */
+  static calcExpReward(enemySpecies, enemyLevel) {
+    const bs = enemySpecies.baseStats;
+    const baseYield = enemySpecies.baseExpYield
+      ?? Math.floor((bs.hp + bs.atk + bs.def + bs.spatk + bs.spdef + bs.spd) / 4);
+    return Math.max(1, Math.floor((baseYield * enemyLevel) / 7));
+  }
 
   setNickname(name) { this._nickname = name || null; }
 
@@ -163,11 +210,13 @@ export class PokemonInstance {
     const base  = this._stats[stat];
     const stage = this._stages[stat] ?? 0;
     const mult  = PokemonInstance._stageMult(stage);
-    // Burn halves physical attack
-    const burnPenalty = (this._status === 'burn' && stat === 'atk') ? 0.5 : 1;
+    // Burn halves physical attack — suppressed by abilities like Guts
+    const burnPenalty = (this._status === 'burn' && stat === 'atk' && !abilitySuppressBurnAtkPenalty(this)) ? 0.5 : 1;
+    // Ability stat multiplier (e.g. Guts: +50% ATK when statused)
+    const abilityMult = abilityStatMultiplier(this, stat);
     // Paralysis halves speed
     const paralysisPenalty = (this._status === 'paralysis' && stat === 'spd') ? 0.5 : 1;
-    return Math.max(1, Math.floor(base * mult * burnPenalty * paralysisPenalty));
+    return Math.max(1, Math.floor(base * mult * burnPenalty * abilityMult * paralysisPenalty));
   }
 
   // ── Moves ─────────────────────────────────────────────────────────────────
@@ -203,6 +252,17 @@ export class PokemonInstance {
   levelUp(newLevel) {
     if (newLevel <= this._level) return;
     const hpRatio = this._currentHp / this._maxHp;
+
+    // Snapshot stats BEFORE levelling so callers can show deltas
+    const statsBefore = {
+      hp:    this._maxHp,
+      atk:   this._stats.atk,
+      def:   this._stats.def,
+      spatk: this._stats.spatk,
+      spdef: this._stats.spdef,
+      spd:   this._stats.spd,
+    };
+
     this._level  = newLevel;
 
     const bs = this._species.baseStats;
@@ -215,6 +275,16 @@ export class PokemonInstance {
       spd:   PokemonInstance._calcStat(bs.spd,   newLevel),
     };
     this._currentHp = Math.max(1, Math.round(this._maxHp * hpRatio));
+
+    // Return stat deltas for UI display (e.g. "12 → 15")
+    this._lastLevelUpDeltas = {
+      hp:    { before: statsBefore.hp,    after: this._maxHp         },
+      atk:   { before: statsBefore.atk,   after: this._stats.atk     },
+      def:   { before: statsBefore.def,   after: this._stats.def     },
+      spatk: { before: statsBefore.spatk, after: this._stats.spatk   },
+      spdef: { before: statsBefore.spdef, after: this._stats.spdef   },
+      spd:   { before: statsBefore.spd,   after: this._stats.spd     },
+    };
 
     // Learn any newly available moves
     const newMoves = PokemonInstance._buildMoveSlots(
@@ -307,6 +377,7 @@ export class PokemonInstance {
     return {
       speciesId:  this._speciesId,
       level:      this._level,
+      exp:        this._exp,
       nickname:   this._nickname,
       gender:     this._gender,
       ability:    this._ability,
@@ -331,6 +402,7 @@ export class PokemonInstance {
     const inst = new PokemonInstance(obj.speciesId, obj.level, pokemonDefs, moveDefs, obj.gender);
     inst._nickname   = obj.nickname   ?? null;
     inst._ability    = obj.ability    ?? inst._ability;
+    inst._exp        = obj.exp        ?? PokemonInstance.expForLevel(obj.level);
     inst._currentHp  = Math.min(inst._maxHp, obj.currentHp ?? inst._maxHp);
     inst._status     = obj.status     ?? null;
     inst._sleepTurns = obj.sleepTurns ?? 0;

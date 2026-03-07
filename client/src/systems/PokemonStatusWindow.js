@@ -4,6 +4,8 @@
  * Usage: const w = new PokemonStatusWindow(); w.toggle();
  */
 
+import { isAbilityActive, abilityName, abilityDesc } from './AbilityReader.js';
+
 const PARTY_KEY = 'pokemon-mmo-party';
 
 const POKEMON_DEFS = {
@@ -137,6 +139,21 @@ const CSS = `
 #psw-header-level { text-align:right; z-index:1; }
 #psw-header-lv { font-size:24px; font-weight:900; line-height:1; }
 #psw-header-num { font-size:9px; color:#445; margin-top:3px; letter-spacing:1px; }
+#psw-ability-badge {
+  display:inline-block; margin-top:6px; font-size:10px; color:#7ab0d0;
+  background:#0a1828; border:1px solid #1e3a5f; border-radius:4px;
+  padding:2px 8px; letter-spacing:0.5px;
+  transition: color 0.4s, background 0.4s, border-color 0.4s, box-shadow 0.4s;
+}
+#psw-ability-badge.ability-glow {
+  color:#fff2cc; background:#2a1800; border-color:#ffaa00;
+  box-shadow: 0 0 8px 2px #ffaa0088, inset 0 0 4px #ffee8844;
+  animation: psw-ability-pulse 1.4s ease-in-out infinite;
+}
+@keyframes psw-ability-pulse {
+  0%,100% { box-shadow: 0 0 5px 2px #ffaa0066, inset 0 0 2px #ffee8833; }
+  50%     { box-shadow: 0 0 14px 5px #ffcc44bb, inset 0 0 6px #ffee8899; }
+}
 
 #psw-hp-row { display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; }
 #psw-hp-label { font-size:10px; color:#556; letter-spacing:1.5px; text-transform:uppercase; }
@@ -166,6 +183,26 @@ const CSS = `
 #psw-evo-hint strong { color:#6cb; }
 #psw-footer { margin-top:14px; padding-left:4px; font-size:9px; color:#1e2d3a; letter-spacing:1px; }
 #psw-overlay::after { content:''; position:fixed; inset:0; pointer-events:none; z-index:1001; background-image:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.03) 2px,rgba(0,0,0,0.03) 4px); }
+
+#psw-ability-tooltip {
+  position: fixed;
+  z-index: 1100;
+  background: #0a1828;
+  border: 1px solid #ffaa00;
+  border-radius: 6px;
+  padding: 7px 11px;
+  font-family: 'Courier New','Lucida Console',monospace;
+  font-size: 11px;
+  color: #f0e8cc;
+  max-width: 240px;
+  pointer-events: none;
+  box-shadow: 0 2px 14px rgba(0,0,0,0.8), 0 0 6px #ffaa0033;
+  line-height: 1.5;
+  white-space: normal;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+#psw-ability-tooltip.visible { opacity: 1; }
 `;
 
 export class PokemonStatusWindow {
@@ -189,6 +226,13 @@ export class PokemonStatusWindow {
     style.id = 'psw-styles';
     style.textContent = CSS;
     document.head.appendChild(style);
+
+    // Shared tooltip element for ability badge hover
+    if (!document.getElementById('psw-ability-tooltip')) {
+      const tip = document.createElement('div');
+      tip.id = 'psw-ability-tooltip';
+      document.body.appendChild(tip);
+    }
   }
 
   _buildDOM() {
@@ -424,6 +468,7 @@ export class PokemonStatusWindow {
             ${pokemon.nickname ? `<span id="psw-header-species">${def.name}</span>` : ''}
           </div>
           <div id="psw-header-types">${typeBadges}</div>
+          ${pokemon.ability ? `<div id="psw-ability-badge" class="${isAbilityActive(pokemon) ? 'ability-glow' : ''}">${abilityName(pokemon.ability)}</div>` : ''}
         </div>
         <div id="psw-header-level">
           <div id="psw-header-lv" style="color:${fainted ? '#F44336' : color};">${fainted ? 'FNT' : `Lv.${pokemon.level}`}</div>
@@ -469,6 +514,32 @@ export class PokemonStatusWindow {
       headerAvatar.style.backgroundPosition = '0 0';
       headerAvatar.style.backgroundRepeat = 'no-repeat';
       headerAvatar.style.backgroundColor = `${color}11`;
+    }
+
+    // Bind ability tooltip
+    const abilityBadge = this.elDetail.querySelector('#psw-ability-badge');
+    if (abilityBadge && pokemon.ability) {
+      const desc = abilityDesc(pokemon.ability);
+      abilityBadge.style.cursor = 'help';
+      abilityBadge.addEventListener('mouseenter', () => {
+        if (!desc) return;
+        const tip = document.getElementById('psw-ability-tooltip');
+        if (!tip) return;
+        tip.textContent = desc;
+        tip.classList.add('visible');
+        const rect = abilityBadge.getBoundingClientRect();
+        let top  = rect.top - tip.offsetHeight - 8;
+        let left = rect.left;
+        if (top < 6) top = rect.bottom + 8;
+        if (left + 250 > window.innerWidth) left = window.innerWidth - 258;
+        if (left < 6) left = 6;
+        tip.style.top  = `${top}px`;
+        tip.style.left = `${left}px`;
+      });
+      abilityBadge.addEventListener('mouseleave', () => {
+        const tip = document.getElementById('psw-ability-tooltip');
+        if (tip) tip.classList.remove('visible');
+      });
     }
   }
 }

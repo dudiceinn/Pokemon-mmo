@@ -6,7 +6,7 @@
 |--------|-----------|
 | **Pokemon** | `assets/data/pokemon.json`, `client/src/systems/PokemonInstance.js`, `client/src/systems/PartyManager.js` |
 | **Inventory** | `assets/data/items.json`, `client/src/systems/InventoryManager.js`, `client/src/systems/Inventory.js` |
-| **Battle** | `client/src/systems/BattleState.js`, `client/src/scenes/BattleScene.js`, `client/src/scenes/BattleUI.js` |
+| **Battle** | `client/src/systems/BattleState.js`, `client/src/scenes/BattleScene.js`, `client/src/scenes/BattleUI.js`, `client/src/systems/ExpBar.js` |
 | **Moves** | `assets/data/moves.json`, referenced in `BattleState.js` + `PokemonInstance.js` |
 | **Maps** | `assets/maps/*.json`, `shared/maps.js` |
 | **NPCs** | `assets/npcs/<map>/*.json`, `client/src/entities/NPC.js`, `client/src/systems/ScriptRunner.js` |
@@ -59,6 +59,10 @@ All 898+ species with variants:
 - `field_bg.png` — Battle background
 - `databox_normal.png`, `databox_normal_foe.png` — HP/status boxes
 - `overlay_command.png`, `overlay_fight.png`, `overlay_hp.png`, `overlay_exp.png`, `overlay_message.png`
+
+### Audio (`assets/audio/`)
+- `bgm/` — Background music (`wild_battle.mp3`, `victory.mp3`)
+- `sfx/` — Sound effects (`battle_start`, `exp_gain`, `level_up`, `hit_normal`, `hit_super`, `hit_not_very`, `faint`, `catch_success`)
 - `grass_base0.png`, `grass_base1.png` — Platform bases
 
 ### Tilesets (`assets/tilesets/`)
@@ -85,8 +89,8 @@ One tileset PNG per map (all share the same FireRed/LeafGreen GBA ripped art).
 | `BootScene.js` | Asset preloading, progress bar, launches OverworldScene |
 | `OverworldScene.js` | Main gameplay: movement, NPCs, warps, encounters, network sync |
 | `UIScene.js` | HUD overlay, keyboard (B/P/Esc/1-9), inventory + party UI |
-| `BattleScene.js` | Battle lifecycle wrapper, transitions to/from overworld |
-| `BattleUI.js` | Full-screen HTML battle overlay (HP bars, moves, items, catch) |
+| `BattleScene.js` | Battle lifecycle wrapper, transitions to/from overworld, creates ExpBar |
+| `BattleUI.js` | Full-screen HTML battle overlay (HP bars, moves, items, catch, EXP animation) |
 
 ### Entities (`client/src/entities/`)
 | File | Purpose |
@@ -103,7 +107,8 @@ One tileset PNG per map (all share the same FireRed/LeafGreen GBA ripped art).
 | `PartyManager.js` | Party of up to 6 Pokemon, localStorage persistence, fires `pokemon-party-changed` event |
 | `InventoryManager.js` | Item data layer: add/remove/count items, localStorage persistence |
 | `Inventory.js` | Inventory UI: hotbar (12 slots), party panel (6), bag overlay (30), drag-drop |
-| `BattleState.js` | Battle logic: type chart, damage calc, status effects, phase machine |
+| `BattleState.js` | Battle logic: type chart, damage calc, status effects, phase machine, EXP award on victory |
+| `ExpBar.js` | Animated EXP bar overlay + level-up card with stat deltas, shown after victory |
 | `BattleTestChooser.js` | Dev tool: pick party lead + wild Pokemon for testing |
 | `ScriptRunner.js` | NPC script interpreter (say, movenpc, givepokemon, giveitem, choice, etc.) |
 | `DialogBox.js` | Dialog box: show name + text lines, advance with Space/Enter |

@@ -15,6 +15,21 @@
  */
 
 import { PokemonInstance } from './PokemonInstance.js';
+import {
+  triggerEntryAbilities,
+  triggerContactAbilities,
+  triggerEndOfTurnAbility,
+  triggerBattleEndAbility,
+  abilityAtkMultiplier,
+  abilityDefMultiplier,
+  abilityBlocksStatus,
+  abilityBlocksFlinch,
+  abilityBlocksConfusion,
+  abilityBlocksRecoil,
+  abilityHasPressure,
+  abilitySynchronizes,
+  abilityName,
+} from './AbilityReader.js';
 
 // ── Phase constants ───────────────────────────────────────────────────────
 export const PHASE = {
@@ -116,85 +131,7 @@ export class BattleState {
     this._playerPokemon.resetStages();
 
     // Entry abilities — fire on battle start
-    this._entryAbilityLog = [];
-    this._triggerEntryAbilities();
-  }
-
-  // ── Ability system ────────────────────────────────────────────────────────
-
-  /**
-   * Abilities that trigger when a pokemon enters battle.
-   * Results stored in _entryAbilityLog, shown during intro.
-   */
-  _triggerEntryAbilities() {
-    const log = this._entryAbilityLog;
-    const say = (text) => log.push({ type: 'text', text });
-
-    // Intimidate — lower enemy ATK by 1 stage on entry
-    if (this._playerPokemon.ability === 'intimidate') {
-      this._enemyPokemon.modifyStage('atk', -1);
-      say(`${this._playerPokemon.name}'s Intimidate lowered ${this._enemyPokemon.name}'s Attack!`);
-    }
-    if (this._enemyPokemon.ability === 'intimidate') {
-      this._playerPokemon.modifyStage('atk', -1);
-      say(`${this._enemyPokemon.name}'s Intimidate lowered ${this._playerPokemon.name}'s Attack!`);
-    }
-  }
-
-  /**
-   * Apply ability-based damage modifier to a move.
-   * Returns a multiplier to apply to the final damage.
-   */
-  _abilityDamageMultiplier(attacker, move) {
-    const ability = attacker.ability;
-    const hp      = attacker.hp / attacker.maxHp;
-    // Torchic-line abilities: boost same-type moves at low HP
-    if (ability === 'blaze'    && move.type === 'fire'     && hp <= 0.33) return 1.5;
-    if (ability === 'overgrow' && move.type === 'grass'    && hp <= 0.33) return 1.5;
-    if (ability === 'torrent'  && move.type === 'water'    && hp <= 0.33) return 1.5;
-    if (ability === 'swarm'    && move.type === 'bug'      && hp <= 0.33) return 1.5;
-    return 1;
-  }
-
-  /**
-   * Check if defender's ability blocks or modifies damage.
-   * Returns a multiplier (0 = immune, 1 = normal).
-   */
-  _abilityDefenseMultiplier(defender, move) {
-    const ability = defender.ability;
-    if (ability === 'levitate'      && move.type === 'ground')   return 0; // immune
-    if (ability === 'flash_fire'    && move.type === 'fire')      return 0; // immune (simplification)
-    if (ability === 'water_absorb'  && move.type === 'water')     return 0; // immune
-    if (ability === 'volt_absorb'   && move.type === 'electric')  return 0; // immune
-    if (ability === 'lightning_rod' && move.type === 'electric')  return 0; // immune
-    if (ability === 'thick_fat' && (move.type === 'fire' || move.type === 'ice')) return 0.5;
-    return 1;
-  }
-
-  /**
-   * On-contact ability effects (after attacker hits defender).
-   */
-  _triggerContactAbilities(attacker, defender, log, say) {
-    if (move?.category !== 'physical') return;
-    const ability = defender.ability;
-    if (ability === 'static' && !attacker.status && Math.random() < 0.30) {
-      attacker.setStatus('paralysis');
-      say(`${attacker.name} was paralyzed by Static!`);
-    }
-    if (ability === 'poison_point' && !attacker.status && Math.random() < 0.30) {
-      attacker.setStatus('poison');
-      say(`${attacker.name} was poisoned by Poison Point!`);
-    }
-    if (ability === 'flame_body' && !attacker.status && Math.random() < 0.30) {
-      attacker.setStatus('burn');
-      say(`${attacker.name} was burned by Flame Body!`);
-    }
-    if (ability === 'effect_spore' && !attacker.status && Math.random() < 0.30) {
-      const roll = Math.random();
-      if (roll < 0.33)      { attacker.setStatus('paralysis'); say(`${attacker.name} was paralyzed by Effect Spore!`); }
-      else if (roll < 0.66) { attacker.setStatus('poison');    say(`${attacker.name} was poisoned by Effect Spore!`); }
-      else                  { attacker.setStatus('sleep');     say(`${attacker.name} fell asleep from Effect Spore!`); }
-    }
+    this._entryAbilityLog = triggerEntryAbilities(this._playerPokemon, this._enemyPokemon);
   }
 
   // ── Public getters ────────────────────────────────────────────────────────
@@ -262,8 +199,15 @@ export class BattleState {
       enemyMaxHp:  this._enemyPokemon.maxHp,
     });
 
-    // Deduct PP
+    // Clear per-turn flags
+    this._playerPokemon._flinched = false;
+    this._enemyPokemon._flinched  = false;
+
+    // Deduct PP (Pressure: enemy's move costs 2 PP if player has Pressure)
     this._playerPokemon.useMove(slotIndex);
+    if (abilityHasPressure(this._enemyPokemon)) {
+      this._playerPokemon.useMove(slotIndex);
+    }
 
     // Speed check — who goes first
     const playerSpd = this._playerPokemon.effectiveStat('spd');
@@ -280,7 +224,12 @@ export class BattleState {
     const enemySlot   = enemyMove
       ? this._enemyPokemon.moves.findIndex(m => m.moveId === enemyMove.moveId)
       : -1;
-    if (enemySlot >= 0) this._enemyPokemon.useMove(enemySlot);
+    if (enemySlot >= 0) {
+      this._enemyPokemon.useMove(enemySlot);
+      if (abilityHasPressure(this._playerPokemon)) {
+        this._enemyPokemon.useMove(enemySlot);
+      }
+    }
 
     if (playerFirst) {
       this._applyMove(playerMove, this._playerPokemon, this._enemyPokemon, log, say, snap);
@@ -300,11 +249,53 @@ export class BattleState {
       this._applyEndOfTurnStatus(this._enemyPokemon, log, say, snap);
     }
 
+    // Tick screens down each turn
+    if (this._screens) {
+      for (const side of ['player', 'enemy']) {
+        if (!this._screens[side]) continue;
+        for (const screen of ['reflect', 'lightScreen', 'safeguard', 'mist']) {
+          if (this._screens[side][screen] > 0) this._screens[side][screen]--;
+        }
+      }
+    }
+
     // Check outcomes
     if (this._enemyPokemon.isFainted) {
       this._phase = PHASE.VICTORY;
+
+      // ── Award EXP ────────────────────────────────────────────────────────
+      const enemySpecies  = this._pokemonDefs[this._enemyPokemon.speciesId];
+      const expGained     = PokemonInstance.calcExpReward(enemySpecies, this._enemyPokemon.level);
+      const expBefore     = this._playerPokemon.exp;
+      const levelBefore   = this._playerPokemon.level;
+      const levelsGained  = this._playerPokemon.gainExp(expGained);
+      const expAfter      = this._playerPokemon.exp;
+      const levelAfter    = this._playerPokemon.level;
+      const statDeltas    = this._playerPokemon._lastGainStatDeltas ?? {};
+
+      say(`${this._playerPokemon.name} gained ${expGained} EXP. Points!`);
+      for (const lv of levelsGained) {
+        say(`${this._playerPokemon.name} grew to Lv. ${lv}!`);
+      }
+      // ── End EXP ──────────────────────────────────────────────────────────
+
       this._partyManager.save();
-      this._emit({ type: 'turn_result', log, phase: PHASE.VICTORY });
+      this._applyBattleEndAbilities();
+      this._emit({
+        type:               'turn_result',
+        log,
+        phase:              PHASE.VICTORY,
+        expGained,
+        expBefore,
+        expAfter,
+        levelBefore,
+        levelAfter,
+        levelsGained,
+        playerSpeciesId:    this._playerPokemon.speciesId,
+        statDeltas,
+        expForCurrentLevel: PokemonInstance.expForLevel(levelAfter),
+        expForNextLevel:    PokemonInstance.expForLevel(levelAfter + 1),
+      });
       return;
     }
 
@@ -313,10 +304,12 @@ export class BattleState {
       if (next) {
         this._phase = PHASE.FAINTED;
         this._partyManager.save();
+        this._applyBattleEndAbilities();
         this._emit({ type: 'turn_result', log, phase: PHASE.FAINTED, nextPokemon: next });
       } else {
         this._phase = PHASE.BLACKED_OUT;
         this._partyManager.save();
+        this._applyBattleEndAbilities();
         this._emit({ type: 'turn_result', log, phase: PHASE.BLACKED_OUT });
       }
       return;
@@ -379,6 +372,7 @@ export class BattleState {
       enemy.resetStages();
       const added = this._partyManager.addInstance(enemy);
       say(`Gotcha! ${enemy.name} was caught!`);
+      this._applyBattleEndAbilities();
       this._emit({ type: 'catch_result', caught: true, wobbles, log, phase: PHASE.CAUGHT, addedToParty: added });
       return;
     }
@@ -402,6 +396,7 @@ export class BattleState {
     if (fled) {
       this._phase = PHASE.FLED;
       say(`Got away safely!`);
+      this._applyBattleEndAbilities();
       this._emit({ type: 'flee_result', fled: true, log, phase: PHASE.FLED });
       return;
     }
@@ -439,16 +434,21 @@ export class BattleState {
       return;
     }
 
-    say(`${attackerName} used ${move.name}!`);
+    // Flinch (set by flinch_30pct on the previous hit this turn)
+    if (attacker._flinched) {
+      attacker._flinched = false;
+      say(`${attackerName} flinched and couldn't move!`);
+      return;
+    }
 
-    // Status-only moves
+    // ── Status-only moves ─────────────────────────────────────────────────────
     if (move.category === 'status') {
       this._applyEffect(move.effect, attacker, defender, 0, log, say, snap);
       return;
     }
 
-    // Accuracy check
-    if (move.effect !== 'never_miss' && move.accuracy > 0) {
+    // ── Accuracy check ────────────────────────────────────────────────────────
+    if (move.effect !== 'never_miss' && move.effect !== 'ohko' && move.accuracy > 0) {
       const accStage  = attacker.stages.accuracy ?? 0;
       const evaStage  = defender.stages.evasion  ?? 0;
       const accMult   = PokemonInstance._stageMult(accStage);
@@ -457,7 +457,75 @@ export class BattleState {
       if (Math.random() > hitChance) { say(`${attackerName}'s attack missed!`); return; }
     }
 
-    // Damage calculation
+    // ── OHKO moves ────────────────────────────────────────────────────────────
+    if (move.effect === 'ohko') {
+      // Accuracy = attacker level - defender level + 30; fails if attacker level < defender
+      if (attacker.level < defender.level) {
+        say(`${defenderName} is unaffected!`);
+        return;
+      }
+      const ohkoAcc = (attacker.level - defender.level + 30) / 100;
+      if (Math.random() > ohkoAcc) { say(`${attackerName}'s attack missed!`); return; }
+      defender.takeDamage(defender.hp);
+      say(`It's a one-hit KO!`);
+      snap();
+      return;
+    }
+
+    // ── Fixed-damage moves ────────────────────────────────────────────────────
+    if (move.effect === 'fixed_40dmg') {
+      // Type immunity still applies (e.g. Dragon Rage vs Normal-immune Ghost)
+      const tMult = typeMultiplier(move.type, defender.types);
+      if (tMult === 0) { say(`It doesn't affect ${defenderName}...`); return; }
+      defender.takeDamage(40);
+      snap();
+      return;
+    }
+
+    if (move.effect === 'fixed_20dmg') {
+      const tMult = typeMultiplier(move.type, defender.types);
+      if (tMult === 0) { say(`It doesn't affect ${defenderName}...`); return; }
+      defender.takeDamage(20);
+      snap();
+      return;
+    }
+
+    if (move.effect === 'level_damage') {
+      // Night Shade / Seismic Toss — damage = attacker level
+      const tMult = typeMultiplier(move.type, defender.types);
+      if (tMult === 0) { say(`It doesn't affect ${defenderName}...`); return; }
+      defender.takeDamage(attacker.level);
+      snap();
+      return;
+    }
+
+    if (move.effect === 'psywave') {
+      const tMult = typeMultiplier(move.type, defender.types);
+      if (tMult === 0) { say(`It doesn't affect ${defenderName}...`); return; }
+      const dmg = Math.max(1, Math.floor(attacker.level * (0.5 + Math.random())));
+      defender.takeDamage(dmg);
+      snap();
+      return;
+    }
+
+    if (move.effect === 'halve_hp') {
+      // Super Fang — deal exactly half of current HP
+      const dmg = Math.max(1, Math.floor(defender.hp / 2));
+      defender.takeDamage(dmg);
+      snap();
+      return;
+    }
+
+    if (move.effect === 'final_gambit') {
+      // Deals damage equal to user's current HP, then user faints
+      const dmg = attacker.hp;
+      defender.takeDamage(dmg);
+      attacker.takeDamage(attacker.hp);
+      snap();
+      return;
+    }
+
+    // ── Standard damage calculation ───────────────────────────────────────────
     const level    = attacker.level;
     const power    = move.power;
     const isSpecial = move.category === 'special';
@@ -468,25 +536,36 @@ export class BattleState {
     const isCrit   = move.effect === 'high_crit' ? Math.random() < 0.125 : Math.random() < 0.0625;
     const critMult = isCrit ? 1.5 : 1;
 
-    const atkAbilityMult = this._abilityDamageMultiplier(attacker, move);
-    const defAbilityMult = this._abilityDefenseMultiplier(defender, move);
+    const atkAbilityMult = abilityAtkMultiplier(attacker, move);
+    const defAbilityMult = abilityDefMultiplier(defender, move);
 
     // Ability immunity check
     if (defAbilityMult === 0) {
+      const defSide = defender === this._playerPokemon ? 'player' : 'enemy';
       const defName2 = defender === this._playerPokemon ? this._playerPokemon.name : this._enemyPokemon.name;
-      say(`${defName2}'s ${defender.ability.replace(/_/g,' ')} made it immune!`);
+      log.push({ type: 'ability_active', side: defSide });
+      say(`${defName2}'s ${abilityName(defender.ability)} made it immune!`);
       return;
     }
 
+    // Screen multiplier (Reflect / Light Screen)
+    const defSide = defender === this._playerPokemon ? 'player' : 'enemy';
+    const screens = this._screens?.[defSide] ?? {};
+    const screenMult = (!isCrit && isSpecial  && screens.lightScreen > 0) ? 0.5
+                     : (!isCrit && !isSpecial && screens.reflect     > 0) ? 0.5
+                     : 1;
+
     let damage = Math.floor(
       ((2 * level / 5 + 2) * power * (atk / def) / 50 + 2)
-      * typeMult * random * critMult * atkAbilityMult * defAbilityMult
+      * typeMult * random * critMult * atkAbilityMult * defAbilityMult * screenMult
     );
     damage = Math.max(1, damage);
 
     // Announce ability boost if active
     if (atkAbilityMult > 1) {
-      say(`${attackerName}'s ${attacker.ability.replace(/_/g,' ')} powered up the move!`);
+      const side = attacker === this._playerPokemon ? 'player' : 'enemy';
+      log.push({ type: 'ability_active', side });
+      say(`${attackerName}'s ${abilityName(attacker.ability)} powered up the move!`);
     }
 
     if (typeMult === 0)    say(`It doesn't affect ${defenderName}...`);
@@ -494,31 +573,28 @@ export class BattleState {
     else if (typeMult < 1) say(`It's not very effective...`);
     if (isCrit) say(`A critical hit!`);
 
-    const hits = move.effect === 'hit_twice' ? 2 : 1;
+    // ── Hit count ─────────────────────────────────────────────────────────────
+    let hits;
+    if (move.effect === 'hit_twice' || move.effect === 'hit_twice_poison_20pct') {
+      hits = 2;
+    } else if (move.effect === 'hit_2to5') {
+      // Gen 4+ distribution: 2×(35%), 3×(35%), 4×(15%), 5×(15%)
+      const r = Math.random();
+      hits = r < 0.35 ? 2 : r < 0.70 ? 3 : r < 0.85 ? 4 : 5;
+    } else {
+      hits = 1;
+    }
+
     let totalDamage = 0;
     for (let i = 0; i < hits; i++) {
       totalDamage += defender.takeDamage(damage);
     }
+    if (hits > 1) say(`Hit ${hits} time(s)!`);
     snap(); // ← HP update after defender takes damage
 
     // Contact ability triggers
     if (move.category === 'physical') {
-      const defAbility = defender.ability;
-      if (defAbility === 'static' && !attacker.status && Math.random() < 0.30) {
-        attacker.setStatus('paralysis');
-        say(`${attackerName} was paralyzed by ${defenderName}'s Static!`);
-      } else if (defAbility === 'poison_point' && !attacker.status && Math.random() < 0.30) {
-        attacker.setStatus('poison');
-        say(`${attackerName} was poisoned by ${defenderName}'s Poison Point!`);
-      } else if (defAbility === 'flame_body' && !attacker.status && Math.random() < 0.30) {
-        attacker.setStatus('burn');
-        say(`${attackerName} was burned by ${defenderName}'s Flame Body!`);
-      } else if (defAbility === 'effect_spore' && !attacker.status && Math.random() < 0.30) {
-        const roll = Math.random();
-        if (roll < 0.33)      { attacker.setStatus('paralysis'); say(`${attackerName} was paralyzed by ${defenderName}'s Effect Spore!`); }
-        else if (roll < 0.66) { attacker.setStatus('poison');    say(`${attackerName} was poisoned by ${defenderName}'s Effect Spore!`); }
-        else                  { attacker.setStatus('sleep');     say(`${attackerName} fell asleep from ${defenderName}'s Effect Spore!`); }
-      }
+      triggerContactAbilities(attacker, defender, say);
     }
 
     if (move.effect === 'drain_half') {
@@ -528,11 +604,17 @@ export class BattleState {
       snap(); // ← HP update after attacker heals
     }
 
-    if (move.effect === 'recoil_33pct') {
+    if (move.effect === 'recoil_33pct' && !abilityBlocksRecoil(attacker)) {
       const recoil = Math.max(1, Math.floor(totalDamage / 3));
       attacker.takeDamage(recoil);
       say(`${attackerName} was hurt by recoil!`);
       snap(); // ← HP update after recoil
+    }
+
+    if (move.effect === 'hit_twice_poison_20pct' && !defender.status && Math.random() < 0.20) {
+      defender.setStatus('poison');
+      const dName = defender === this._playerPokemon ? this._playerPokemon.name : this._enemyPokemon.name;
+      say(`${dName} was poisoned!`);
     }
 
     this._applyEffect(move.effect, attacker, defender, totalDamage, log, say, snap);
@@ -549,9 +631,30 @@ export class BattleState {
 
     const tryStatus = (status, chance, label) => {
       if (defender.status) return;
+      // Immunity abilities
+      if (abilityBlocksStatus(defender, status)) {
+        const blockerSide = defender === this._playerPokemon ? 'player' : 'enemy';
+        log.push({ type: 'ability_active', side: blockerSide });
+        say(`${defName} is protected by its ${abilityName(defender.ability)}!`);
+        return;
+      }
+      // Safeguard blocks external status moves
+      const defSideKey = defender === this._playerPokemon ? 'player' : 'enemy';
+      if (this._screens?.[defSideKey]?.safeguard > 0) {
+        say(`${defName} is protected by Safeguard!`);
+        return;
+      }
       if (Math.random() < chance) {
         defender.setStatus(status);
         say(`${defName} was ${label}!`);
+        // Synchronize — reflect burn / poison / paralysis back to attacker
+        // Synchronize — reflect burn / poison / paralysis back to attacker
+        if (abilitySynchronizes(defender)
+            && !attacker.status
+            && (status === 'burn' || status === 'poison' || status === 'paralysis')) {
+          attacker.setStatus(status);
+          say(`${attName}'s Synchronize reflected the ${status} back!`);
+        }
       }
     };
 
@@ -561,7 +664,14 @@ export class BattleState {
       case 'poison':        tryStatus('poison',    1.00, 'poisoned'); break;
       case 'sleep':         tryStatus('sleep',     1.00, 'put to sleep'); break;
       case 'freeze':        tryStatus('freeze',    1.00, 'frozen solid'); break;
-      case 'confuse':       say(`${defName} became confused!`); break;
+      case 'confuse': {
+        if (abilityBlocksConfusion(defender)) {
+          say(`${defName}'s ${abilityName(defender.ability)} prevents confusion!`);
+        } else {
+          say(`${defName} became confused!`);
+        }
+        break;
+      }
 
       case 'burn_10pct':    tryStatus('burn',      0.10, 'burned'); break;
       case 'freeze_10pct':  tryStatus('freeze',    0.10, 'frozen solid'); break;
@@ -569,7 +679,13 @@ export class BattleState {
       case 'poison_30pct':  tryStatus('poison',    0.30, 'poisoned'); break;
       case 'confuse_10pct': break;
 
-      case 'flinch_30pct': break;
+      case 'flinch_30pct': {
+        if (!abilityBlocksFlinch(defender) && Math.random() < 0.30) {
+          defender._flinched = true;
+          say(`${defName} flinched!`);
+        }
+        break;
+      }
 
       case 'lower_atk':   { const d = defender.modifyStage('atk',  -1); if(d) say(`${defName}'s Attack fell!`); break; }
       case 'lower_def':   { const d = defender.modifyStage('def',  -1); if(d) say(`${defName}'s Defense fell!`); break; }
@@ -605,9 +721,102 @@ export class BattleState {
       case 'high_crit':
       case 'priority1':
       case 'hit_twice':
+      case 'hit_2to5':
+      case 'hit_twice_poison_20pct':
       case 'drain_half':
       case 'recoil_33pct':
         break;
+
+      // ── Recovery — self heal ─────────────────────────────────────────────────
+      case 'heal_half_hp': {
+        // Recover / Slack Off / Roost / Softboiled
+        if (attacker.hp === attacker.maxHp) {
+          say(`${attName}'s HP is full!`);
+        } else {
+          const healed = attacker.heal(Math.floor(attacker.maxHp / 2));
+          say(`${attName} recovered HP!`);
+          snap();
+        }
+        break;
+      }
+      case 'sleep_full_heal': {
+        // Rest — fully heal, apply sleep 2 turns
+        if (attacker.status === 'sleep') {
+          say(`${attName} is already asleep!`);
+        } else {
+          attacker.heal(attacker.maxHp);
+          attacker.setStatus('sleep');
+          attacker.sleepTurns = 2;
+          say(`${attName} slept and became healthy!`);
+          snap();
+        }
+        break;
+      }
+      case 'heal_pulse': {
+        // Heal target (defender in context) 50%
+        if (defender.hp === defender.maxHp) {
+          say(`${defName}'s HP is full!`);
+        } else {
+          const healed = defender.heal(Math.floor(defender.maxHp / 2));
+          say(`${defName} had its HP restored!`);
+          snap();
+        }
+        break;
+      }
+
+      // ── Screens / field protection ───────────────────────────────────────────
+      case 'halve_special_dmg': {
+        // Light Screen — store flag on the user's side for 5 turns
+        const side = attacker === this._playerPokemon ? 'player' : 'enemy';
+        if (!this._screens) this._screens = {};
+        if (this._screens[side]?.lightScreen > 0) {
+          say(`But it failed!`);
+        } else {
+          this._screens[side] = this._screens[side] || {};
+          this._screens[side].lightScreen = 5;
+          say(`Light Screen raised ${attName}'s team's Sp. Def!`);
+        }
+        break;
+      }
+      case 'reflect_screen': {
+        // Reflect — halve physical damage for 5 turns
+        const side = attacker === this._playerPokemon ? 'player' : 'enemy';
+        if (!this._screens) this._screens = {};
+        if (this._screens[side]?.reflect > 0) {
+          say(`But it failed!`);
+        } else {
+          this._screens[side] = this._screens[side] || {};
+          this._screens[side].reflect = 5;
+          say(`Reflect raised ${attName}'s team's Defense!`);
+        }
+        break;
+      }
+      case 'prevent_status_5turns': {
+        // Safeguard
+        const side = attacker === this._playerPokemon ? 'player' : 'enemy';
+        if (!this._screens) this._screens = {};
+        if (this._screens[side]?.safeguard > 0) {
+          say(`But it failed!`);
+        } else {
+          this._screens[side] = this._screens[side] || {};
+          this._screens[side].safeguard = 5;
+          say(`${attName} is protected by Safeguard!`);
+        }
+        break;
+      }
+      case 'mist_screen': {
+        // Mist — block stat drops for 5 turns
+        const side = attacker === this._playerPokemon ? 'player' : 'enemy';
+        if (!this._screens) this._screens = {};
+        if (this._screens[side]?.mist > 0) {
+          say(`But it failed!`);
+        } else {
+          this._screens[side] = this._screens[side] || {};
+          this._screens[side].mist = 5;
+          say(`${attName} is shrouded in mist!`);
+        }
+        break;
+      }
 
       default: break;
     }
@@ -618,6 +827,10 @@ export class BattleState {
   _applyEndOfTurnStatus(pokemon, log, say, snap) {
     const name = pokemon === this._playerPokemon
       ? this._playerPokemon.name : this._enemyPokemon.name;
+
+    // End-of-turn ability hooks (e.g. Shed Skin) — returns true if status was cured
+    const suppressed = triggerEndOfTurnAbility(pokemon, name, say, snap);
+    if (suppressed) return;
 
     if (pokemon.status === 'burn') {
       const dmg = Math.max(1, Math.floor(pokemon.maxHp / 8));
@@ -660,6 +873,16 @@ export class BattleState {
 
     this._phase = PHASE.PLAYER_TURN;
     this._emit({ type: 'turn_result', log, phase: PHASE.PLAYER_TURN });
+  }
+
+  // ── Battle-end ability hooks ───────────────────────────────────────────────
+
+  /**
+   * Called just before a battle-ending emit.
+   * Natural Cure clears the player's status on switching out / battle end.
+   */
+  _applyBattleEndAbilities() {
+    triggerBattleEndAbility(this._playerPokemon);
   }
 
   // ── Helpers ───────────────────────────────────────────────────────────────

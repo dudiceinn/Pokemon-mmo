@@ -26,5 +26,8 @@ export const gameConfig = {
   zoom,
   parent: document.body,
   backgroundColor: '#000000',
+  audio: {
+    disableWebAudio: false,   // force Web Audio API (loads via XHR, IDM won't intercept)
+  },
   scene: [BootScene, OverworldScene, UIScene, BattleScene],
 };

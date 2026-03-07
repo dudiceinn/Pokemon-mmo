@@ -23,6 +23,7 @@ export default defineConfig({
     }
   },
   publicDir: path.resolve(__dirname, '../assets'),
+  assetsInclude: ['**/*.mp3', '**/*.ogg', '**/*.wav'],
   build: {
     target: 'esnext',
   },
@@ -56,6 +57,34 @@ export default defineConfig({
             }
           }
           
+          // Audio files — serve WITHOUT extension to bypass IDM interception
+          // Request: /audio/bgm/wild_battle → serves assets/audio/bgm/wild_battle.mp3
+          if (urlPath.startsWith('/audio/')) {
+            const hasExt = urlPath.match(/\.(mp3|ogg|wav)$/i);
+            const basePath = urlPath.slice(1); // strip leading /
+            const tryExts = hasExt ? [''] : ['.mp3', '.ogg', '.wav'];
+            const MIME = { mp3: 'audio/mpeg', ogg: 'audio/ogg', wav: 'audio/wav' };
+            for (const ext of tryExts) {
+              const filePath = path.resolve(__dirname, '../assets', basePath + ext);
+              if (fs.existsSync(filePath)) {
+                const data = fs.readFileSync(filePath);
+                const resolvedExt = ext ? ext.slice(1) : hasExt[0].slice(1);
+                res.setHeader('Content-Type', MIME[resolvedExt] || 'application/octet-stream');
+                res.setHeader('Content-Disposition', 'inline');
+                res.setHeader('Cache-Control', 'public, max-age=3600');
+                res.setHeader('Content-Length', data.length);
+                res.statusCode = 200;
+                res.end(data);
+                console.log(`[audio] ✅ ${urlPath} → ${filePath}`);
+                return;
+              }
+            }
+            // Not found — don't block, let Vite handle it
+            console.log(`[audio] ❌ ${urlPath} — no file found`);
+            next();
+            return;
+          }
+
           // Intercept all static image paths (pokemon, items)
           if (urlPath.match(/\.png$/i) && (
             urlPath.startsWith('/pokemon/followers/') ||
