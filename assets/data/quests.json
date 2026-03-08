@@ -1,0 +1,26 @@
+[
+  {
+    "id": "quest1",
+    "title": "The Lost Daughter",
+    "giver": "Old Man",
+    "location": "Pallet Town",
+    "stages": [
+      {
+        "flag": "quest1_find_daughter",
+        "description": "Find the Old Man's daughter on Route 1.",
+        "objective": "Go north to Route 1 and find Cici."
+      },
+      {
+        "flag": "quest1_found_cici",
+        "description": "Escort Cici back to Pallet Town.",
+        "objective": "Lead Cici back to her father in Pallet Town."
+      },
+      {
+        "flag": "quest1_complete",
+        "description": "Quest complete!",
+        "objective": ""
+      }
+    ],
+    "rewards": "5x Potion, 5x Pokeball"
+  }
+]

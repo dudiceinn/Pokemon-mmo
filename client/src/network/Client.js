@@ -6,9 +6,16 @@ export class Client {
     this.handlers = new Map();
     this.connected = false;
     this.playerId = null;
+    this.token = null;       // JWT token for authenticated sessions
   }
 
-  connect(name = 'Trainer') {
+  /**
+   * Connect to the game server.
+   * @param {string} name - Display name
+   * @param {string} [token] - JWT token (omit for unauthenticated/legacy)
+   */
+  connect(name = 'Trainer', token = null) {
+    this.token = token;
     const host = window.location.hostname || 'localhost';
     const url = `ws://${host}:${WS_PORT}`;
 
@@ -18,7 +25,9 @@ export class Client {
     this.ws.onopen = () => {
       console.log('[Network] Connected');
       this.connected = true;
-      this.send({ type: MSG.JOIN, name });
+      const joinMsg = { type: MSG.JOIN, name };
+      if (this.token) joinMsg.token = this.token;
+      this.send(joinMsg);
     };
 
     this.ws.onmessage = (event) => {

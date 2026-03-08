@@ -1,3 +1,4 @@
+import { MSG } from '@pokemon-mmo/shared';
 import { WildPokemon } from '../entities/WildPokemon.js';
 import { BattleState, PHASE } from './BattleState.js';
 
@@ -7,20 +8,43 @@ const MAX_WILD = 3;            // max pokemon visible at once on a map
 /**
  * EncounterManager
  *
- * Flow:
- *   1. Player lands on a grass tile  →  checkStep(x, y)  (called from OverworldScene.onMoveComplete)
- *   2. Roll encounterRate — on hit, spawn a WildPokemon on a nearby grass tile
- *   3. Pokemon roams within grass tiles each frame via update(delta)
- *   4. If player lands on same tile as a pokemon → flash + battle dialog, despawn
+ * Flow (server-authoritative):
+ *   1. Player lands on a grass tile  →  checkStep(x, y)
+ *   2. Sends ENCOUNTER_CHECK to server
+ *   3. Server rolls encounterRate, picks species + level → sends ENCOUNTER_RESULT
+ *   4. Client spawns a WildPokemon sprite on a nearby grass tile
+ *   5. Pokemon roams within grass tiles each frame via update(delta)
+ *   6. If player lands on same tile as a pokemon → flash + battle, despawn
  */
 export class EncounterManager {
   constructor(scene) {
     this.scene      = scene;
-    this._spawnMap  = {};        // "x,y" → spawn entry
+    this._spawnMap  = {};        // "x,y" → spawn entry (for grass tile lookup + patch flood-fill)
     this._allTiles  = [];        // [{x,y}] every grass tile on this map
     this._tileSet   = new Set(); // fast lookup set of "x,y" strings
     this._wild      = [];        // active WildPokemon[]
     this._cooldowns = {};        // "x,y" → Date.now() expiry
+
+    // Listen for server encounter results
+    this._setupNetworkHandlers();
+  }
+
+  _setupNetworkHandlers() {
+    const client = this.scene.client;
+    if (!client) return;
+
+    client.on(MSG.ENCOUNTER_RESULT, (msg) => {
+      if (!msg.spawn) return;
+      this._spawnFromServer(msg.spawn.speciesId, msg.spawn.level);
+    });
+  }
+
+  /** Called after scene.client is available (re-binds handler). */
+  bindClient(client) {
+    client.on(MSG.ENCOUNTER_RESULT, (msg) => {
+      if (!msg.spawn) return;
+      this._spawnFromServer(msg.spawn.speciesId, msg.spawn.level);
+    });
   }
 
   // ── Load spawns for a new map ─────────────────────────────────────────────
@@ -67,27 +91,39 @@ export class EncounterManager {
     // Cooldown check
     if ((this._cooldowns[`${tileX},${tileY}`] || 0) > Date.now()) return;
 
-    // Encounter rate roll
-    if (Math.random() > entry.encounterRate) return;
-
     // Cap active pokemon
     if (this._wild.length >= MAX_WILD) return;
 
-    const picked = this._pickPokemon(entry.pokemon);
-    if (!picked) return;
+    // Ask server to roll the encounter
+    const client = this.scene.client;
+    if (client?.connected) {
+      client.send({
+        type: MSG.ENCOUNTER_CHECK,
+        map: this.scene.currentMapKey,
+        x: tileX,
+        y: tileY,
+      });
+    }
+  }
 
-    // Spawn on a tile within the same connected grass patch
-    const patch = this._getPatch(tileX, tileY);
-    const tile = this._pickSpawnTile(tileX, tileY);
+  // ── Server told us to spawn a pokemon ─────────────────────────────────────
+
+  _spawnFromServer(speciesId, level) {
+    if (this._wild.length >= MAX_WILD) return;
+
+    const px = this.scene.player?.tileX;
+    const py = this.scene.player?.tileY;
+    if (px === undefined) return;
+
+    const tile = this._pickSpawnTile(px, py);
     if (!tile) return;
 
-    // Build a Set of just this patch so the pokemon roams only within it
+    const patch = this._getPatch(px, py);
     const patchSet = new Set(patch.map(t => `${t.x},${t.y}`));
 
-    const level = this._randomInt(picked.minLevel, picked.maxLevel);
     const wp = new WildPokemon(
       this.scene,
-      picked.speciesId,
+      speciesId,
       level,
       tile.x,
       tile.y,
@@ -96,7 +132,7 @@ export class EncounterManager {
     wp._collisionCheck = (x, y, self) => this._isBlocked(x, y, self);
     this._wild.push(wp);
 
-    console.log(`[EncounterManager] Spawned ${picked.speciesId} Lv.${level} at (${tile.x},${tile.y})`);
+    console.log(`[EncounterManager] Spawned ${speciesId} Lv.${level} at (${tile.x},${tile.y})`);
   }
 
   // ── Per-frame: tick roam + contact check ─────────────────────────────────
@@ -130,7 +166,6 @@ export class EncounterManager {
 
   // ── Internals ─────────────────────────────────────────────────────────────
 
-  // Flood-fill to get all grass tiles connected to (startX, startY)
   _getPatch(startX, startY) {
     const patch = [];
     const visited = new Set();
@@ -140,7 +175,7 @@ export class EncounterManager {
       const key = `${x},${y}`;
       if (visited.has(key)) continue;
       visited.add(key);
-      if (!this._tileSet.has(key)) continue; // not a grass tile
+      if (!this._tileSet.has(key)) continue;
       patch.push({ x, y });
       queue.push({ x: x+1, y }, { x: x-1, y }, { x, y: y+1 }, { x, y: y-1 });
     }
@@ -153,7 +188,6 @@ export class EncounterManager {
       ...this._wild.map(wp => `${wp.tileX},${wp.tileY}`),
     ]);
 
-    // Only pick from the same connected grass patch the player is standing in
     const patch = this._getPatch(px, py);
     const free = patch.filter(t => !occupied.has(`${t.x},${t.y}`));
     return free.length ? free[Math.floor(Math.random() * free.length)] : null;
@@ -179,7 +213,6 @@ export class EncounterManager {
     scene.cutsceneActive = true;
 
     if (!lead) {
-      // No party yet — fall back to placeholder until Oak gives a starter
       const defs = scene.cache?.json.get('pokemonDefs');
       const raw  = wildPokemon.speciesId;
       const name = defs?.[raw]?.name ?? (raw.charAt(0).toUpperCase() + raw.slice(1));
@@ -190,6 +223,15 @@ export class EncounterManager {
         ], () => { scene.cutsceneActive = false; });
       });
       return;
+    }
+
+    // Notify server that battle is starting (for catch tracking)
+    if (scene.client?.connected) {
+      scene.client.send({
+        type: MSG.BATTLE_START,
+        speciesId: wildPokemon.speciesId,
+        level: wildPokemon.level,
+      });
     }
 
     this._flash(() => {
@@ -204,13 +246,12 @@ export class EncounterManager {
         moveDefs,
         partyManager:      pm,
         inventoryManager,
+        networkClient:     scene.client,  // Pass client for server-authoritative catch
       });
 
-      // Store on scene so BattleScene can pick it up
       scene.battleState = battleState;
       scene.battleWildData = { speciesId: wildPokemon.speciesId, level: wildPokemon.level };
 
-      // Step 6 complete: launch BattleScene
       scene.stopOverworldBgm?.();
       scene.scene.launch('BattleScene', { battleState });
       scene.scene.pause('OverworldScene');
@@ -231,17 +272,5 @@ export class EncounterManager {
       'pointer-events:none;animation:encounter-flash 0.5s ease forwards;';
     document.body.appendChild(el);
     setTimeout(() => { el.remove(); onDone?.(); }, 500);
-  }
-
-  _pickPokemon(table) {
-    if (!table?.length) return null;
-    const total = table.reduce((s, p) => s + (p.weight || 1), 0);
-    let roll = Math.random() * total;
-    for (const e of table) { roll -= (e.weight || 1); if (roll <= 0) return e; }
-    return table[table.length - 1];
-  }
-
-  _randomInt(min, max) {
-    return Math.floor(Math.random() * (max - min + 1)) + min;
   }
 }

@@ -15,23 +15,29 @@
   "dialogs": [
     {
       "condition": "quest1_complete",
-      "script": "say: Hi {player}! Want to play?"
+      "script": "say: Hi {player}! Want to play?",
+      "lines": []
     },
     {
       "condition": "quest1_found_cici",
-      "script": "say: Please hurry!\nsay: Lead me back to my dad, I'm right behind you!"
+      "script": "say: Please hurry!\nsay: Lead me back to my dad, I'm right behind you!",
+      "lines": []
     },
     {
       "condition": "quest1_refused_cici",
-      "script": "say: Oh come on...\nsay: You're a bad person!\nsay: Fine... will you at least take me back to my dad?\nchoice: Will you take me to him?\nclearflag: quest1_refused_cici\nsetflag: quest1_found_cici\nstartfollow\nsay: Okay! Lead the way, {player}!"
+      "script": "say: Oh come on...\nsay: You're a bad person!\nsay: Fine... will you at least take me back to my dad?\nchoice: Will you take me to him?\nclearflag: quest1_refused_cici\nsetflag: quest1_found_cici\nstartfollow\nsay: Okay! Lead the way, {player}!",
+      "lines": []
     },
     {
       "condition": "quest1_find_daughter",
-      "script": "say: ...\nsay: I'm lost...\nsay: I can't find my way back home.\nsay: Can you take me back to my dad?\nchoice: Will you take me to him?\nsetflag: quest1_found_cici\nstartfollow\nsay: Oh thank you! Lead the way, {player}!\nsay: I'll follow right behind you!"
+      "script": "say: ...\nsay: I'm lost...\nsay: I can't find my way back home.\nsay: Can you take me back to my dad?\nchoice: Will you take me to him?\nsetflag: quest1_found_cici\nstartfollow\nsay: Oh thank you! Lead the way, {player}!\nsay: I'll follow right behind you!",
+      "lines": []
     },
     {
       "condition": "",
-      "script": "say: ..."
+      "script": "say: ...",
+      "lines": []
     }
-  ]
+  ],
+  "dialog": []
 }

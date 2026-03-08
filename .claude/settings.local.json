@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(curl:*)",
+      "Bash(node:*)",
+      "Bash(npm install:*)",
+      "Bash(timeout 5 npm run:*)",
+      "Bash(npx vite:*)",
+      "Bash(netstat:*)",
+      "Bash(taskkill:*)",
+      "Bash(grep:*)",
+      "Bash(do echo:*)",
+      "Bash(do cp:*)"
+    ]
+  }
+}

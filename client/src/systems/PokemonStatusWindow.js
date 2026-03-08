@@ -9,15 +9,15 @@ import { isAbilityActive, abilityName, abilityDesc } from './AbilityReader.js';
 const PARTY_KEY = 'pokemon-mmo-party';
 
 const POKEMON_DEFS = {
-  bulbasaur:  { name:'Bulbasaur',  number:1,  type:['grass','poison'], sprite:'/pokemon/Icons/BULBASAUR.png',  baseStats:{hp:45,atk:49,def:49,spatk:65,spdef:65,spd:45},  evolvesTo:'ivysaur',    evolvesAtLevel:16   },
-  ivysaur:    { name:'Ivysaur',    number:2,  type:['grass','poison'], sprite:'/pokemon/Icons/IVYSAUR.png',    baseStats:{hp:60,atk:62,def:63,spatk:80,spdef:80,spd:60},  evolvesTo:'venusaur',   evolvesAtLevel:32   },
-  venusaur:   { name:'Venusaur',   number:3,  type:['grass','poison'], sprite:'/pokemon/Icons/VENUSAUR.png',   baseStats:{hp:80,atk:82,def:83,spatk:100,spdef:100,spd:80}, evolvesTo:null,         evolvesAtLevel:null },
-  charmander: { name:'Charmander', number:4,  type:['fire'],           sprite:'/pokemon/Icons/CHARMANDER.png', baseStats:{hp:39,atk:52,def:43,spatk:60,spdef:50,spd:65},  evolvesTo:'charmeleon', evolvesAtLevel:16   },
-  charmeleon: { name:'Charmeleon', number:5,  type:['fire'],           sprite:'/pokemon/Icons/CHARMELEON.png', baseStats:{hp:58,atk:64,def:58,spatk:80,spdef:65,spd:80},  evolvesTo:'charizard',  evolvesAtLevel:36   },
-  charizard:  { name:'Charizard',  number:6,  type:['fire','flying'],  sprite:'/pokemon/Icons/CHARIZARD.png',  baseStats:{hp:78,atk:84,def:78,spatk:109,spdef:85,spd:100}, evolvesTo:null,         evolvesAtLevel:null },
-  squirtle:   { name:'Squirtle',   number:7,  type:['water'],          sprite:'/pokemon/Icons/SQUIRTLE.png',   baseStats:{hp:44,atk:48,def:65,spatk:50,spdef:64,spd:43},  evolvesTo:'wartortle',  evolvesAtLevel:16   },
-  wartortle:  { name:'Wartortle',  number:8,  type:['water'],          sprite:'/pokemon/Icons/WARTORTLE.png',  baseStats:{hp:59,atk:63,def:80,spatk:65,spdef:80,spd:58},  evolvesTo:'blastoise',  evolvesAtLevel:36   },
-  blastoise:  { name:'Blastoise',  number:9,  type:['water'],          sprite:'/pokemon/Icons/BLASTOISE.png',  baseStats:{hp:79,atk:83,def:100,spatk:85,spdef:105,spd:78}, evolvesTo:null,         evolvesAtLevel:null },
+  bulbasaur:  { name:'Bulbasaur',  number:1,  type:['grass','poison'], sprite:'/pokemon-animated/front/bulbasaur.gif',  baseStats:{hp:45,atk:49,def:49,spatk:65,spdef:65,spd:45},  evolvesTo:'ivysaur',    evolvesAtLevel:16   },
+  ivysaur:    { name:'Ivysaur',    number:2,  type:['grass','poison'], sprite:'/pokemon-animated/front/ivysaur.gif',    baseStats:{hp:60,atk:62,def:63,spatk:80,spdef:80,spd:60},  evolvesTo:'venusaur',   evolvesAtLevel:32   },
+  venusaur:   { name:'Venusaur',   number:3,  type:['grass','poison'], sprite:'/pokemon-animated/front/venusaur.gif',   baseStats:{hp:80,atk:82,def:83,spatk:100,spdef:100,spd:80}, evolvesTo:null,         evolvesAtLevel:null },
+  charmander: { name:'Charmander', number:4,  type:['fire'],           sprite:'/pokemon-animated/front/charmander.gif', baseStats:{hp:39,atk:52,def:43,spatk:60,spdef:50,spd:65},  evolvesTo:'charmeleon', evolvesAtLevel:16   },
+  charmeleon: { name:'Charmeleon', number:5,  type:['fire'],           sprite:'/pokemon-animated/front/charmeleon.gif', baseStats:{hp:58,atk:64,def:58,spatk:80,spdef:65,spd:80},  evolvesTo:'charizard',  evolvesAtLevel:36   },
+  charizard:  { name:'Charizard',  number:6,  type:['fire','flying'],  sprite:'/pokemon-animated/front/charizard.gif',  baseStats:{hp:78,atk:84,def:78,spatk:109,spdef:85,spd:100}, evolvesTo:null,         evolvesAtLevel:null },
+  squirtle:   { name:'Squirtle',   number:7,  type:['water'],          sprite:'/pokemon-animated/front/squirtle.gif',   baseStats:{hp:44,atk:48,def:65,spatk:50,spdef:64,spd:43},  evolvesTo:'wartortle',  evolvesAtLevel:16   },
+  wartortle:  { name:'Wartortle',  number:8,  type:['water'],          sprite:'/pokemon-animated/front/wartortle.gif',  baseStats:{hp:59,atk:63,def:80,spatk:65,spdef:80,spd:58},  evolvesTo:'blastoise',  evolvesAtLevel:36   },
+  blastoise:  { name:'Blastoise',  number:9,  type:['water'],          sprite:'/pokemon-animated/front/blastoise.gif',  baseStats:{hp:79,atk:83,def:100,spatk:85,spdef:105,spd:78}, evolvesTo:null,         evolvesAtLevel:null },
 };
 
 const TYPE_COLORS = {
@@ -314,8 +314,7 @@ export class PokemonStatusWindow {
     const fullDefs = window.partyManager?._pokemonDefs;
     if (fullDefs && fullDefs[speciesId]) {
       const d = fullDefs[speciesId];
-      // Always use the Icons folder — pokemon.json sprite paths may point elsewhere
-      return { ...d, sprite: `/pokemon/Icons/${speciesId.toUpperCase()}.png` };
+      return { ...d, sprite: `/pokemon-animated/front/${speciesId.toLowerCase()}.gif` };
     }
     // Generic fallback so the window never crashes on an unknown species
     return { name: speciesId, number: 0, type: ['normal'], sprite: '', baseStats: {hp:50,atk:50,def:50,spatk:50,spdef:50,spd:50}, evolvesTo: null, evolvesAtLevel: null };
@@ -363,8 +362,8 @@ export class PokemonStatusWindow {
       avatar.textContent = '💀';
     } else {
       avatar.style.backgroundImage = `url('${def.sprite}')`;
-      avatar.style.backgroundSize = '96px 48px';
-      avatar.style.backgroundPosition = '0 0';
+      avatar.style.backgroundSize = 'contain';
+      avatar.style.backgroundPosition = 'center';
       avatar.style.backgroundRepeat = 'no-repeat';
       avatar.style.backgroundColor = `${color}22`;
     }
@@ -538,8 +537,8 @@ export class PokemonStatusWindow {
       headerAvatar.textContent = '💀';
     } else {
       headerAvatar.style.backgroundImage = `url('${def.sprite}')`;
-      headerAvatar.style.backgroundSize = '192px 96px';
-      headerAvatar.style.backgroundPosition = '0 0';
+      headerAvatar.style.backgroundSize = 'contain';
+      headerAvatar.style.backgroundPosition = 'center';
       headerAvatar.style.backgroundRepeat = 'no-repeat';
       headerAvatar.style.backgroundColor = `${color}11`;
     }

@@ -40,10 +40,10 @@ function hpColor(ratio) {
 
 // speciesId is always lowercase in the game — filenames are uppercase
 function frontSprite(speciesId) {
-  return `/pokemon/Front/${speciesId.toUpperCase()}.png`;
+  return `/pokemon-animated/front/${speciesId.toLowerCase()}.gif`;
 }
 function backSprite(speciesId) {
-  return `/pokemon/Back/${speciesId.toUpperCase()}.png`;
+  return `/pokemon-animated/back/${speciesId.toLowerCase()}.gif`;
 }
 
 // Low-HP threshold shared by Overgrow / Blaze / Torrent / Swarm
@@ -141,17 +141,17 @@ const CSS = `
 
   /* ── Sprites ── */
   .poke-sprite {
-    position: absolute; image-rendering: pixelated; object-fit: contain;
+    position: absolute; image-rendering: auto; object-fit: contain;
   }
-  /* Enemy: upper-RIGHT */
+  /* Enemy: centered on enemy platform */
   .poke-sprite.enemy {
-    width: clamp(64px,15vw,150px); height: clamp(64px,15vw,150px);
-    right: 10%; bottom: 35%;
+    width: clamp(56px,12vw,96px); height: clamp(56px,12vw,96px);
+    right: 13%; top: 24%;
   }
-  /* Player: lower-LEFT */
+  /* Player: centered on player platform */
   .poke-sprite.player {
-    width: clamp(72px,17vw,250px); height: clamp(72px,17vw,250px);
-    left: 8%; bottom: -5%;
+    width: clamp(64px,14vw,120px); height: clamp(64px,14vw,120px);
+    left: 12%; bottom: 15%;
   }
   .poke-sprite.faint { transition: bottom 0.4s ease-in, opacity 0.4s ease-in !important; opacity: 0 !important; }
   .poke-sprite.enemy.faint  { bottom: 24% !important; }

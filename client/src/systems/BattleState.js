@@ -146,12 +146,15 @@ export class BattleState {
    * @param {object}          opts.moveDefs       - Full moves.json
    * @param {object}          opts.partyManager   - PartyManager instance
    * @param {object}          opts.inventoryManager - InventoryManager instance (optional)
+   * @param {object}          opts.networkClient    - Client instance for server-authoritative catch (optional)
    */
-  constructor({ playerPokemon, wildData, pokemonDefs, moveDefs, partyManager, inventoryManager = null }) {
+  constructor({ playerPokemon, wildData, pokemonDefs, moveDefs, partyManager, inventoryManager = null, networkClient = null }) {
     this._pokemonDefs      = pokemonDefs;
     this._moveDefs         = moveDefs;
     this._partyManager     = partyManager;
     this._inventoryManager = inventoryManager;
+    this._networkClient    = networkClient;
+    this._pendingCatch     = false; // true while waiting for server catch result
 
     // Build live PokemonInstances
     this._playerPokemon = playerPokemon;
@@ -171,6 +174,19 @@ export class BattleState {
 
     // Entry abilities — fire on battle start
     this._entryAbilityLog = triggerEntryAbilities(this._playerPokemon, this._enemyPokemon);
+
+    // Listen for server results
+    if (this._networkClient) {
+      this._networkClient.on('catch_result', (msg) => {
+        if (!this._pendingCatch) return;
+        this._pendingCatch = false;
+        this._handleServerCatchResult(msg);
+      });
+      this._networkClient.on('item_result', (msg) => {
+        if (!this._pendingItem) return;
+        this._handleServerItemResult(msg);
+      });
+    }
   }
 
   // ── Public getters ────────────────────────────────────────────────────────
@@ -365,6 +381,38 @@ export class BattleState {
   }
 
   _resolveItem(itemId) {
+    // Server-authoritative: validate item exists before using
+    if (this._networkClient?.connected) {
+      this._pendingItem = true;
+      this._pendingItemId = itemId;
+      this._networkClient.send({ type: 'use_item', itemId, count: 1 });
+      return;
+    }
+
+    // Offline fallback
+    this._resolveItemLocal(itemId);
+  }
+
+  /** Handle server's item validation result. */
+  _handleServerItemResult(msg) {
+    if (!this._pendingItem) return;
+    this._pendingItem = false;
+
+    const itemId = msg.itemId || this._pendingItemId;
+
+    if (!msg.ok) {
+      // Server rejected — item doesn't exist
+      this._phase = PHASE.PLAYER_TURN;
+      this._emit({ type: 'turn_result', log: [{ type: 'text', text: msg.error || "Can't use that item." }], phase: PHASE.PLAYER_TURN });
+      return;
+    }
+
+    // Server approved — apply effect locally
+    this._resolveItemLocal(itemId, true);
+  }
+
+  /** Apply item effect locally. If serverValidated, skip _removeItem (server already removed). */
+  _resolveItemLocal(itemId, serverValidated = false) {
     const log = [];
     const say  = (text) => log.push({ type: 'text', text });
     const snap = () => log.push({ type: 'hp_update', playerHp: this._playerPokemon.hp, playerMaxHp: this._playerPokemon.maxHp, enemyHp: this._enemyPokemon.hp, enemyMaxHp: this._enemyPokemon.maxHp });
@@ -374,7 +422,8 @@ export class BattleState {
       const healed = this._playerPokemon.heal(amount);
       say(`Used ${itemId.replace(/_/g,' ')}! ${this._playerPokemon.name} restored ${healed} HP.`);
       snap();
-      this._removeItem(itemId);
+      if (!serverValidated) this._removeItem(itemId);
+      else this._removeItemLocal(itemId);
     } else if (STATUS_CURE[itemId]) {
       const cures = STATUS_CURE[itemId];
       if (this._playerPokemon.status && cures.includes(this._playerPokemon.status)) {
@@ -384,7 +433,8 @@ export class BattleState {
       } else {
         say(`It had no effect...`);
       }
-      this._removeItem(itemId);
+      if (!serverValidated) this._removeItem(itemId);
+      else this._removeItemLocal(itemId);
     } else {
       say(`Can't use that here!`);
       this._phase = PHASE.PLAYER_TURN;
@@ -396,6 +446,69 @@ export class BattleState {
   }
 
   _resolveCatch(ballId = 'pokeball') {
+    const enemy = this._enemyPokemon;
+
+    // Server-authoritative catch: send attempt to server, wait for result
+    if (this._networkClient?.connected) {
+      this._pendingCatch = true;
+      this._pendingCatchBallId = ballId;
+      this._networkClient.send({
+        type: 'catch_attempt',
+        ballId,
+        enemyHp: enemy.hp,
+        enemyMaxHp: enemy.maxHp,
+      });
+      // Remove item locally for immediate UI feedback
+      this._removeItem(ballId);
+      return;
+    }
+
+    // Offline fallback: same local logic as before
+    this._resolveCatchLocal(ballId);
+  }
+
+  /** Handle server's catch result. */
+  _handleServerCatchResult(msg) {
+    if (msg.error) {
+      console.warn('[BattleState] Catch error:', msg.error);
+      this._phase = PHASE.PLAYER_TURN;
+      this._emit({ type: 'catch_result', caught: false, wobbles: 0, log: [msg.error], phase: PHASE.PLAYER_TURN, ballId: this._pendingCatchBallId });
+      return;
+    }
+
+    const enemy = this._enemyPokemon;
+    const ballId = msg.ballId || this._pendingCatchBallId;
+
+    if (msg.caught) {
+      this._phase = PHASE.CAUGHT;
+      enemy.resetStages();
+      // Server already added pokemon to party/PC in DB.
+      // Add locally so the client state matches.
+      let added = this._partyManager.addInstance(enemy);
+      const log = [];
+      if (!added) {
+        const storage = window.storageManager;
+        const spot = storage?.depositAuto(enemy);
+        if (spot) {
+          log.push({ type: 'text', text: `Gotcha! ${enemy.name} was caught!` });
+          log.push({ type: 'text', text: `Party is full — ${enemy.name} was sent to ${storage.getBoxName(spot.box)}.` });
+          added = true;
+        } else {
+          log.push({ type: 'text', text: `Gotcha! ${enemy.name} was caught!` });
+          log.push({ type: 'text', text: `But your party and PC are both full! ${enemy.name} had to be released...` });
+        }
+      } else {
+        log.push({ type: 'text', text: `Gotcha! ${enemy.name} was caught!` });
+      }
+      this._applyBattleEndAbilities();
+      this._emit({ type: 'catch_result', caught: true, wobbles: 3, log, phase: PHASE.CAUGHT, addedToParty: added, ballId });
+    } else {
+      this._emit({ type: 'catch_result', caught: false, wobbles: msg.wobbles, log: [`Oh no! ${enemy.name} broke free!`], phase: PHASE.PLAYER_TURN, ballId });
+    }
+  }
+
+  /** Local catch resolution (offline / legacy fallback). */
+  _resolveCatchLocal(ballId = 'pokeball') {
     const log  = [];
     const say  = (text) => log.push({ type: 'text', text });
     const snap = () => log.push({ type: 'hp_update', playerHp: this._playerPokemon.hp, playerMaxHp: this._playerPokemon.maxHp, enemyHp: this._enemyPokemon.hp, enemyMaxHp: this._enemyPokemon.maxHp });
@@ -416,7 +529,6 @@ export class BattleState {
       enemy.resetStages();
       let added = this._partyManager.addInstance(enemy);
       if (!added) {
-        // Party full — try PC storage
         const storage = window.storageManager;
         const spot = storage?.depositAuto(enemy);
         if (spot) {
@@ -963,6 +1075,12 @@ export class BattleState {
   // ── Helpers ───────────────────────────────────────────────────────────────
 
   _removeItem(itemId) {
+    if (!this._inventoryManager) return;
+    try { this._inventoryManager.removeItem(itemId, 1); } catch {}
+  }
+
+  /** Remove item from client-side inventory only (server already removed it from DB). */
+  _removeItemLocal(itemId) {
     if (!this._inventoryManager) return;
     try { this._inventoryManager.removeItem(itemId, 1); } catch {}
   }

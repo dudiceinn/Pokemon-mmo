@@ -228,7 +228,6 @@ export class Inventory {
 
     if (data.icon) {
       if (data.iconSpritesheet) {
-        // Spritesheet: 128x64, show left frame (male) only via background-image
         const iconDiv = document.createElement('div');
         iconDiv.style.cssText = [
           'width:100%', 'height:100%',
@@ -238,6 +237,19 @@ export class Inventory {
           'background-size:200% 100%',
           'image-rendering:pixelated',
         ].join(';');
+        // Hover: swap to animated GIF
+        if (data.iconAnimated) {
+          slotEl.addEventListener('mouseenter', () => {
+            iconDiv.style.backgroundImage = `url('${data.iconAnimated}')`;
+            iconDiv.style.backgroundSize = 'contain';
+            iconDiv.style.backgroundPosition = 'center';
+          });
+          slotEl.addEventListener('mouseleave', () => {
+            iconDiv.style.backgroundImage = `url('${data.icon}')`;
+            iconDiv.style.backgroundSize = '200% 100%';
+            iconDiv.style.backgroundPosition = '0 0';
+          });
+        }
         slotEl.appendChild(iconDiv);
       } else {
         const img = document.createElement('img');
@@ -290,16 +302,16 @@ export class Inventory {
 
       const speciesId = p.speciesId ?? p._speciesId;
       const def = defs[speciesId] ?? {};
-      // Always use the Icons folder — def.sprite points to the wrong folder
       const icon = `/pokemon/Icons/${speciesId.toUpperCase()}.png`;
-      // Icon spritesheets are 128x64 (left=male, right=female) — flag for _renderSlot
+      const iconAnimated = `/pokemon-animated/front/${speciesId.toLowerCase()}.gif`;
 
       const currentHp = p.hp ?? p.currentHp ?? p._currentHp ?? 0;
       const maxHp     = p.maxHp ?? p._maxHp ?? 1;
 
       this.setPartySlot(i, {
         icon,
-        iconSpritesheet: true,  // 128x64 sheet, show left (male) frame only
+        iconAnimated,
+        iconSpritesheet: true,
         level:     p.level ?? p._level,
         currentHp,
         maxHp,

@@ -13,6 +13,8 @@ import { PartyManager } from '../systems/PartyManager.js';
 import { InventoryManager } from '../systems/InventoryManager.js';
 import { StorageManager } from '../systems/StorageManager.js';
 import { StorageUI } from '../systems/StorageUI.js';
+import { LoginScreen } from '../ui/LoginScreen.js';
+import { ChatSystem } from '../systems/ChatSystem.js';
 
 export class OverworldScene extends Phaser.Scene {
   constructor() {
@@ -31,21 +33,46 @@ export class OverworldScene extends Phaser.Scene {
   }
 
   create() {
+    // Show login screen — game initializes after successful auth
+    this._authToken = null;
+    this._autoSaveTimer = null;
+    this._waitingForLogin = true;
+
+    const loginScreen = new LoginScreen((authData) => {
+      this._waitingForLogin = false;
+      this._initGame(authData);
+    });
+    loginScreen.show();
+  }
+
+  _initGame({ token, displayName, state }) {
+    this._authToken = token;
+
+    // Write server state to localStorage BEFORE creating managers
+    // so they load from server data (not stale local data)
+    if (state) {
+      localStorage.setItem('pokemon-mmo-party', JSON.stringify(state.party ?? []));
+      localStorage.setItem('pokemon-mmo-inventory', JSON.stringify(state.bag ?? {}));
+      localStorage.setItem('pokemon-mmo-flags', JSON.stringify(state.flags ?? {}));
+      localStorage.setItem('pokemon-mmo-storage', JSON.stringify(state.pc ?? { boxNames: [], boxes: [] }));
+      this.currentMapKey = state.map || DEFAULT_MAP;
+    }
+
     this.dialogBox = new DialogBox();
     this.flags = new FlagManager();
     this.encounterManager = new EncounterManager(this);
 
-    // Party — load saved party from localStorage, or start empty (Oak gives starter)
+    // Party — initialized from server state (written to localStorage above)
     const pokemonDefs = this.cache.json.get('pokemonDefs');
     const moveDefs    = this.cache.json.get('moveDefs');
     this.partyManager = new PartyManager(pokemonDefs, moveDefs);
-    window.partyManager = this.partyManager; // fallback for ScriptRunner
+    window.partyManager = this.partyManager;
 
     const itemDefs = this.cache.json.get('itemDefs');
-    const inventoryUI = window.inventory ?? null; // set by UIScene / Inventory.js
+    const inventoryUI = window.inventory ?? null;
     this.inventoryManager = new InventoryManager(inventoryUI, itemDefs);
-    window.inventoryManager = this.inventoryManager; // used by BattleUI + ScriptRunner
-    window.overworldScene = this; // used by InventoryManager overworld item use
+    window.inventoryManager = this.inventoryManager;
+    window.overworldScene = this;
 
     // PC Storage
     this.storageManager = new StorageManager(pokemonDefs, moveDefs);
@@ -54,8 +81,10 @@ export class OverworldScene extends Phaser.Scene {
 
     this.loadMap(this.currentMapKey);
 
-    const mapData = MAPS[this.currentMapKey];
-    this.player = new Player(this, mapData.spawnX, mapData.spawnY);
+    // Spawn player at server position or map default
+    const spawnX = state?.x ?? MAPS[this.currentMapKey].spawnX;
+    const spawnY = state?.y ?? MAPS[this.currentMapKey].spawnY;
+    this.player = new Player(this, spawnX, spawnY);
 
     this.cameras.main.startFollow(this.player.sprite, true);
     this.cameras.main.setBounds(0, 0, this.map.widthInPixels, this.map.heightInPixels);
@@ -89,8 +118,21 @@ export class OverworldScene extends Phaser.Scene {
     this.setupDpad();
     this.setupActionButton();
 
-    // Connect to server
-    this.connectToServer();
+    // Connect to server with auth
+    this.playerName = displayName;
+    this.dialogBox.setPlayerName(displayName);
+    this.client = new Client();
+    this.setupNetworkHandlers();
+    this.encounterManager.bindClient(this.client);
+    this.chatSystem = new ChatSystem();
+    this.chatSystem.bind(this.client, displayName);
+    this.client.connect(displayName, token);
+
+    // Auto-save every 60 seconds
+    this._autoSaveTimer = setInterval(() => this.saveToServer(), 60_000);
+
+    // Save on tab close / refresh
+    window.addEventListener('beforeunload', () => this.saveToServer());
   }
 
   setupDpad() {
@@ -140,18 +182,13 @@ export class OverworldScene extends Phaser.Scene {
 
   // --- Networking ---
 
-  connectToServer() {
-    const name = prompt('Enter your name:', 'Trainer') || 'Trainer';
-    this.playerName = name;
-    this.dialogBox.setPlayerName(name);
-
-    this.client = new Client();
-    this.setupNetworkHandlers();
-    this.client.connect(name);
-  }
-
   setupNetworkHandlers() {
     const client = this.client;
+
+    client.on('auth_error', (msg) => {
+      alert(msg.error || 'Disconnected by server.');
+      window.location.reload();
+    });
 
     client.on(MSG.WELCOME, (msg) => {
       client.playerId = msg.player.id;
@@ -190,6 +227,29 @@ export class OverworldScene extends Phaser.Scene {
     client.on(MSG.PLAYER_LEFT, (msg) => {
       this.removeRemotePlayer(msg.id);
     });
+
+    client.on(MSG.MOVE_REJECT, (msg) => {
+      // Server rejected our move — snap back to valid position
+      console.warn(`[Network] Move rejected (${msg.reason}), snapping to ${msg.x},${msg.y}`);
+      if (this.player) {
+        // Kill any active movement tweens on the sprite
+        this.tweens.killTweensOf(this.player.sprite);
+
+        this.player.tileX = msg.x;
+        this.player.tileY = msg.y;
+        this.player.isMoving = false;
+        this.player.sprite.setPosition(
+          msg.x * TILE_SIZE + TILE_SIZE / 2,
+          msg.y * TILE_SIZE + TILE_SIZE
+        );
+
+        // Re-center camera on corrected position
+        this.cameras.main.centerOn(
+          this.player.sprite.x,
+          this.player.sprite.y
+        );
+      }
+    });
   }
 
   addRemotePlayer(data) {
@@ -212,6 +272,33 @@ export class OverworldScene extends Phaser.Scene {
       remote.destroy();
     }
     this.remotePlayers.clear();
+  }
+
+  // --- Server save ─────────────────────────────────────────────────────────
+
+  gatherState() {
+    const pcData = (() => {
+      try {
+        return JSON.parse(localStorage.getItem('pokemon-mmo-storage') || '{"boxNames":[],"boxes":[]}');
+      } catch { return { boxNames: [], boxes: [] }; }
+    })();
+    return {
+      map: this.currentMapKey,
+      x: this.player?.tileX ?? 0,
+      y: this.player?.tileY ?? 0,
+      dir: this.player?.dir ?? 'down',
+      party: this.partyManager ? this.partyManager.getParty().map(p => p.serialize()) : [],
+      pc: pcData,
+      bag: JSON.parse(localStorage.getItem('pokemon-mmo-inventory') || '{}'),
+      flags: this.flags?.flags ?? {},
+      money: 0,
+      badges: [],
+    };
+  }
+
+  saveToServer() {
+    if (!this.client?.connected || !this._authToken) return;
+    this.client.send({ type: MSG.SAVE_STATE, state: this.gatherState() });
   }
 
   sendMove() {
@@ -678,6 +765,8 @@ findNpcAt(x, y) {
   // --- Game loop ---
 
   update(time, delta) {
+    if (this._waitingForLogin) return;
+
     // Update HTML name labels to follow camera
     const cam = this.cameras.main;
     for (const npc of this.npcs) {
@@ -722,8 +811,9 @@ findNpcAt(x, y) {
     }
     if (this.player.isMoving || this.transitioning || this.cutsceneActive) return;
 
-    // Block movement when bag overlay is open
+    // Block movement when bag overlay or chat input is open
     if (window.inventory?.isBagOpen()) return;
+    if (this.chatSystem?.isOpen()) return;
 
     // Block interact for N frames after dialog closes — prevents the Space
     // that closed the final dialog line from immediately re-triggering the NPC.
@@ -919,8 +1009,9 @@ findNpcAt(x, y) {
       this.player.setPosition(destX, destY);
       this.cameras.main.setBounds(0, 0, this.map.widthInPixels, this.map.heightInPixels);
 
-      // Notify server of map change
+      // Notify server of map change + save state
       this.sendMapChange(destMapKey, destX, destY);
+      this.saveToServer();
 
       this.cameras.main.fadeIn(150, 0, 0, 0);
       this.cameras.main.once('camerafadeincomplete', () => {

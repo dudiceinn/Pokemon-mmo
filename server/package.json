@@ -7,7 +7,10 @@
     "dev": "node --watch src/index.js"
   },
   "dependencies": {
-    "ws": "^8.18.0",
-    "@pokemon-mmo/shared": "*"
+    "@pokemon-mmo/shared": "*",
+    "bcryptjs": "^3.0.3",
+    "jsonwebtoken": "^9.0.3",
+    "sql.js": "^1.14.1",
+    "ws": "^8.18.0"
   }
 }

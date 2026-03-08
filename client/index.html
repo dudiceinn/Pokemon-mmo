@@ -36,7 +36,41 @@
       border-radius: 4px;
       line-height: 1.4;
     }
-    #hud-left .map-name { color: #ffd700; }
+    #hud-left {
+      background: rgba(0,0,0,0.75);
+      border: 2px solid rgba(255,215,0,0.5);
+      border-radius: 6px;
+      padding: 6px 10px;
+      min-width: 140px;
+      line-height: 1.5;
+    }
+    #hud-left .trainer-name { color: #ffd700; font-weight: bold; font-size: 14px; }
+    #hud-left .trainer-lv { color: #88ff88; font-size: 12px; margin-left: 4px; }
+    #hud-left .money { color: #fff; font-size: 12px; }
+    #hud-left .money-symbol { color: #ffd700; font-weight: bold; }
+    #hud-left .map-name { color: #aac8ff; font-size: 11px; }
+    #hud-left .coords { color: rgba(255,255,255,0.6); font-size: 11px; }
+    #hud-left .badges-row { font-size: 11px; color: rgba(255,255,255,0.5); }
+    #hud-left .badge-count { color: #ffd700; font-weight: bold; }
+    #hud-left .hud-icons {
+      display: flex; gap: 4px; margin-top: 4px;
+      pointer-events: auto;
+    }
+    #hud-left .hud-icon-btn {
+      width: 26px; height: 26px;
+      background: rgba(255,215,0,0.1);
+      border: 1px solid rgba(255,215,0,0.4);
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      display: flex; align-items: center; justify-content: center;
+      transition: background 0.15s, border-color 0.15s;
+      padding: 0;
+    }
+    #hud-left .hud-icon-btn:hover {
+      background: rgba(255,215,0,0.25);
+      border-color: #ffd700;
+    }
     #hud-right { text-align: right; }
     #hud-right .status-online { color: #88ff88; }
     #hud-right .status-offline { color: #ff6666; }
@@ -392,9 +426,17 @@
 </head>
 <body>
   <div id="hud">
-    <div id="hud-left" class="hud-text">
-      <span class="coords"></span><br>
-      <span class="map-name"></span>
+    <div id="hud-left">
+      <span class="trainer-name"></span><span class="trainer-lv">Lv.1</span><br>
+      <span class="money"><span class="money-symbol">P</span><span class="money-val">0</span></span><br>
+      <span class="badges-row">Badges: <span class="badge-count">0</span></span><br>
+      <span class="map-name"></span> <span class="coords"></span>
+      <div class="hud-icons">
+        <button class="hud-icon-btn" id="hud-btn-party" title="Party (P)">&#x1F43E;</button>
+        <button class="hud-icon-btn" id="hud-btn-bag" title="Bag (B)">&#x1F392;</button>
+        <button class="hud-icon-btn" id="hud-btn-badges" title="Badges">&#x1F3C5;</button>
+        <button class="hud-icon-btn" id="hud-btn-quests" title="Quest Log">&#x1F4DC;</button>
+      </div>
     </div>
     <div id="hud-right" class="hud-text">
       <span class="status"></span><br>

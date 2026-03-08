@@ -89,6 +89,53 @@ export class RemotePlayer {
     this.sprite.setFrame(DIR_FRAMES[this.dir].stand);
   }
 
+  showEmoji(emoji) {
+    const container = document.getElementById('name-labels');
+    if (!container) return;
+
+    const el = document.createElement('div');
+    el.className = 'emoji-bubble';
+    el.textContent = emoji;
+    container.appendChild(el);
+
+    const cam = this.scene.cameras.main;
+    const canvas = this.scene.game.canvas;
+    let elapsed = 0;
+    const wobbleDuration = 800;
+    const floatDuration = 1200;
+    const totalDuration = wobbleDuration + floatDuration;
+
+    const interval = setInterval(() => {
+      elapsed += 16;
+      const rect = canvas.getBoundingClientRect();
+      const scaleX = rect.width / cam.width;
+      const scaleY = rect.height / cam.height;
+      const worldX = this.sprite.x;
+      const worldY = this.sprite.y - this.sprite.height * this.sprite.originY * this.sprite.scaleY - 2;
+      const camX = worldX - cam.scrollX;
+      const camY = worldY - cam.scrollY;
+      const screenX = rect.left + camX * scaleX;
+      const screenY = rect.top + camY * scaleY;
+
+      if (elapsed <= wobbleDuration) {
+        const wobble = Math.sin(elapsed / 60 * Math.PI) * 6;
+        el.style.left = `${screenX + wobble}px`;
+        el.style.top = `${screenY}px`;
+        el.style.opacity = '1';
+      } else {
+        const floatProgress = (elapsed - wobbleDuration) / floatDuration;
+        el.style.left = `${screenX}px`;
+        el.style.top = `${screenY - floatProgress * 40 * scaleY}px`;
+        el.style.opacity = floatProgress > 0.5 ? String(1 - (floatProgress - 0.5) / 0.5) : '1';
+      }
+
+      if (elapsed >= totalDuration) {
+        clearInterval(interval);
+        el.remove();
+      }
+    }, 16);
+  }
+
   destroy() {
     this.sprite.destroy();
     this.label.destroy();

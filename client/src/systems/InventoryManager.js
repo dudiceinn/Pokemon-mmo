@@ -15,6 +15,8 @@
  *   Nothing else in the codebase needs to change.
  */
 
+import { MSG } from '@pokemon-mmo/shared';
+
 const INVENTORY_KEY = 'pokemon-mmo-inventory';
 
 export class InventoryManager {
@@ -206,6 +208,41 @@ export class InventoryManager {
     }
   }
 
+  /**
+   * Validate item use through the server, then run callback on success.
+   * Falls back to direct use if not connected.
+   */
+  _useItemViaServer(itemId, onApproved) {
+    const client = window.overworldScene?.client;
+    if (!client?.connected) {
+      // Offline fallback — use directly
+      this.removeItem(itemId, 1);
+      onApproved();
+      return;
+    }
+
+    client.send({ type: MSG.USE_ITEM, itemId, count: 1 });
+
+    // One-time handler for the server response
+    const handler = (msg) => {
+      if (msg.itemId !== itemId) return; // not our request
+      // Remove handler so it doesn't fire again
+      const handlers = client.handlers.get(MSG.ITEM_RESULT);
+      if (handlers) {
+        const idx = handlers.indexOf(handler);
+        if (idx >= 0) handlers.splice(idx, 1);
+      }
+
+      if (msg.ok) {
+        this.removeItem(itemId, 1); // sync client-side
+        onApproved();
+      } else {
+        this._showMessage(msg.error || "Can't use that item.");
+      }
+    };
+    client.on(MSG.ITEM_RESULT, handler);
+  }
+
   /** Handles all medicine-category items via party picker. */
   _useMedicineOverworld(itemId, name) {
     // Revive only shown for fainted; others only for active
@@ -217,11 +254,12 @@ export class InventoryManager {
       // --- Revive ---
       if (itemId === 'revive') {
         if (!isFainted) { this._showMessage(`${pokemon.name} isn't fainted!`); return; }
-        const hp = Math.floor(pokemon.maxHp / 2);
-        pokemon.heal(hp);
-        window.partyManager?.save();
-        this.removeItem(itemId, 1);
-        this._showMessage(`${pokemon.name} was revived with ${hp} HP!`);
+        this._useItemViaServer(itemId, () => {
+          const hp = Math.floor(pokemon.maxHp / 2);
+          pokemon.heal(hp);
+          window.partyManager?.save();
+          this._showMessage(`${pokemon.name} was revived with ${hp} HP!`);
+        });
         return;
       }
 
@@ -231,10 +269,11 @@ export class InventoryManager {
       const healMap = { potion: 20, super_potion: 50, hyper_potion: 200, max_potion: Infinity };
       if (healMap[itemId] !== undefined) {
         if (pokemon.hp >= pokemon.maxHp) { this._showMessage(`${pokemon.name}'s HP is already full!`); return; }
-        const healed = pokemon.heal(healMap[itemId]);
-        window.partyManager?.save();
-        this.removeItem(itemId, 1);
-        this._showMessage(`${pokemon.name} restored ${healed} HP!`);
+        this._useItemViaServer(itemId, () => {
+          const healed = pokemon.heal(healMap[itemId]);
+          window.partyManager?.save();
+          this._showMessage(`${pokemon.name} restored ${healed} HP!`);
+        });
         return;
       }
 
@@ -248,24 +287,25 @@ export class InventoryManager {
         if (!pokemon.status || !cureMap[itemId].includes(pokemon.status)) {
           this._showMessage(`It won't have any effect on ${pokemon.name}.`); return;
         }
-        const old = pokemon.status;
-        pokemon.clearStatus();
-        window.partyManager?.save();
-        this.removeItem(itemId, 1);
-        this._showMessage(`${pokemon.name} was cured of ${old}!`);
+        this._useItemViaServer(itemId, () => {
+          const old = pokemon.status;
+          pokemon.clearStatus();
+          window.partyManager?.save();
+          this._showMessage(`${pokemon.name} was cured of ${old}!`);
+        });
         return;
       }
 
       // --- Rare Candy ---
       if (itemId === 'rare_candy') {
-        // gainExp with a large number triggers level-up(s) via PokemonInstance
-        const expNeeded = pokemon._expForNextLevel
-          ? pokemon._expForNextLevel()
-          : 9999;
-        pokemon.gainExp(expNeeded);
-        window.partyManager?.save();
-        this.removeItem(itemId, 1);
-        this._showMessage(`${pokemon.name} leveled up to Lv.${pokemon.level}!`);
+        this._useItemViaServer(itemId, () => {
+          const expNeeded = pokemon._expForNextLevel
+            ? pokemon._expForNextLevel()
+            : 9999;
+          pokemon.gainExp(expNeeded);
+          window.partyManager?.save();
+          this._showMessage(`${pokemon.name} leveled up to Lv.${pokemon.level}!`);
+        });
         return;
       }
 
@@ -276,9 +316,10 @@ export class InventoryManager {
   /** Handles battle-category items (repel, escape rope). */
   _useBattleItemOverworld(itemId, name) {
     if (itemId === 'repel' || itemId === 'super_repel') {
-      this.removeItem(itemId, 1);
-      const steps = itemId === 'super_repel' ? 200 : 100;
-      this._showMessage(`Repel will keep weak wild Pokémon away for ${steps} steps!`);
+      this._useItemViaServer(itemId, () => {
+        const steps = itemId === 'super_repel' ? 200 : 100;
+        this._showMessage(`Repel will keep weak wild Pokémon away for ${steps} steps!`);
+      });
       return;
     }
     if (itemId === 'escape_rope') {
